@@ -192,10 +192,13 @@ const getStatusColor = (status: string) => {
             <span>📍</span> {{ session.location }}
           </p>
           <div class="flex gap-2">
-            <button @click="copySessionLink(session.id)" class="text-xs bg-white/10 px-3 py-1 rounded-lg hover:bg-white/20 transition-all">
+            <button @click="copySessionLink(session.id)" class="text-xs bg-white/10 px-3 py-1 rounded-lg hover:bg-white/20 transition-all font-bold">
               🔗 Copy Link
             </button>
-            <button @click="toggleStatus(session)" class="text-xs bg-indigo-500/10 text-indigo-600 px-3 py-1 rounded-lg hover:bg-indigo-500/20 transition-all font-bold">
+            <NuxtLink :to="'/admin/session/' + session.id" class="text-xs bg-indigo-500/10 text-indigo-600 px-3 py-1 rounded-lg hover:bg-indigo-500/20 transition-all font-bold">
+              📊 Manage Attendance
+            </NuxtLink>
+            <button @click="toggleStatus(session)" class="text-xs bg-slate-500/10 text-slate-600 px-3 py-1 rounded-lg hover:bg-slate-500/20 transition-all font-bold">
               🔄 Next Status
             </button>
           </div>
