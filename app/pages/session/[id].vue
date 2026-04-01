@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { doc, getDoc, collection, query, where, getDocs, setDoc, orderBy, onSnapshot } from 'firebase/firestore'
+import { doc, getDoc, collection, query, where, getDocs, setDoc, addDoc, orderBy, onSnapshot } from 'firebase/firestore'
 import { Calendar, Clock, MapPin, CheckCircle2, XCircle, User, Users as UsersIcon, Loader2, Check, Minus } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -14,6 +14,8 @@ const submitting = ref(false)
 const message = ref({ text: '', type: '' })
 
 // Form State
+const isNewPlayer = ref(false)
+const newPlayerName = ref('')
 const vote = ref({
   rosterId: '',
   isJoining: true,
@@ -61,8 +63,20 @@ onMounted(async () => {
   }
 })
 
+const handleSelectionChange = async () => {
+  if (vote.value.rosterId === 'new') {
+    isNewPlayer.value = true
+    return
+  }
+  
+  isNewPlayer.value = false
+  if (vote.value.rosterId) {
+    await fetchUserVote(vote.value.rosterId)
+  }
+}
+
 const fetchUserVote = async (rosterId: string) => {
-  if (!rosterId) return
+  if (!rosterId || rosterId === 'new') return
   const attendanceDoc = await getDoc(doc(db, `sessions/${sessionId}/attendances`, rosterId))
   if (attendanceDoc.exists()) {
     const data = attendanceDoc.data()
@@ -77,10 +91,30 @@ const submitVote = async () => {
     return
   }
 
+  if (vote.value.rosterId === 'new' && !newPlayerName.value.trim()) {
+    message.value = { text: 'Please enter your name.', type: 'error' }
+    return
+  }
+
   submitting.value = true
   try {
-    const selectedUser = roster.value.find(u => u.id === vote.value.rosterId)
-    const rosterId = vote.value.rosterId
+    let rosterId = vote.value.rosterId
+    let displayName = ''
+
+    // 1. Handle New Player Creation
+    if (rosterId === 'new') {
+      const rosterRef = collection(db, 'roster')
+      const newDoc = await addDoc(rosterRef, {
+        name: newPlayerName.value.trim(),
+        isActive: true,
+        createdAt: new Date().toISOString()
+      })
+      rosterId = newDoc.id
+      displayName = newPlayerName.value.trim()
+    } else {
+      const selectedUser = roster.value.find(u => u.id === rosterId)
+      displayName = selectedUser?.name || 'Unknown Player'
+    }
     
     // Save to LocalStorage
     localStorage.setItem(STORAGE_KEY, rosterId)
@@ -89,7 +123,7 @@ const submitVote = async () => {
     const attendanceRef = doc(db, `sessions/${sessionId}/attendances`, rosterId)
     await setDoc(attendanceRef, {
       rosterId,
-      name: selectedUser.name,
+      name: displayName,
       isJoining: vote.value.isJoining,
       guestCount: vote.value.guestCount,
       actualAttended: vote.value.isJoining, 
@@ -99,6 +133,10 @@ const submitVote = async () => {
 
     message.value = { text: 'Successfully RSVP\'d! See you there! 🏸', type: 'success' }
     
+    // Update local state to reflect the new ID
+    vote.value.rosterId = rosterId
+    isNewPlayer.value = false
+
     // Reset message after 3 seconds
     setTimeout(() => {
       message.value = { text: '', type: '' }
@@ -128,21 +166,42 @@ const getStatusColor = (status: string) => {
       <h1 class="text-5xl font-black bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
         Session RSVP
       </h1>
-      <p class="text-white/40 font-bold uppercase tracking-[0.2em] text-[10px]">Badminton Attendance Manager</p>
+      <p class="text-white/70 font-bold uppercase tracking-[0.2em] text-[10px]">Badminton Attendance Manager</p>
     </div>
 
-    <!-- Loading -->
-    <UIGlassCard v-if="loading" class="w-full flex flex-col items-center gap-4 py-20">
-      <Loader2 class="animate-spin text-brand-indigo" :size="40" />
-      <p class="text-white/40 font-bold tracking-widest uppercase text-xs">Loading session...</p>
+    <!-- Loading Skeleton -->
+    <UIGlassCard v-if="loading" class="w-full relative overflow-hidden animate-pulse min-h-[300px]">
+      <div class="flex items-center gap-4 mb-10">
+        <div class="w-16 h-16 rounded-2xl bg-white/5" />
+        <div class="space-y-3">
+          <div class="w-48 h-8 bg-white/10 rounded-lg" />
+          <div class="w-32 h-4 bg-white/5 rounded-lg" />
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4 mb-10">
+        <div class="h-14 bg-white/5 rounded-2xl" />
+        <div class="h-14 bg-white/5 rounded-2xl" />
+      </div>
+      <div class="space-y-4">
+        <div class="w-24 h-4 bg-white/5 rounded-lg" />
+        <div class="h-14 bg-white/5 rounded-2xl" />
+      </div>
     </UIGlassCard>
+    
+    <div v-if="loading" class="w-full mt-6 space-y-4 animate-pulse">
+        <div class="w-32 h-6 bg-white/5 rounded-lg mx-auto" />
+    </div>
 
     <!-- Content -->
     <div v-else-if="session" class="w-full space-y-6">
       <!-- Session Details Card -->
       <UIGlassCard class="relative overflow-hidden group">
-        <div class="absolute top-0 right-0 p-4">
-           <span :class="getStatusColor(session.status)" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/5">
+        <div class="absolute top-0 right-0 p-4 flex items-center gap-2">
+           <div v-if="session.status?.toLowerCase() === 'open'" class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+           </div>
+           <span :class="getStatusColor(session.status)" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/5 shadow-[0_0_15px_rgba(34,197,94,0.05)]">
             {{ session.status }}
           </span>
         </div>
@@ -154,7 +213,7 @@ const getStatusColor = (status: string) => {
             </div>
             <div>
               <h2 class="text-3xl font-black tracking-tight">{{ session.date }}</h2>
-              <p class="text-white/40 font-bold text-sm tracking-wide">Weekly Badminton Match</p>
+              <p class="text-white/70 font-bold text-sm tracking-wide">Weekly Badminton Match</p>
             </div>
           </div>
 
@@ -184,14 +243,14 @@ const getStatusColor = (status: string) => {
         <form @submit.prevent="submitVote" class="space-y-8">
           <!-- Member Selection -->
           <div class="space-y-3">
-             <label class="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] px-1">Identity Verification</label>
+             <label class="text-[10px] font-black text-white/60 uppercase tracking-[0.2em] px-1">Identity Verification</label>
              <div class="relative group">
                 <div class="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-brand-indigo transition-colors z-10">
                   <User :size="20" />
                 </div>
                 <select 
                   v-model="vote.rosterId" 
-                  @change="fetchUserVote(vote.rosterId)"
+                  @change="handleSelectionChange"
                   required 
                   class="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-4 focus:ring-brand-indigo/10 focus:border-brand-indigo/50 transition-all appearance-none cursor-pointer font-bold text-white"
                 >
@@ -199,13 +258,26 @@ const getStatusColor = (status: string) => {
                   <option v-for="member in roster" :key="member.id" :value="member.id" class="bg-slate-900">
                     {{ member.name }}
                   </option>
+                  <option value="new" class="bg-slate-900 font-black text-brand-indigo">+ I'M NOT ON THE LIST / ADD ME</option>
                 </select>
+             </div>
+
+             <!-- New Member Name Input -->
+             <div v-if="isNewPlayer" class="animate-fade-in pt-2">
+                <UIGlassInput 
+                  v-model="newPlayerName" 
+                  placeholder="Enter your full name" 
+                  label="Your Full Name"
+                  required
+                >
+                  <template #icon><User :size="20" /></template>
+                </UIGlassInput>
              </div>
           </div>
 
           <!-- RSVP Action -->
           <div class="space-y-3">
-            <label class="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] px-1">Court Attendance</label>
+            <label class="text-[10px] font-black text-white/60 uppercase tracking-[0.2em] px-1">Court Attendance</label>
             <div class="grid grid-cols-2 gap-4">
               <label class="cursor-pointer group">
                 <input type="radio" v-model="vote.isJoining" :value="true" class="hidden peer" />
@@ -281,7 +353,7 @@ const getStatusColor = (status: string) => {
         <div class="overflow-x-auto -mx-8 sm:mx-0">
           <table class="w-full text-left">
             <thead>
-              <tr class="text-[10px] font-black uppercase tracking-widest text-white/30 border-b border-white/5">
+              <tr class="text-[10px] font-black uppercase tracking-widest text-white/60 border-b border-white/5">
                 <th class="px-4 py-4">Player</th>
                 <th class="px-4 py-4 text-center">Status</th>
                 <th class="px-4 py-4 text-center">Guests</th>

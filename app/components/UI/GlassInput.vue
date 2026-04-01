@@ -13,6 +13,7 @@
         :type="type"
         :value="modelValue"
         @input="$emit('update:modelValue', type === 'number' ? Number(($event.target as HTMLInputElement).value) : ($event.target as HTMLInputElement).value)"
+        @focus="($event.target as HTMLInputElement).select()"
         class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-white placeholder:text-slate-600 focus:bg-white/10 focus:border-brand-indigo/50 focus:ring-4 focus:ring-brand-indigo/10 transition-all outline-none"
         :class="{ 'pl-12': $slots.icon }"
         :placeholder="placeholder"

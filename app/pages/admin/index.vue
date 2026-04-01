@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { collection, addDoc, updateDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore'
-import { Calendar, Clock, MapPin, Plus, X, Copy, BarChart2, RefreshCcw, DollarSign, Users as UsersIcon, Loader2 } from 'lucide-vue-next'
+import { collection, addDoc, updateDoc, doc, onSnapshot, query, orderBy, getDocs, where } from 'firebase/firestore'
+import { Calendar, Clock, MapPin, Plus, X, Copy, BarChart2, RefreshCcw, DollarSign, Users as UsersIcon, Loader2, AlertTriangle } from 'lucide-vue-next'
 
 definePageMeta({
   layout: 'admin',
@@ -24,6 +24,33 @@ const adding = ref(false)
 
 // Financials State
 const playerCounts = ref<Record<string, number>>({})
+const syncing = ref<Record<string, boolean>>({})
+
+const syncFromRSVP = async (sessionId: string) => {
+  syncing.value[sessionId] = true
+  try {
+    const attendancesRef = collection(db, `sessions/${sessionId}/attendances`)
+    const q = query(attendancesRef, where('isJoining', '==', true))
+    const snap = await getDocs(q)
+    
+    // Sum of joining players + their guests
+    let total = 0
+    snap.docs.forEach(doc => {
+      const data = doc.data()
+      total += 1 + (data.guestCount || 0)
+    })
+    
+    playerCounts.value[sessionId] = total
+    
+    // Auto-update financials if it changes
+    const session = sessions.value.find(s => s.id === sessionId)
+    if (session) updateFinancials(session)
+  } catch (e) {
+    console.error('Error syncing RSVP count:', e)
+  } finally {
+    syncing.value[sessionId] = false
+  }
+}
 
 // Fetch sessions in real-time
 onMounted(() => {
@@ -78,6 +105,12 @@ const toggleStatus = async (session: any) => {
   const currentIndex = statusOrder.indexOf(session.status)
   const nextStatus = statusOrder[(currentIndex + 1) % statusOrder.length]
   
+  if (nextStatus === 'completed') {
+    if (!window.confirm('Are you sure you want to mark this session as COMPLETED? This should only be done after the match to finalize financials.')) {
+      return
+    }
+  }
+
   try {
     const docRef = doc(db, 'sessions', session.id)
     await updateDoc(docRef, { status: nextStatus })
@@ -132,7 +165,7 @@ const getStatusColor = (status: string) => {
         <h1 class="text-4xl font-black bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
           Sessions
         </h1>
-        <p class="text-white/40 font-bold uppercase tracking-[0.2em] text-xs">Manage weekly matches & financials</p>
+        <p class="text-white/70 font-bold uppercase tracking-[0.2em] text-xs">Manage weekly matches & financials</p>
       </div>
       
       <UIGlassButton @click="showCreateForm = !showCreateForm" class="!px-8">
@@ -176,7 +209,7 @@ const getStatusColor = (status: string) => {
     <!-- Loading State -->
     <div v-if="loading" class="py-20 flex flex-col items-center gap-4">
       <Loader2 class="animate-spin text-brand-indigo" :size="48" />
-      <p class="text-white/20 font-black uppercase tracking-widest text-sm">Fetching Court Data...</p>
+      <p class="text-white/50 font-black uppercase tracking-widest text-sm">Fetching Court Data...</p>
     </div>
 
     <!-- Empty State -->
@@ -242,26 +275,32 @@ const getStatusColor = (status: string) => {
 
            <div class="grid grid-cols-2 gap-4">
               <div class="space-y-2">
-                 <label class="text-[10px] font-black uppercase text-white/20 px-1">Court Cost</label>
+                 <label class="text-[10px] font-black uppercase text-white/50 px-1">Court Cost</label>
                  <div class="relative">
                     <DollarSign class="absolute left-3 top-1/2 -translate-y-1/2 text-white/20" :size="12" />
-                    <input v-model.number="session.financials.courtCost" @change="updateFinancials(session)" type="number" class="w-full pl-8 pr-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm outline-none focus:border-brand-purple/50" />
+                    <input v-model.number="session.financials.courtCost" @change="updateFinancials(session)" @focus="($event.target as HTMLInputElement).select()" type="number" class="w-full pl-8 pr-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm outline-none focus:border-brand-purple/50" />
                  </div>
               </div>
               <div class="space-y-2">
-                 <label class="text-[10px] font-black uppercase text-white/20 px-1">Actual Players</label>
-                 <div class="relative">
-                    <UsersIcon class="absolute left-3 top-1/2 -translate-y-1/2 text-white/20" :size="12" />
-                    <input v-model.number="playerCounts[session.id]" @input="updateFinancials(session)" type="number" class="w-full pl-8 pr-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm outline-none focus:border-brand-purple/50" />
-                 </div>
+                  <div class="flex items-center justify-between px-1">
+                     <label class="text-[10px] font-black uppercase text-white/50">Actual Players</label>
+                     <button @click="syncFromRSVP(session.id)" class="text-[9px] font-black text-brand-indigo hover:text-brand-purple flex items-center gap-1 transition-colors uppercase" :disabled="syncing[session.id]">
+                        <RefreshCcw :size="10" :class="{ 'animate-spin': syncing[session.id] }" />
+                        Sync
+                     </button>
+                  </div>
+                  <div class="relative">
+                     <UsersIcon class="absolute left-3 top-1/2 -translate-y-1/2 text-white/20" :size="12" />
+                     <input v-model.number="playerCounts[session.id]" @input="updateFinancials(session)" @focus="($event.target as HTMLInputElement).select()" type="number" class="w-full pl-8 pr-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm outline-none focus:border-brand-purple/50" />
+                  </div>
               </div>
               <div class="space-y-2">
-                 <label class="text-[10px] font-black uppercase text-white/20 px-1">Shuttle Count</label>
-                 <input v-model.number="session.financials.shuttlecocksUsed" @change="updateFinancials(session)" type="number" class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm outline-none focus:border-brand-purple/50" />
+                 <label class="text-[10px] font-black uppercase text-white/50 px-1">Shuttle Count</label>
+                 <input v-model.number="session.financials.shuttlecocksUsed" @change="updateFinancials(session)" @focus="($event.target as HTMLInputElement).select()" type="number" class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm outline-none focus:border-brand-purple/50" />
               </div>
               <div class="space-y-2">
-                 <label class="text-[10px] font-black uppercase text-white/20 px-1">Price/Shuttle</label>
-                 <input v-model.number="session.financials.shuttlecockPrice" @change="updateFinancials(session)" type="number" class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm outline-none focus:border-brand-purple/50" />
+                 <label class="text-[10px] font-black uppercase text-white/50 px-1">Price/Shuttle</label>
+                 <input v-model.number="session.financials.shuttlecockPrice" @change="updateFinancials(session)" @focus="($event.target as HTMLInputElement).select()" type="number" class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm outline-none focus:border-brand-purple/50" />
               </div>
            </div>
 

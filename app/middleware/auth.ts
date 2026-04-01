@@ -1,6 +1,8 @@
 import { onAuthStateChanged } from 'firebase/auth'
 
 export default defineNuxtRouteMiddleware(async (to) => {
+  if (import.meta.server) return
+
   const { auth } = useFirebase()
   
   // Skip if we're already on the login page to avoid infinite redirect

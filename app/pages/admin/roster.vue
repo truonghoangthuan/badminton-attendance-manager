@@ -1,5 +1,119 @@
+<template>
+  <div class="space-y-12 pb-20">
+    <!-- Page Header -->
+    <header class="space-y-1">
+      <h1 class="text-4xl font-black bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+        Team Roster
+      </h1>
+      <p class="text-white/70 font-bold uppercase tracking-[0.2em] text-xs">Manage player directory & availability</p>
+    </header>
+
+    <!-- Quick Add Form -->
+    <UIGlassCard class="!p-8">
+      <div class="mb-8">
+        <h2 class="text-2xl font-black">Add New Member</h2>
+        <p class="text-white/70 text-sm font-medium">Register a regular player to the club</p>
+      </div>
+      
+      <form @submit.prevent="addMember" class="flex flex-col sm:flex-row gap-4 items-end">
+        <UIGlassInput 
+          v-model="newMemberName" 
+          placeholder="Enter player name..." 
+          label="Player Full Name"
+          required
+        />
+        <UIGlassButton 
+          type="submit" 
+          :disabled="adding" 
+          class="!px-10 h-14"
+        >
+          <Loader2 v-if="adding" class="animate-spin" :size="20" />
+          <span v-else>Add Player</span>
+        </UIGlassButton>
+      </form>
+    </UIGlassCard>
+
+    <!-- Member List -->
+    <UIGlassCard class="!p-0 overflow-hidden">
+      <div v-if="loading" class="p-20 flex flex-col items-center gap-4">
+        <Loader2 class="animate-spin text-brand-indigo" :size="40" />
+        <p class="text-white/70 font-black uppercase tracking-widest text-xs">Loading Roster...</p>
+      </div>
+      
+      <div v-else-if="error" class="p-8 text-center text-red-400 bg-red-400/5 m-6 rounded-2xl border border-red-400/20">
+        <AlertTriangle class="mx-auto mb-3" :size="32" />
+        <p class="font-bold">{{ error }}</p>
+      </div>
+      
+      <div v-else-if="members.length === 0" class="p-20 text-center space-y-4">
+        <UsersIcon class="mx-auto text-white/20" :size="48" />
+        <p class="text-white/70 font-medium">No members found. Add one above!</p>
+      </div>
+
+      <div v-else class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="bg-white/5 border-b border-white/10">
+              <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-white/60">Member Name</th>
+              <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-white/60 text-center">Status</th>
+              <th class="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-white/60 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            <tr v-for="member in members" :key="member.id" class="group hover:bg-white/5 transition-colors">
+              <td class="px-8 py-6">
+                <div v-if="editingId === member.id" class="flex items-center gap-3">
+                  <input 
+                    v-model="editName" 
+                    class="px-4 py-2 bg-white/10 border border-white/20 rounded-xl outline-none focus:border-brand-indigo/50 text-white w-full max-w-sm"
+                    @keyup.enter="saveEdit(member.id)"
+                    @focus="($event.target as HTMLInputElement).select()"
+                    v-focus
+                  />
+                  <div class="flex gap-1">
+                    <button @click="saveEdit(member.id)" class="p-2 hover:text-green-400 transition-colors" title="Save">
+                      <Check :size="18" />
+                    </button>
+                    <button @click="cancelEdit" class="p-2 hover:text-red-400 transition-colors" title="Cancel">
+                      <X :size="18" />
+                    </button>
+                  </div>
+                </div>
+                <span v-else :class="{ 'opacity-40 line-through': !member.isActive }" class="font-bold text-lg text-white/80 group-hover:text-white transition-colors">
+                  {{ member.name }}
+                </span>
+              </td>
+              <td class="px-8 py-6 text-center">
+                <button 
+                  @click="toggleStatus(member)"
+                  class="px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest transition-all border"
+                  :class="member.isActive 
+                    ? 'bg-green-500/10 text-green-400 border-green-500/10 hover:bg-green-500/20' 
+                    : 'bg-red-500/10 text-red-500 border-red-500/10 hover:bg-red-500/20'"
+                >
+                  {{ member.isActive ? 'ACTIVE' : 'INACTIVE' }}
+                </button>
+              </td>
+              <td class="px-8 py-6 text-right">
+                <button 
+                  @click="startEdit(member)" 
+                  class="text-white/40 hover:text-brand-indigo transition-all font-black text-[10px] uppercase tracking-widest flex items-center gap-2 ml-auto"
+                >
+                  <Edit2 :size="14" />
+                  Edit
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </UIGlassCard>
+  </div>
+</template>
+
 <script setup lang="ts">
 import { collection, addDoc, updateDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore'
+import { Users as UsersIcon, Loader2, AlertTriangle, Edit2, Check, X } from 'lucide-vue-next'
 
 definePageMeta({
   layout: 'admin',
@@ -20,6 +134,11 @@ const editingId = ref<string | null>(null)
 const editName = ref('')
 
 const error = ref<string | null>(null)
+
+// Custom directive for auto-focus
+const vFocus = {
+  mounted: (el: HTMLElement) => el.focus()
+}
 
 // Fetch roster in real-time
 onMounted(() => {
@@ -48,7 +167,7 @@ const addMember = async () => {
   adding.value = true
   try {
     await addDoc(rosterRef, {
-      name: newMemberName.value,
+      name: newMemberName.value.trim(),
       isActive: true,
       createdAt: new Date().toISOString()
     })
@@ -81,7 +200,7 @@ const saveEdit = async (id: string) => {
   try {
     const docRef = doc(db, 'roster', id)
     await updateDoc(docRef, {
-      name: editName.value
+      name: editName.value.trim()
     })
     editingId.value = null
   } catch (e) {
@@ -93,114 +212,3 @@ const cancelEdit = () => {
   editingId.value = null
 }
 </script>
-
-<template>
-  <div class="space-y-8 max-w-4xl">
-    <div>
-      <h1 class="text-4xl font-black bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent mb-2">
-        Team Roster
-      </h1>
-      <p class="text-slate-900 opacity-70">Manage your player list and availability</p>
-    </div>
-
-    <!-- Quick Add Form -->
-    <div class="glass-card p-6">
-      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-        <span class="opacity-70">➕</span> Add New Member
-      </h2>
-      <form @submit.prevent="addMember" class="flex flex-col sm:flex-row gap-3">
-        <input 
-          v-model="newMemberName" 
-          type="text" 
-          placeholder="Enter player name..." 
-          required
-          class="flex-1 px-4 py-3 bg-white/5 border border-white/20 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-        />
-        <button 
-          type="submit" 
-          :disabled="adding" 
-          class="indigo-purple-badge px-6 py-3 font-bold hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
-        >
-          <span v-if="adding" class="animate-spin h-5 w-5 border-2 border-white/30 border-t-white rounded-full"></span>
-          {{ adding ? 'Adding...' : 'Add Player' }}
-        </button>
-      </form>
-    </div>
-
-    <!-- Member List -->
-    <div class="glass-card overflow-hidden">
-      <div v-if="loading" class="p-12 text-center opacity-70 animate-pulse">
-        <span class="text-2xl">🏸</span> Loading roster...
-      </div>
-      
-      <div v-else-if="error" class="p-8 text-center text-red-500 bg-red-500/10 border border-red-500/20 m-6 rounded-xl">
-        <span class="text-2xl block mb-2">⚠️</span>
-        {{ error }}
-      </div>
-      
-      <div v-else-if="members.length === 0" class="p-12 text-center opacity-70">
-        No members found. Add one above!
-      </div>
-
-      <div v-else class="overflow-x-auto">
-        <table class="w-full text-left">
-          <thead>
-            <tr class="bg-white/5 border-b border-white/10">
-              <th class="px-6 py-4 font-bold text-sm uppercase tracking-wider">Member Name</th>
-              <th class="px-6 py-4 font-bold text-sm uppercase tracking-wider text-center">Status</th>
-              <th class="px-6 py-4 font-bold text-sm uppercase tracking-wider text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-white/5">
-            <tr v-for="member in members" :key="member.id" class="hover:bg-white/5 transition-colors">
-              <td class="px-6 py-4">
-                <div v-if="editingId === member.id" class="flex gap-2">
-                  <input 
-                    v-model="editName" 
-                    class="px-2 py-1 bg-white/10 border border-white/20 rounded-lg outline-none w-full"
-                    @keyup.enter="saveEdit(member.id)"
-                  />
-                  <button @click="saveEdit(member.id)" class="text-green-500">✅</button>
-                  <button @click="cancelEdit" class="text-red-500">❌</button>
-                </div>
-                <span v-else :class="{ 'opacity-40 line-through': !member.isActive }" class="font-medium">
-                  {{ member.name }}
-                </span>
-              </td>
-              <td class="px-6 py-4 text-center">
-                <button 
-                  @click="toggleStatus(member)"
-                  class="px-3 py-1 rounded-full text-xs font-bold transition-all"
-                  :class="member.isActive ? 'bg-green-500/20 text-green-700' : 'bg-red-500/20 text-red-700'"
-                >
-                  {{ member.isActive ? 'ACTIVE' : 'INACTIVE' }}
-                </button>
-              </td>
-              <td class="px-6 py-4 text-right flex justify-end gap-3">
-                <button 
-                  @click="startEdit(member)" 
-                  class="opacity-60 hover:opacity-100 transition-all text-sm"
-                  title="Edit Name"
-                >
-                  ✏️ Edit
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</template>
-
-<style scoped>
-.indigo-purple-badge {
-  background: linear-gradient(to right, var(--color-indigo-600), var(--color-purple-600));
-  color: white;
-  border: none;
-}
-
-.animate-spin {
-  border-top-color: transparent;
-}
-</style>
