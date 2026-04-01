@@ -1,197 +1,93 @@
-/* 
-  Modern Vanilla CSS Styling for Badminton Attendance Manager 
-  Glassmorphism Design System 
-*/
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --color-glass-bg: rgba(255, 255, 255, 0.1);
-  --color-glass-border: rgba(255, 255, 255, 0.2);
-  --color-slate-50: #f8fafc;
-  --color-slate-100: #f1f5f9;
-  --color-slate-900: #0f172a;
-  --color-slate-950: #020617;
-  --color-indigo-500: #6366f1;
-  --color-indigo-600: #4f46e5;
-  --color-purple-500: #a855f7;
-  --color-purple-600: #9333ea;
-  
-  --transition-speed: 0.3s;
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100 font-jakarta min-h-screen selection:bg-brand-indigo/30;
+    margin: 0;
+    overflow-x: hidden;
+  }
 }
 
-/* Light mode (default) */
-body {
-  margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: var(--color-slate-50);
-  color: var(--color-slate-900);
-  min-height: 100vh;
-  transition: background-color var(--transition-speed), color var(--transition-speed);
+@layer components {
+  /* Premium Glass Shell */
+  .glass-shell {
+    @apply bg-white/10 backdrop-blur-xl border border-white/20 shadow-glass transition-all duration-500;
+  }
+
+  .glass-card-hover {
+    @apply hover:bg-white/15 hover:border-white/30 hover:shadow-glass-hover hover:-translate-y-1;
+  }
+
+  /* Animated Mesh Background */
+  .bg-mesh {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    background-color: #020617;
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+      radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+      radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(253,16%,7%,1) 0, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(225,39%,30%,1) 0, transparent 50%);
+    opacity: 0.8;
+  }
+
+  .mesh-glow {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(60px);
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  /* Custom Glow Buttons */
+  .btn-glow {
+    @apply relative overflow-hidden transition-all duration-300;
+  }
+
+  .btn-glow::after {
+    content: '';
+    @apply absolute inset-0 opacity-0 bg-white/20 transition-opacity duration-300;
+  }
+
+  .btn-glow:hover::after {
+    @apply opacity-100;
+  }
+
+  .btn-glow:hover {
+    @apply shadow-[0_0_20px_rgba(99,102,241,0.5)];
+  }
 }
 
-/* Base Utilities */
-.min-h-screen { min-height: 100vh; }
-.max-w-7xl { max-width: 80rem; }
-.mx-auto { margin-left: auto; margin-right: auto; }
-.px-4 { padding-left: 1rem; padding-right: 1rem; }
-.py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
-.py-10 { padding-top: 2.5rem; padding-bottom: 2.5rem; }
-.p-8 { padding: 2rem; }
-.p-10 { padding: 2.5rem; }
-.p-0 { padding: 0; }
-
-.flex { display: flex; }
-.flex-col { flex-direction: column; }
-.items-center { align-items: center; }
-.justify-between { justify-content: space-between; }
-.justify-center { justify-content: center; }
-.gap-2 { gap: 0.5rem; }
-.gap-4 { gap: 1rem; }
-.gap-6 { gap: 1.5rem; }
-.gap-8 { gap: 2rem; }
-
-.grid { display: grid; }
-.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-@media (min-width: 768px) {
-  .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .md\:flex { display: flex; }
+/* Transitions */
+.page-enter-active,
+.page-leave-active {
+  transition: all 0.4s ease-out;
+}
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 
-.text-center { text-align: center; }
-.text-sm { font-size: 0.875rem; }
-.text-lg { font-size: 1.125rem; }
-.text-xl { font-size: 1.25rem; }
-.text-2xl { font-size: 1.5rem; }
-.text-4xl { font-size: 2.25rem; }
-@media (min-width: 768px) {
-  .md\:text-6xl { font-size: 3.75rem; }
+/* Custom Scrollbar for Glassmorphism */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-.font-medium { font-weight: 500; }
-.font-bold { font-weight: 700; }
-.font-black { font-weight: 900; }
-
-.rounded-lg { border-radius: 0.5rem; }
-.rounded-xl { border-radius: 0.75rem; }
-.rounded-2xl { border-radius: 1rem; }
-.rounded-full { border-radius: 9999px; }
-
-.shadow-xl { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
-.overflow-hidden { overflow: hidden; }
-.sticky { position: sticky; }
-.top-0 { top: 0; }
-.z-50 { z-index: 50; }
-.opacity-40 { opacity: 0.4; }
-.opacity-70 { opacity: 0.7; }
-.opacity-80 { opacity: 0.8; }
-.w-full { width: 100%; }
-.w-12 { width: 3rem; }
-.h-12 { height: 3rem; }
-
-/* Custom Glassmorphism Classes */
-.glass-surface {
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--color-glass-border);
-  background-color: var(--color-glass-bg);
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.glass-card {
-  border-radius: 1rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--color-glass-border);
-  background-color: var(--color-glass-bg);
-}
-
-.nav-glass {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--color-glass-border);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  background-color: var(--color-glass-bg);
-}
-
-.btn-glass {
-  border: 1px solid var(--color-glass-border);
-  background-color: var(--color-glass-bg);
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  color: inherit;
-  font-size: inherit;
-}
-
-.btn-glass:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-}
-
-.btn-glass:active {
-  transform: scale(0.95);
-}
-
-/* Gradients */
-.bg-gradient-app {
-  background: radial-gradient(circle at top left, #6366f1 0%, transparent 40%),
-              radial-gradient(circle at bottom right, #a855f7 0%, transparent 40%),
-              radial-gradient(circle at top right, #3b82f6 0%, transparent 30%);
-}
-
-.bg-clip-text {
-  -webkit-background-clip: text;
-  background-clip: text;
-}
-
-.text-transparent {
-  color: transparent;
-}
-
-.bg-gradient-to-r {
-  background-image: linear-gradient(to right, var(--tw-gradient-stops, #6366f1, #a855f7));
-}
-
-.from-indigo-500 { --tw-gradient-stops: #6366f1, #a855f7; }
-
-/* Fixed gradients since we don't have Tailwind anymore */
-.gradient-indigo-purple {
-  background-image: linear-gradient(to right, #6366f1, #a855f7);
-}
-
-.indigo-purple-badge {
-  background: linear-gradient(to top right, #6366f1, #a855f7);
-  color: white;
-  padding: 0.5rem;
-  border-radius: 0.75rem;
-  font-size: 0.875rem;
-}
-
-/* Space-y replacements */
-.space-y-6 > * + * { margin-top: 1.5rem; }
-.space-y-12 > * + * { margin-top: 3rem; }
-
-/* Group Hover Replacements */
-.glass-card:hover .group-hover\:scale-110 {
-  transform: scale(1.1);
-}
-
-.transition-all { transition: all 0.3s; }
-.transition-colors { transition: background-color 0.3s, color 0.3s; }
-
-/* Placeholder for responsive hidden/visible */
-@media (max-width: 639px) {
-  .sm\:inline-block { display: none; }
-}
-
-@media (max-width: 767px) {
-  .hidden { display: none; }
+::-webkit-scrollbar-thumb {
+  @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
 }

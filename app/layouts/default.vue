@@ -1,46 +1,66 @@
 <script setup lang="ts">
-// Color mode logic removed as per user's Tailwind/ColorMode removal request
+import { LayoutDashboard, Home, LogIn } from 'lucide-vue-next'
 </script>
 
 <template>
-  <div class="bg-gradient-app min-h-screen">
-    <!-- Navbar -->
-    <nav class="nav-glass transition-all">
-      <div class="max-w-7xl mx-auto flex items-center justify-between px-4">
-        <NuxtLink to="/" class="text-2xl font-bold flex items-center gap-2" style="text-decoration: none; color: inherit;">
-          <span class="indigo-purple-badge">🏸</span>
-          <span class="sm:inline-block">Badminton Attendance</span>
-        </NuxtLink>
+  <div class="relative min-h-screen overflow-x-hidden">
+    <!-- Animated Mesh Background -->
+    <div class="bg-mesh" />
+    <div class="mesh-glow top-[-10%] left-[-10%] animate-pulse-slow" />
+    <div class="mesh-glow bottom-[-10%] right-[-10%] animate-pulse-slow" style="animation-delay: -4s" />
 
-        <div class="flex items-center gap-4">
-          <!-- Navigation placeholders -->
-          <div class="hidden md:flex items-center gap-6 text-sm font-medium">
-            <NuxtLink to="/" class="transition-colors" style="text-decoration: none; color: inherit;">Home</NuxtLink>
-            <NuxtLink to="/" class="btn-glass" style="background-color: var(--color-indigo-600); color: white; border: none;">Get Started</NuxtLink>
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-50 w-full px-4 py-4">
+      <div class="max-w-7xl mx-auto">
+        <div class="glass-shell px-6 py-4 rounded-3xl flex items-center justify-between">
+          <NuxtLink to="/" class="flex items-center gap-3 group">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-indigo to-brand-purple flex items-center justify-center text-xl group-hover:scale-110 transition-transform shadow-lg shadow-brand-indigo/20">
+              🏸
+            </div>
+            <span class="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60 tracking-tight">
+              Badminton<span class="text-brand-indigo">Manager</span>
+            </span>
+          </NuxtLink>
+
+          <div class="flex items-center gap-2 md:gap-4">
+            <NuxtLink to="/" class="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl hover:bg-white/5 transition-colors text-sm font-bold text-white/70 hover:text-white">
+              <Home :size="18" />
+              Home
+            </NuxtLink>
+            <NuxtLink to="/admin">
+              <UIGlassButton variant="secondary" class="!px-4 !py-2 !text-sm">
+                <template #icon-left><LayoutDashboard :size="16" /></template>
+                Dashboard
+              </UIGlassButton>
+            </NuxtLink>
           </div>
         </div>
       </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 py-10">
+    <main class="max-w-7xl mx-auto px-4 py-8 relative z-10">
       <slot />
     </main>
 
-    <!-- Simple Footer -->
-    <footer class="p-10 text-center opacity-40 text-sm">
-      <p>&copy; 2026 Badminton Attendance Manager. All rights reserved.</p>
+    <!-- Footer -->
+    <footer class="max-w-7xl mx-auto px-4 py-12 text-center relative z-10">
+      <div class="glass-shell p-8 rounded-3xl inline-flex flex-col items-center gap-4">
+        <p class="text-sm font-bold text-white/40 tracking-widest uppercase">
+          &copy; 2026 Badminton Attendance Manager
+        </p>
+        <div class="flex gap-4 text-white/20">
+          <div class="w-1.5 h-1.5 rounded-full bg-current" />
+          <div class="w-1.5 h-1.5 rounded-full bg-current" />
+          <div class="w-1.5 h-1.5 rounded-full bg-current" />
+        </div>
+      </div>
     </footer>
   </div>
 </template>
 
 <style scoped>
 .router-link-active {
-  color: var(--color-indigo-500) !important;
-}
-
-/* Hover effect for home link */
-a.transition-colors:hover {
-  color: var(--color-indigo-500);
+  @apply text-white !important;
 }
 </style>
