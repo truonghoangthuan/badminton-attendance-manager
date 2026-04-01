@@ -69,9 +69,13 @@ const toggleAttendanceAttr = async (attendanceId: string, field: string, value: 
 }
 
 const updateFinancials = async () => {
+  if (!session.value) return
   try {
     const docRef = doc(db, 'sessions', sessionId)
     await updateDoc(docRef, {
+      'financials.courtCost': session.value.financials.courtCost,
+      'financials.shuttlecocksUsed': session.value.financials.shuttlecocksUsed,
+      'financials.shuttlecockPrice': session.value.financials.shuttlecockPrice,
       'financials.calculatedFeePerPerson': calculatedFeePerPerson.value
     })
   } catch (e) {
@@ -79,7 +83,7 @@ const updateFinancials = async () => {
   }
 }
 
-// Watch for changes in calculation and sync to session (optional, but good for persistence)
+// Watch for changes in calculation and sync to session
 watch(calculatedFeePerPerson, (newVal) => {
   if (session.value && session.value.financials.calculatedFeePerPerson !== newVal) {
     updateFinancials()

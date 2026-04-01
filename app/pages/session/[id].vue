@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { doc, getDoc, collection, query, where, getDocs, setDoc, orderBy } from 'firebase/firestore'
-import { Calendar, Clock, MapPin, CheckCircle2, XCircle, User, Users as UsersIcon, Loader2 } from 'lucide-vue-next'
+import { doc, getDoc, collection, query, where, getDocs, setDoc, orderBy, onSnapshot } from 'firebase/firestore'
+import { Calendar, Clock, MapPin, CheckCircle2, XCircle, User, Users as UsersIcon, Loader2, Check, Minus } from 'lucide-vue-next'
 
 const route = useRoute()
 const sessionId = route.params.id as string
@@ -8,6 +8,7 @@ const { db } = useFirebase()
 
 const session = ref<any>(null)
 const roster = ref<any[]>([])
+const attendanceList = ref<any[]>([])
 const loading = ref(true)
 const submitting = ref(false)
 const message = ref({ text: '', type: '' })
@@ -33,23 +34,28 @@ onMounted(async () => {
     session.value = { id: sessionDoc.id, ...sessionDoc.data() }
 
     // 2. Fetch Active Roster
-    const q = query(collection(db, 'roster'), where('isActive', '==', true), orderBy('name'))
-    const rosterSnap = await getDocs(q)
+    const qRoster = query(collection(db, 'roster'), where('isActive', '==', true), orderBy('name'))
+    const rosterSnap = await getDocs(qRoster)
     roster.value = rosterSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
 
-    // 3. Device Tracking: Load from LocalStorage
+    // 3. Setup real-time attendance listener
+    const attendancesRef = collection(db, `sessions/${sessionId}/attendances`)
+    const qAttendance = query(attendancesRef, orderBy('updatedAt', 'desc'))
+    const unsubscribe = onSnapshot(qAttendance, (snapshot) => {
+      attendanceList.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    })
+
+    // 4. Device Tracking: Load from LocalStorage
     const savedUserId = localStorage.getItem(STORAGE_KEY)
     if (savedUserId) {
       vote.value.rosterId = savedUserId
       await fetchUserVote(savedUserId)
     }
+
+    onUnmounted(unsubscribe)
   } catch (e: any) {
     console.error('Error loading session:', e)
-    if (e.code === 'permission-denied') {
-      message.value = { text: 'Permission denied. Please check Firestore security rules.', type: 'error' }
-    } else {
-      message.value = { text: 'Error loading session data.', type: 'error' }
-    }
+    message.value = { text: 'Error loading session data.', type: 'error' }
   } finally {
     loading.value = false
   }
@@ -92,6 +98,11 @@ const submitVote = async () => {
     })
 
     message.value = { text: 'Successfully RSVP\'d! See you there! 🏸', type: 'success' }
+    
+    // Reset message after 3 seconds
+    setTimeout(() => {
+      message.value = { text: '', type: '' }
+    }, 3000)
   } catch (e) {
     console.error('Error submitting vote:', e)
     message.value = { text: 'Failed to submit RSVP.', type: 'error' }
@@ -238,8 +249,8 @@ const getStatusColor = (status: string) => {
         </form>
       </UIGlassCard>
 
-      <!-- Closed Message -->
-      <UIGlassCard v-else class="!py-20 text-center space-y-6">
+      <!-- Closed Message (Alternative) -->
+      <UIGlassCard v-if="session.status !== 'open' && attendanceList.length === 0" class="!py-20 text-center space-y-6">
         <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10">
           <XCircle class="text-white/20" :size="40" />
         </div>
@@ -250,6 +261,58 @@ const getStatusColor = (status: string) => {
         <NuxtLink to="/">
           <UIGlassButton variant="secondary">Back to Home</UIGlassButton>
         </NuxtLink>
+      </UIGlassCard>
+
+      <!-- Public Registration List -->
+      <UIGlassCard v-if="attendanceList.length > 0" class="!p-8 space-y-8 animate-fade-in">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-2xl font-black">Registered Players</h3>
+            <p class="text-white/40 text-sm font-medium">Real-time attendance & payment status</p>
+          </div>
+          <div class="flex items-center gap-2 bg-brand-indigo/10 px-4 py-2 rounded-xl border border-brand-indigo/20">
+            <UsersIcon class="text-brand-indigo" :size="18" />
+            <span class="text-sm font-black text-brand-indigo">
+              {{ attendanceList.filter(a => a.isJoining).reduce((acc, a) => acc + 1 + (a.guestCount || 0), 0) }} Players
+            </span>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto -mx-8 sm:mx-0">
+          <table class="w-full text-left">
+            <thead>
+              <tr class="text-[10px] font-black uppercase tracking-widest text-white/30 border-b border-white/5">
+                <th class="px-4 py-4">Player</th>
+                <th class="px-4 py-4 text-center">Status</th>
+                <th class="px-4 py-4 text-center">Guests</th>
+                <th class="px-4 py-4 text-right">Payment</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              <tr v-for="att in attendanceList" :key="att.id" class="group hover:bg-white/5 transition-colors">
+                <td class="px-4 py-4">
+                  <span class="font-bold text-white/80 group-hover:text-white transition-colors">{{ att.name }}</span>
+                </td>
+                <td class="px-4 py-4 text-center">
+                  <div class="flex justify-center">
+                    <span v-if="att.isJoining" class="px-2 py-1 rounded-md bg-green-500/10 text-green-400 text-[10px] font-black uppercase border border-green-500/10">JOINING</span>
+                    <span v-else class="px-2 py-1 rounded-md bg-white/5 text-white/20 text-[10px] font-black uppercase border border-white/5">AWAY</span>
+                  </div>
+                </td>
+                <td class="px-4 py-4 text-center">
+                  <span class="font-mono text-sm text-white/40">{{ att.guestCount || 0 }}</span>
+                </td>
+                <td class="px-4 py-4 text-right">
+                  <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md" :class="att.hasPaid ? 'bg-brand-indigo/10 text-brand-indigo border border-brand-indigo/10' : 'bg-amber-500/5 text-amber-500/40 border border-amber-500/5'">
+                    <Check v-if="att.hasPaid" :size="10" stroke-width="4" />
+                    <Minus v-else :size="10" stroke-width="4" />
+                    <span class="text-[9px] font-black uppercase tracking-wider">{{ att.hasPaid ? 'PAID' : 'UNPAID' }}</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </UIGlassCard>
     </div>
   </div>
