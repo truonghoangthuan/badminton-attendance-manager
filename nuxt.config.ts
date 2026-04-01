@@ -3,20 +3,12 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
 
   modules: [
-    '@primevue/nuxt-module',
     '@pinia/nuxt'
   ],
 
   // Nuxt 4 folder structure
   future: {
     compatibilityVersion: 4,
-  },
-
-  primevue: {
-    options: {
-      ripple: true,
-    },
-    autoImport: true
   },
 
   css: ['~/assets/css/main.css'],
