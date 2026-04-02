@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { LayoutDashboard, Home, LogIn } from 'lucide-vue-next'
+import { LayoutDashboard, Home, User as UserIcon } from 'lucide-vue-next'
+
+const { profile, loading } = useUserProfile()
 </script>
 
 <template>
@@ -21,13 +23,20 @@ import { LayoutDashboard, Home, LogIn } from 'lucide-vue-next'
               <span class="xs:inline">Gravity</span><span class="text-brand-indigo"> Badminton</span>
             </span>
           </NuxtLink>
-
           <div class="flex items-center gap-2 md:gap-4">
+            <div v-if="!loading && profile?.displayName" class="flex items-center gap-2 px-3 py-1.5 cursor-default">
+              <div class="h-8 flex items-center justify-center text-sm font-black text-white/80 transition-colors">
+                {{ profile.displayName }}
+              </div>
+              <span class="hidden xs:inline text-xs font-black text-white/70 uppercase tracking-wider group-hover:text-white transition-colors">
+                {{ profile.displayName }}
+              </span>
+            </div>
             <NuxtLink to="/" class="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl hover:bg-white/5 transition-colors text-sm font-bold text-white/70 hover:text-white">
               <Home :size="18" />
               Home
             </NuxtLink>
-            <NuxtLink to="/admin">
+            <NuxtLink to="/admin" class="flex items-center">
               <UIGlassButton variant="secondary" class="!px-3 md:!px-4 !py-2 !text-sm">
                 <template #icon-left><LayoutDashboard :size="16" /></template>
                 <span class="hidden sm:inline">Dashboard</span>
@@ -37,6 +46,9 @@ import { LayoutDashboard, Home, LogIn } from 'lucide-vue-next'
         </div>
       </div>
     </nav>
+
+    <!-- Username Prompt Modal -->
+    <UsernamePrompt />
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 py-8 relative z-10">

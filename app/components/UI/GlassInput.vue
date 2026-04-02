@@ -20,6 +20,8 @@
         :required="required"
         :min="min"
         :max="max"
+        :maxlength="maxlength"
+        :disabled="disabled"
       />
     </div>
   </div>
@@ -34,6 +36,8 @@ defineProps<{
   required?: boolean
   min?: number | string
   max?: number | string
+  maxlength?: number | string
+  disabled?: boolean
 }>()
 
 defineEmits(['update:modelValue'])

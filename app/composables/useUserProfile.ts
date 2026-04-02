@@ -3,28 +3,9 @@ import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 
 export const useUserProfile = () => {
   const { auth, db } = useFirebase()
-  const user = ref<User | null>(null)
-  const profile = ref<any>(null)
-  const loading = ref(true)
-
-  // Initialize Auth
-  onMounted(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (!currentUser) {
-        try {
-          await signInAnonymously(auth)
-        } catch (e) {
-          console.error('Error signing in anonymously:', e)
-        }
-      } else {
-        user.value = currentUser
-        await fetchProfile(currentUser.uid)
-      }
-      loading.value = false
-    })
-
-    onUnmounted(unsubscribe)
-  })
+  const user = useState<User | null>('auth-user', () => null)
+  const profile = useState<any>('user-profile', () => null)
+  const loading = useState('auth-loading', () => true)
 
   // Fetch Profile from Firestore
   const fetchProfile = async (uid: string) => {
@@ -41,6 +22,27 @@ export const useUserProfile = () => {
     }
   }
 
+  // Initialize Auth (only once)
+  if (import.meta.client && loading.value) {
+    onMounted(() => {
+      const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+        if (!currentUser) {
+          try {
+            await signInAnonymously(auth)
+          } catch (e) {
+            console.error('Error signing in anonymously:', e)
+          }
+        } else {
+          user.value = currentUser
+          await fetchProfile(currentUser.uid)
+        }
+        loading.value = false
+      })
+
+      onUnmounted(unsubscribe)
+    })
+  }
+
   // Create or Update Profile
   const setProfile = async (displayName: string) => {
     if (!user.value) return
@@ -54,12 +56,15 @@ export const useUserProfile = () => {
       }
       
       // If profile doesn't exist, add createdAt
-      if (!profile.value) {
-        Object.assign(data, { createdAt: serverTimestamp() })
-      }
+      const isNew = !profile.value
+      const finalData = isNew 
+        ? { ...data, createdAt: serverTimestamp() }
+        : data
 
-      await setDoc(docRef, data, { merge: true })
-      profile.value = { ...profile.value, ...data }
+      await setDoc(docRef, finalData, { merge: true })
+      
+      // Update local state
+      profile.value = { ...profile.value, ...finalData }
       return true
     } catch (e) {
       console.error('Error setting profile:', e)
@@ -67,10 +72,13 @@ export const useUserProfile = () => {
     }
   }
 
+  const hasUsername = computed(() => !!profile.value?.displayName)
+
   return {
     user,
     profile,
     loading,
+    hasUsername,
     setProfile,
     fetchProfile
   }
