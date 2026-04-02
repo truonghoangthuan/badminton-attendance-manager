@@ -18,7 +18,7 @@ import { LayoutDashboard, Home, LogIn } from 'lucide-vue-next'
               🏸
             </div>
             <span class="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60 tracking-tight">
-              <span class="hidden xs:inline">Badminton</span><span class="text-brand-indigo">Manager</span>
+              <span class="xs:inline">Gravity</span><span class="text-brand-indigo"> Badminton</span>
             </span>
           </NuxtLink>
 
