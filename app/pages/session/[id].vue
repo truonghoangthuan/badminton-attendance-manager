@@ -4,25 +4,21 @@ import { Calendar, Clock, MapPin, CheckCircle2, XCircle, User, Users as UsersIco
 
 const route = useRoute()
 const sessionId = route.params.id as string
+const { user, profile, loading: authLoading, setProfile } = useUserProfile()
 const { db } = useFirebase()
 
 const session = ref<any>(null)
-const roster = ref<any[]>([])
 const attendanceList = ref<any[]>([])
 const loading = ref(true)
 const submitting = ref(false)
 const message = ref({ text: '', type: '' })
 
 // Form State
-const isNewPlayer = ref(false)
-const newPlayerName = ref('')
+const newName = ref('')
 const vote = ref({
-  rosterId: '',
   isJoining: true,
   guestCount: 0
 })
-
-const STORAGE_KEY = 'badminton_user_id'
 
 onMounted(async () => {
   try {
@@ -35,26 +31,25 @@ onMounted(async () => {
     }
     session.value = { id: sessionDoc.id, ...sessionDoc.data() }
 
-    // 2. Fetch Active Roster
-    const qRoster = query(collection(db, 'roster'), where('isActive', '==', true), orderBy('name'))
-    const rosterSnap = await getDocs(qRoster)
-    roster.value = rosterSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-
-    // 3. Setup real-time attendance listener
+    // 2. Setup real-time attendance listener
     const attendancesRef = collection(db, `sessions/${sessionId}/attendances`)
     const qAttendance = query(attendancesRef, orderBy('updatedAt', 'desc'))
-    const unsubscribe = onSnapshot(qAttendance, (snapshot) => {
+    const unsubscribeSnapshot = onSnapshot(qAttendance, (snapshot) => {
       attendanceList.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
     })
 
-    // 4. Device Tracking: Load from LocalStorage
-    const savedUserId = localStorage.getItem(STORAGE_KEY)
-    if (savedUserId) {
-      vote.value.rosterId = savedUserId
-      await fetchUserVote(savedUserId)
-    }
+    // 3. Initial check for existing vote (if profile is already loaded)
+    watchEffect(() => {
+      if (user.value && attendanceList.value.length) {
+        const myVote = attendanceList.value.find(a => a.id === user.value?.uid)
+        if (myVote) {
+          vote.value.isJoining = myVote.isJoining
+          vote.value.guestCount = myVote.guestCount || 0
+        }
+      }
+    })
 
-    onUnmounted(unsubscribe)
+    onUnmounted(unsubscribeSnapshot)
   } catch (e: any) {
     console.error('Error loading session:', e)
     message.value = { text: 'Error loading session data.', type: 'error' }
@@ -63,66 +58,34 @@ onMounted(async () => {
   }
 })
 
-const handleSelectionChange = async () => {
-  if (vote.value.rosterId === 'new') {
-    isNewPlayer.value = true
-    return
-  }
-  
-  isNewPlayer.value = false
-  if (vote.value.rosterId) {
-    await fetchUserVote(vote.value.rosterId)
-  }
-}
-
-const fetchUserVote = async (rosterId: string) => {
-  if (!rosterId || rosterId === 'new') return
-  const attendanceDoc = await getDoc(doc(db, `sessions/${sessionId}/attendances`, rosterId))
-  if (attendanceDoc.exists()) {
-    const data = attendanceDoc.data()
-    vote.value.isJoining = data.isJoining
-    vote.value.guestCount = data.guestCount || 0
-  }
-}
-
 const submitVote = async () => {
-  if (!vote.value.rosterId) {
-    message.value = { text: 'Please select your name.', type: 'error' }
+  if (!user.value) {
+    message.value = { text: 'Identifying you... please wait.', type: 'error' }
     return
   }
 
-  if (vote.value.rosterId === 'new' && !newPlayerName.value.trim()) {
-    message.value = { text: 'Please enter your name.', type: 'error' }
-    return
+  // Handle first-time name registration
+  if (!profile.value?.displayName) {
+    if (!newName.value.trim()) {
+      message.value = { text: 'Please enter your name first.', type: 'error' }
+      return
+    }
+    const success = await setProfile(newName.value.trim())
+    if (!success) {
+      message.value = { text: 'Failed to save your profile.', type: 'error' }
+      return
+    }
   }
 
   submitting.value = true
   try {
-    let rosterId = vote.value.rosterId
-    let displayName = ''
+    const displayName = profile.value.displayName
+    const uid = user.value.uid
 
-    // 1. Handle New Player Creation
-    if (rosterId === 'new') {
-      const rosterRef = collection(db, 'roster')
-      const newDoc = await addDoc(rosterRef, {
-        name: newPlayerName.value.trim(),
-        isActive: true,
-        createdAt: new Date().toISOString()
-      })
-      rosterId = newDoc.id
-      displayName = newPlayerName.value.trim()
-    } else {
-      const selectedUser = roster.value.find(u => u.id === rosterId)
-      displayName = selectedUser?.name || 'Unknown Player'
-    }
-    
-    // Save to LocalStorage
-    localStorage.setItem(STORAGE_KEY, rosterId)
-
-    // Save to Firestore
-    const attendanceRef = doc(db, `sessions/${sessionId}/attendances`, rosterId)
+    // Save to Firestore - using UID as the document ID for attendance
+    const attendanceRef = doc(db, `sessions/${sessionId}/attendances`, uid)
     await setDoc(attendanceRef, {
-      rosterId,
+      uid, // Store UID as well
       name: displayName,
       isJoining: vote.value.isJoining,
       guestCount: vote.value.guestCount,
@@ -133,10 +96,6 @@ const submitVote = async () => {
 
     message.value = { text: 'Successfully RSVP\'d! See you there! 🏸', type: 'success' }
     
-    // Update local state to reflect the new ID
-    vote.value.rosterId = rosterId
-    isNewPlayer.value = false
-
     // Reset message after 3 seconds
     setTimeout(() => {
       message.value = { text: '', type: '' }
@@ -243,37 +202,48 @@ const getStatusColor = (status: string) => {
           </div>
 
           <form @submit.prevent="submitVote" class="space-y-8">
-            <!-- Member Selection -->
-            <div class="space-y-3">
+            <!-- Identity Verification -->
+            <div class="space-y-4">
                <label class="text-[10px] font-black text-white/60 uppercase tracking-[0.2em] px-1">Identity Verification</label>
-               <div class="relative group">
-                  <div class="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-brand-indigo transition-colors z-10">
-                    <User :size="20" />
-                  </div>
-                  <select 
-                    v-model="vote.rosterId" 
-                    @change="handleSelectionChange"
-                    required 
-                    class="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl outline-none focus:ring-4 focus:ring-brand-indigo/10 focus:border-brand-indigo/50 transition-all appearance-none cursor-pointer font-bold text-white"
-                  >
-                    <option value="" disabled class="bg-slate-900">Choose your name...</option>
-                    <option v-for="member in roster" :key="member.id" :value="member.id" class="bg-slate-900">
-                      {{ member.name }}
-                    </option>
-                    <option value="new" class="bg-slate-900 font-black text-brand-indigo">+ I'M NOT ON THE LIST / ADD ME</option>
-                  </select>
+               
+               <!-- Loading State -->
+               <div v-if="authLoading" class="flex items-center gap-3 py-4 px-6 bg-white/5 border border-white/10 rounded-2xl animate-pulse">
+                  <Loader2 class="animate-spin text-white/20" :size="20" />
+                  <span class="text-white/40 font-bold text-sm">Identifying secure session...</span>
                </div>
 
-               <!-- New Member Name Input -->
-               <div v-if="isNewPlayer" class="animate-fade-in pt-2">
+               <!-- Name Registration (For New Users) -->
+               <div v-else-if="!profile?.displayName" class="animate-fade-in group">
                   <UIGlassInput 
-                    v-model="newPlayerName" 
+                    v-model="newName" 
                     placeholder="Enter your full name" 
                     label="Your Full Name"
                     required
                   >
                     <template #icon><User :size="20" /></template>
                   </UIGlassInput>
+                  <p class="mt-2 text-[10px] text-white/40 px-1 italic">This name will be saved for all future sessions on this device.</p>
+               </div>
+
+               <!-- Recognized Profile (For Returning Users) -->
+               <div v-else class="flex items-center justify-between p-5 bg-brand-indigo/10 border border-brand-indigo/20 rounded-2xl animate-fade-in">
+                  <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-brand-indigo/20 flex items-center justify-center text-brand-indigo shadow-inner border border-white/5">
+                      <User :size="20" />
+                    </div>
+                    <div>
+                      <p class="text-[10px] font-black text-brand-indigo/60 uppercase tracking-widest">Registering as</p>
+                      <h4 class="text-lg font-black text-white">{{ profile.displayName }}</h4>
+                    </div>
+                  </div>
+                  <button 
+                    type="button" 
+                    @click="profile.displayName = ''"
+                    class="p-2 hover:bg-white/5 rounded-lg text-white/40 hover:text-white/80 transition-all"
+                    title="Change Name"
+                  >
+                    <User :size="16" />
+                  </button>
                </div>
             </div>
 
