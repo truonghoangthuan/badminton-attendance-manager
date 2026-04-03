@@ -3,24 +3,41 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+
   body {
-    @apply bg-slate-950 text-slate-100 font-jakarta min-h-screen selection:bg-brand-indigo/30;
+    @apply bg-brand-sand text-brand-ink font-jakarta min-h-screen selection:bg-brand-shuttle/50;
     margin: 0;
     overflow-x: hidden;
+    background-image:
+      linear-gradient(135deg, rgba(47, 122, 83, 0.08), transparent 28%),
+      linear-gradient(180deg, #fcfbf7 0%, #f6f3eb 52%, #f2eee3 100%);
+  }
+
+  * {
+    @apply border-brand-line;
+  }
+
+  h1, h2, h3, h4 {
+    @apply text-brand-ink;
+  }
+
+  a {
+    @apply text-inherit;
   }
 }
 
 @layer components {
-  /* Premium Glass Shell */
   .glass-shell {
-    @apply bg-white/10 backdrop-blur-xl border border-white/20 shadow-glass transition-all duration-500;
+    @apply rounded-[28px] border bg-white shadow-glass transition-all duration-300;
   }
 
   .glass-card-hover {
-    @apply hover:bg-white/15 hover:border-white/30 hover:shadow-glass-hover hover:-translate-y-1;
+    @apply hover:-translate-y-1 hover:shadow-glass-hover;
   }
 
-  /* Animated Mesh Background */
   .bg-mesh {
     position: fixed;
     top: 0;
@@ -28,28 +45,23 @@
     width: 100vw;
     height: 100vh;
     z-index: -1;
-    background-color: #020617;
     background-image: 
-      radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
-      radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
-      radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%),
-      radial-gradient(at 100% 100%, hsla(253,16%,7%,1) 0, transparent 50%),
-      radial-gradient(at 0% 100%, hsla(225,39%,30%,1) 0, transparent 50%);
-    opacity: 0.8;
+      radial-gradient(circle at top left, rgba(47, 122, 83, 0.13) 0, transparent 34%),
+      radial-gradient(circle at 85% 12%, rgba(244, 201, 93, 0.2) 0, transparent 24%),
+      linear-gradient(180deg, rgba(255,255,255,0.85), rgba(246,243,235,0.95));
   }
 
   .mesh-glow {
     position: absolute;
     width: 600px;
     height: 600px;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(47, 122, 83, 0.1) 0%, transparent 72%);
     border-radius: 50%;
     filter: blur(60px);
     pointer-events: none;
     z-index: -1;
   }
 
-  /* Custom Glow Buttons */
   .btn-glow {
     @apply relative overflow-hidden transition-all duration-300;
   }
@@ -64,7 +76,28 @@
   }
 
   .btn-glow:hover {
-    @apply shadow-[0_0_20px_rgba(99,102,241,0.5)];
+    @apply shadow-[0_12px_24px_rgba(18,55,42,0.12)];
+  }
+
+  .court-divider {
+    @apply relative;
+  }
+
+  .court-divider::before {
+    content: '';
+    @apply absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-brand-line;
+  }
+
+  .court-divider > span {
+    @apply relative inline-block bg-brand-sand px-3 text-[11px] font-black uppercase tracking-[0.24em] text-brand-slate;
+  }
+
+  .score-chip {
+    @apply inline-flex items-center rounded-full border border-brand-line bg-brand-sand px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-brand-slate;
+  }
+
+  .section-kicker {
+    @apply text-[11px] font-black uppercase tracking-[0.28em] text-brand-slate;
   }
 }
 
@@ -79,7 +112,6 @@
   transform: translateY(10px);
 }
 
-/* Custom Scrollbar for Glassmorphism */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -89,5 +121,5 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
+  @apply rounded-full bg-brand-line hover:bg-brand-slate/40 transition-colors;
 }

@@ -2,14 +2,14 @@
   <UIGlassModal :modelValue="show" persistent>
     <template #header>
       <div class="flex flex-col items-center gap-4 text-center">
-        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-indigo to-brand-purple flex items-center justify-center text-3xl shadow-lg shadow-brand-indigo/20 animate-bounce-subtle">
+        <div class="flex h-16 w-16 items-center justify-center rounded-2xl border border-brand-line bg-brand-sand text-3xl animate-bounce-subtle">
           👋
         </div>
         <div>
-          <h2 class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
+          <h2 class="text-2xl font-black tracking-tight text-brand-ink">
             Welcome to Gravity
           </h2>
-          <p class="text-white/50 text-sm mt-1 font-medium">
+          <p class="mt-1 text-sm font-medium text-brand-slate">
             Please enter a name to join the session
           </p>
         </div>
@@ -18,7 +18,7 @@
 
     <form @submit.prevent="handleSubmit" class="space-y-6">
       <div class="space-y-2">
-        <label for="username" class="text-xs font-black uppercase tracking-widest text-white/40 ml-2">
+        <label for="username" class="ml-2 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">
           Your Display Name
         </label>
         <UIGlassInput
@@ -30,7 +30,7 @@
           autofocus
           maxlength="255"
         />
-        <p v-if="error" class="text-red-400 text-xs ml-2 font-medium animate-pulse">
+        <p v-if="error" class="ml-2 text-xs font-medium text-red-500 animate-pulse">
           {{ error }}
         </p>
       </div>
@@ -51,7 +51,7 @@
     </form>
 
     <template #footer>
-      <p class="text-center text-[10px] text-white/30 uppercase tracking-[0.2em] font-bold">
+      <p class="text-center text-[10px] font-bold uppercase tracking-[0.2em] text-brand-slate">
         Secure Anonymous Authentication
       </p>
     </template>

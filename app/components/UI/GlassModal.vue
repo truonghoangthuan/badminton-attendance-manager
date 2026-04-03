@@ -2,40 +2,34 @@
   <Teleport to="body">
     <Transition name="modal-fade">
       <div v-if="modelValue" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        <!-- Backdrop -->
         <div 
-          class="absolute inset-0 bg-slate-950/60 backdrop-blur-md" 
+          class="absolute inset-0 bg-brand-ink/25 backdrop-blur-sm" 
           @click="persistent ? null : $emit('update:modelValue', false)"
         />
         
-        <!-- Modal Content -->
         <Transition name="modal-scale" appear>
           <div 
             v-if="modelValue"
-            class="relative w-full max-w-lg glass-shell rounded-[2rem] overflow-hidden shadow-2xl"
+            class="relative w-full max-w-lg overflow-hidden rounded-[2rem] border border-brand-line bg-white shadow-[0_30px_80px_rgba(29,42,34,0.16)]"
             role="dialog"
             aria-modal="true"
           >
-            <!-- Header -->
             <div v-if="$slots.header" class="px-8 pt-8 pb-4">
               <slot name="header" />
             </div>
 
-            <!-- Close Button (if not persistent) -->
             <button 
               v-if="!persistent"
               @click="$emit('update:modelValue', false)"
-              class="absolute top-6 right-6 p-2 rounded-full hover:bg-white/10 transition-colors text-white/50 hover:text-white"
+              class="absolute top-6 right-6 rounded-full border border-brand-line p-2 text-brand-slate transition-colors hover:bg-brand-sand hover:text-brand-ink"
             >
               <X :size="20" />
             </button>
 
-            <!-- Body -->
             <div class="px-8 py-4">
               <slot />
             </div>
 
-            <!-- Footer -->
             <div v-if="$slots.footer" class="px-8 py-8">
               <slot name="footer" />
             </div>

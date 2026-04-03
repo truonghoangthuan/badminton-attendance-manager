@@ -1,9 +1,9 @@
 <template>
   <div 
-    class="glass-shell p-6 rounded-3xl"
+    class="glass-shell p-6"
     :class="[
       hoverable ? 'glass-card-hover cursor-default' : '',
-      interactive ? 'active:scale-[0.98] transition-transform' : ''
+      interactive ? 'active:scale-[0.99] transition-transform' : ''
     ]"
   >
     <slot />

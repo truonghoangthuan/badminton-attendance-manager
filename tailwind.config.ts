@@ -5,23 +5,23 @@ export default <Partial<Config>>{
     extend: {
       colors: {
         brand: {
-          indigo: '#6366f1',
-          purple: '#a855f7',
-          blue: '#3b82f6',
+          indigo: '#12372a',
+          purple: '#24553f',
+          blue: '#1b4d8c',
+          court: '#2f7a53',
+          shuttle: '#f4c95d',
+          line: '#dbe6dd',
+          sand: '#f6f3eb',
+          ink: '#1d2a22',
+          slate: '#637267',
         }
       },
       fontFamily: {
         jakarta: ['"Plus Jakarta Sans Variable"', 'sans-serif'],
       },
-      backdropBlur: {
-        xs: '2px',
-      },
       boxShadow: {
-        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-        'glass-hover': '0 8px 32px 0 rgba(31, 38, 135, 0.45)',
-      },
-      backgroundImage: {
-        'mesh-gradient': "radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%)",
+        'glass': '0 18px 45px rgba(18, 55, 42, 0.08)',
+        'glass-hover': '0 22px 50px rgba(18, 55, 42, 0.12)',
       },
       animation: {
         'pulse-slow': 'pulse 8s cubic-bezier(0.4, 0, 0.6, 1) infinite',

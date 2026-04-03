@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { collection, query, orderBy, getDocs, doc, getDoc } from 'firebase/firestore'
-import { Calendar, Clock, MapPin, ArrowRight, Loader2, User, Zap, Trophy, Users, BarChart3, Shield } from 'lucide-vue-next'
+import { ArrowRight, Calendar, Clock3, MapPin, Trophy } from 'lucide-vue-next'
 
 const { db } = useFirebase()
 const sessions = ref<any[]>([])
@@ -10,7 +10,6 @@ const STORAGE_KEY = 'badminton_user_id'
 
 onMounted(async () => {
   try {
-    // 1. Check LocalStorage for returning user
     const savedUserId = localStorage.getItem(STORAGE_KEY)
     if (savedUserId) {
       const userDoc = await getDoc(doc(db, 'roster', savedUserId))
@@ -19,7 +18,6 @@ onMounted(async () => {
       }
     }
 
-    // 2. Fetch Sessions
     const qSessions = query(collection(db, 'sessions'), orderBy('date', 'desc'))
     const querySnapshot = await getDocs(qSessions)
     sessions.value = querySnapshot.docs.map(doc => ({
@@ -33,187 +31,115 @@ onMounted(async () => {
   }
 })
 
+const featuredSession = computed(() => sessions.value.find(session => session.status !== 'completed') || sessions.value[0] || null)
+const otherSessions = computed(() => sessions.value.filter(session => session.id !== featuredSession.value?.id).slice(0, 4))
+
 const getStatusStyles = (status: string) => {
   switch (status?.toLowerCase()) {
     case 'open':
-      return 'bg-green-500/10 text-green-400 border-green-500/20'
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200'
     case 'locked':
-      return 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+      return 'bg-amber-50 text-amber-700 border-amber-200'
     case 'completed':
-      return 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+      return 'bg-slate-100 text-slate-600 border-slate-200'
     default:
-      return 'bg-white/5 text-white/40 border-white/10'
+      return 'bg-white text-brand-slate border-brand-line'
   }
 }
 </script>
 
 <template>
-  <div class="space-y-12 py-8 px-4 max-w-7xl mx-auto">
-    <!-- Welcome Section / Hero -->
-    <header class="space-y-6 text-center md:text-left">
-      <div v-if="userName" class="inline-flex items-center gap-3 px-5 py-2.5 rounded-2xl bg-brand-indigo/10 border border-brand-indigo/20 text-brand-indigo animate-fade-in">
-        <User :size="18" class="text-brand-indigo" />
-        <span class="font-black text-sm uppercase tracking-widest">Welcome back, {{ userName }}!</span>
-      </div>
-      
-      <div v-else class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white/70 text-[10px] font-black uppercase tracking-widest animate-fade-in">
-        <Zap :size="14" />
-        Badminton Attendance Manager
-      </div>
+  <div class="space-y-8 pb-16">
+    <section>
+      <UIGlassCard class="space-y-6">
+        <div class="space-y-2">
+          <p class="section-kicker">Community Dashboard</p>
+          <h1 class="text-3xl font-black tracking-tight md:text-4xl">
+            {{ userName ? `Hi ${userName}, ready to play?` : 'Ready for the next badminton session?' }}
+          </h1>
+        </div>
 
-      <div class="space-y-2">
-        <h1 class="text-4xl md:text-6xl font-black tracking-tighter leading-tight bg-gradient-to-b from-white to-white/50 bg-clip-text text-transparent">
-          Upcoming <span class="text-brand-indigo">Sessions</span>
-        </h1>
-        <p class="text-lg text-white/70 font-medium max-w-2xl">
-          Join your next match, track your progress, and stay connected with the club.
-        </p>
-      </div>
-    </header>
-
-    <!-- Sessions Grid -->
-    <section v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <UIGlassCard v-for="i in 3" :key="i" class="h-64 relative overflow-hidden animate-pulse">
-        <div class="flex items-center gap-4 mb-6">
-          <div class="w-14 h-14 rounded-2xl bg-white/5" />
-          <div class="space-y-2">
-            <div class="w-24 h-6 bg-white/10 rounded-lg" />
-            <div class="w-16 h-3 bg-white/5 rounded-lg" />
+        <template v-if="loading">
+          <div class="space-y-3 animate-pulse">
+            <div class="h-12 rounded-2xl bg-brand-sand" />
+            <div class="h-12 rounded-2xl bg-brand-sand" />
+            <div class="h-12 rounded-2xl bg-brand-sand" />
           </div>
-        </div>
-        <div class="space-y-3">
-          <div class="w-full h-10 bg-white/5 rounded-xl" />
-          <div class="w-full h-10 bg-white/5 rounded-xl" />
-        </div>
-        <div class="mt-8 pt-6 border-t border-white/5 flex justify-between">
-          <div class="w-20 h-3 bg-white/5 rounded-lg" />
-          <div class="w-8 h-8 rounded-full bg-white/5" />
-        </div>
+        </template>
+
+        <template v-else-if="featuredSession">
+          <div class="rounded-[28px] border border-brand-line bg-brand-sand p-6">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="text-3xl font-black tracking-tight">{{ featuredSession.date }}</p>
+                <p class="mt-1 text-sm font-medium text-brand-slate">Next session</p>
+              </div>
+              <span :class="getStatusStyles(featuredSession.status)" class="rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]">
+                {{ featuredSession.status }}
+              </span>
+            </div>
+
+            <div class="mt-5 grid gap-3 md:grid-cols-2">
+              <div class="flex items-center gap-3 rounded-2xl border border-brand-line bg-white px-4 py-3 text-sm font-medium">
+                <Clock3 :size="16" class="text-brand-court" />
+                {{ featuredSession.time }}
+              </div>
+              <div class="flex items-center gap-3 rounded-2xl border border-brand-line bg-white px-4 py-3 text-sm font-medium">
+                <MapPin :size="16" class="text-brand-blue" />
+                {{ featuredSession.location }}
+              </div>
+            </div>
+
+            <NuxtLink :to="`/session/${featuredSession.id}`" class="mt-5 block">
+              <UIGlassButton class="w-full !justify-between">
+                Join this session
+                <template #icon-right><ArrowRight :size="18" /></template>
+              </UIGlassButton>
+            </NuxtLink>
+          </div>
+        </template>
+
+        <template v-else>
+          <div class="rounded-[28px] border border-dashed border-brand-line bg-brand-sand px-6 py-14 text-center">
+            <Trophy :size="28" class="mx-auto text-brand-slate" />
+            <h2 class="mt-4 text-2xl font-black">No sessions yet</h2>
+          </div>
+        </template>
       </UIGlassCard>
     </section>
 
-    <section v-else-if="sessions.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-up">
-      <NuxtLink 
-        v-for="session in sessions" 
-        :key="session.id" 
-        :to="`/session/${session.id}`"
-        class="block group no-underline"
-      >
-        <UIGlassCard hoverable interactive class="h-full relative overflow-hidden flex flex-col justify-between">
-          <!-- Status Badge -->
-          <div class="absolute top-4 right-4 flex items-center gap-2">
-            <div v-if="session.status?.toLowerCase() === 'open'" class="relative flex h-2 w-2">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-            </div>
-            <span 
-              :class="getStatusStyles(session.status)"
-              class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-[0_0_15px_rgba(34,197,94,0.05)]"
-            >
-              {{ session.status }}
-            </span>
-          </div>
-
-          <div class="space-y-6">
-            <!-- Session Icon & Date -->
-            <div class="flex items-center gap-4">
-              <div class="w-14 h-14 rounded-2xl bg-brand-indigo/10 flex items-center justify-center text-brand-indigo border border-brand-indigo/20 group-hover:bg-brand-indigo/20 transition-colors">
-                <Calendar :size="28" />
+    <section v-if="otherSessions.length" class="space-y-4">
+      <div class="court-divider"><span>More Sessions</span></div>
+      <div class="grid gap-4 md:grid-cols-2">
+        <NuxtLink
+          v-for="session in otherSessions"
+          :key="session.id"
+          :to="`/session/${session.id}`"
+          class="block"
+        >
+          <UIGlassCard hoverable interactive class="space-y-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-sand text-brand-court">
+                  <Calendar :size="20" />
+                </div>
+                <div>
+                  <p class="text-xl font-black">{{ session.date }}</p>
+                  <p class="text-sm font-medium text-brand-slate">{{ session.time }}</p>
+                </div>
               </div>
-              <div>
-                <h3 class="text-2xl font-black group-hover:text-brand-indigo transition-colors">{{ session.date }}</h3>
-                <p class="text-white/70 text-xs font-bold uppercase tracking-widest">Match Session</p>
-              </div>
+              <span :class="getStatusStyles(session.status)" class="rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]">
+                {{ session.status }}
+              </span>
             </div>
 
-            <!-- Details -->
-            <div class="space-y-3">
-              <div class="flex items-center gap-3 text-white/60 font-medium bg-white/5 px-4 py-3 rounded-xl border border-white/5">
-                <Clock :size="18" class="text-brand-purple" />
-                <span class="text-sm">{{ session.time }}</span>
-              </div>
-              <div class="flex items-center gap-3 text-white/60 font-medium bg-white/5 px-4 py-3 rounded-xl border border-white/5">
-                <MapPin :size="18" class="text-brand-blue" />
-                <span class="text-sm truncate">{{ session.location }}</span>
-              </div>
+            <div class="flex items-center gap-3 rounded-2xl border border-brand-line bg-brand-sand px-4 py-3 text-sm font-medium">
+              <MapPin :size="16" class="text-brand-blue" />
+              {{ session.location }}
             </div>
-          </div>
-
-          <div class="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
-            <span class="text-[10px] font-black text-white/50 uppercase tracking-widest group-hover:text-white transition-colors">View Details</span>
-            <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:translate-x-1 transition-all group-hover:bg-brand-indigo group-hover:text-white">
-              <ArrowRight :size="16" />
-            </div>
-          </div>
-        </UIGlassCard>
-      </NuxtLink>
-    </section>
-
-    <!-- Empty State -->
-    <section v-else class="py-24 text-center space-y-6">
-      <div class="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mx-auto border border-white/10 text-white/20">
-        <Trophy :size="40" />
-      </div>
-      <div class="space-y-2">
-        <h3 class="text-2xl font-black">No sessions scheduled</h3>
-        <p class="text-white/40 font-medium">Check back later for upcoming badminton matches.</p>
-      </div>
-    </section>
-
-    <!-- Features Section (Simplified footer-like) -->
-    <hr class="border-white/5 my-20" />
-    
-    <section class="grid grid-cols-1 md:grid-cols-3 gap-8 pb-12">
-      <div class="space-y-4">
-        <div class="w-10 h-10 rounded-xl bg-brand-indigo/10 flex items-center justify-center text-brand-indigo border border-brand-indigo/20">
-          <Shield :size="20" />
-        </div>
-        <h4 class="text-lg font-black tracking-tight">Personalized Expo</h4>
-        <p class="text-sm text-white/40 font-medium leading-relaxed">System remembers your preferences for a seamless RSVP experience every time.</p>
-      </div>
-      <div class="space-y-4">
-        <div class="w-10 h-10 rounded-xl bg-brand-purple/10 flex items-center justify-center text-brand-purple border border-brand-purple/20">
-          <BarChart3 :size="20" />
-        </div>
-        <h4 class="text-lg font-black tracking-tight">Real-time Updates</h4>
-        <p class="text-sm text-white/40 font-medium leading-relaxed">Live attendance tracking and financial breakdowns powered by Firestore.</p>
-      </div>
-      <div class="space-y-4">
-        <div class="w-10 h-10 rounded-xl bg-brand-blue/10 flex items-center justify-center text-brand-blue border border-brand-blue/20">
-          <Users :size="20" />
-        </div>
-        <h4 class="text-lg font-black tracking-tight">Community First</h4>
-        <p class="text-sm text-white/40 font-medium leading-relaxed">Built for badminton players, by badminton players, to simplify match organization.</p>
+          </UIGlassCard>
+        </NuxtLink>
       </div>
     </section>
   </div>
 </template>
-
-<style scoped>
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.6s ease-out forwards;
-}
-
-.animate-fade-in-up {
-  animation: fade-in-up 0.8s ease-out forwards;
-}
-
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-</style>

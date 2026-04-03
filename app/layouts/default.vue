@@ -1,38 +1,30 @@
 <script setup lang="ts">
-import { LayoutDashboard, Home, User as UserIcon } from 'lucide-vue-next'
+import { Home, LayoutDashboard, Sparkles } from 'lucide-vue-next'
 
 const { profile, loading } = useUserProfile()
+const welcomeInitial = computed(() => profile.value?.displayName?.trim()?.charAt(0)?.toUpperCase() || '?')
 </script>
 
 <template>
   <div class="relative min-h-screen overflow-x-hidden">
-    <!-- Animated Mesh Background -->
     <div class="bg-mesh" />
     <div class="mesh-glow top-[-10%] left-[-10%] animate-pulse-slow" />
     <div class="mesh-glow bottom-[-10%] right-[-10%] animate-pulse-slow" style="animation-delay: -4s" />
 
-    <!-- Navbar -->
-    <nav class="sticky top-0 z-50 w-full px-4 py-4">
-      <div class="max-w-7xl mx-auto">
-        <div class="glass-shell px-6 py-4 rounded-3xl flex items-center justify-between">
-          <NuxtLink to="/" class="flex items-center gap-2 group">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-indigo to-brand-purple flex items-center justify-center text-xl group-hover:scale-110 transition-transform shadow-lg shadow-brand-indigo/20">
+    <nav class="sticky top-0 z-50 w-full px-4 py-4 md:px-6">
+      <div class="mx-auto max-w-7xl">
+        <div class="glass-shell flex items-center justify-between px-4 py-4 md:px-6">
+          <NuxtLink to="/" class="group flex items-center gap-3">
+            <div class="flex h-11 w-11 items-center justify-center rounded-2xl border border-brand-line bg-brand-court text-xl text-white transition-transform group-hover:scale-105">
               🏸
             </div>
-            <span class="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60 tracking-tight">
-              <span class="xs:inline">Gravity</span><span class="text-brand-indigo"> Badminton</span>
-            </span>
-          </NuxtLink>
-          <div class="flex items-center gap-2 md:gap-4">
-            <div v-if="!loading && profile?.displayName" class="flex items-center gap-2 px-3 py-1.5 cursor-default">
-              <div class="h-8 flex items-center justify-center text-sm font-black text-white/80 transition-colors">
-                {{ profile.displayName }}
-              </div>
-              <span class="hidden xs:inline text-xs font-black text-white/70 uppercase tracking-wider group-hover:text-white transition-colors">
-                {{ profile.displayName }}
-              </span>
+            <div>
+              <p class="section-kicker">Gravity Club</p>
+              <span class="text-xl font-black tracking-tight text-brand-ink">Gravity <span class="text-brand-court">Badminton</span></span>
             </div>
-            <NuxtLink to="/" class="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl hover:bg-white/5 transition-colors text-sm font-bold text-white/70 hover:text-white">
+          </NuxtLink>
+          <div class="flex items-center gap-2 md:gap-3">
+            <NuxtLink to="/" class="hidden items-center gap-2 rounded-2xl px-4 py-2 text-sm font-bold text-brand-slate transition-colors hover:bg-brand-sand hover:text-brand-ink md:flex">
               <Home :size="18" />
               Home
             </NuxtLink>
@@ -47,24 +39,40 @@ const { profile, loading } = useUserProfile()
       </div>
     </nav>
 
-    <!-- Username Prompt Modal -->
+    <div class="relative z-20 px-4 pt-2 md:px-6">
+      <div class="mx-auto max-w-7xl">
+        <div v-if="!loading && profile?.displayName" class="glass-shell flex items-center gap-3 px-4 py-3 md:px-5">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-court text-sm font-black text-white">
+            {{ welcomeInitial }}
+          </div>
+          <div class="min-w-0">
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-brand-slate/80">Welcome back</p>
+            <div class="flex items-center gap-1.5">
+              <p class="truncate text-base font-semibold text-brand-ink md:text-lg">{{ profile.displayName }}</p>
+              <Sparkles :size="12" class="text-brand-court/70" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <UsernamePrompt />
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 py-8 relative z-10">
+    <main class="relative z-10 mx-auto max-w-7xl px-4 py-8 md:px-6 md:py-10">
       <slot />
     </main>
 
-    <!-- Footer -->
-    <footer class="max-w-7xl mx-auto px-4 py-12 text-center relative z-10">
-      <div class="glass-shell p-8 rounded-3xl inline-flex flex-col items-center gap-4">
-        <p class="text-sm font-bold text-white/70 tracking-widest uppercase">
+    <footer class="relative z-10 mx-auto max-w-7xl px-4 py-12 md:px-6">
+      <div class="glass-shell flex flex-col items-start justify-between gap-5 p-6 md:flex-row md:items-center">
+        <div>
+          <p class="section-kicker">Club Footer</p>
+          <p class="mt-2 text-sm font-bold uppercase tracking-[0.18em] text-brand-slate">
           &copy; 2026 Badminton Attendance Manager
-        </p>
-        <div class="flex gap-4 text-white/50">
-          <div class="w-1.5 h-1.5 rounded-full bg-current" />
-          <div class="w-1.5 h-1.5 rounded-full bg-current" />
-          <div class="w-1.5 h-1.5 rounded-full bg-current" />
+          </p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="score-chip">Court Ready</span>
+          <span class="score-chip">Player Friendly</span>
         </div>
       </div>
     </footer>
@@ -73,6 +81,6 @@ const { profile, loading } = useUserProfile()
 
 <style scoped>
 .router-link-active {
-  @apply text-white !important;
+  @apply text-brand-ink !important;
 }
 </style>

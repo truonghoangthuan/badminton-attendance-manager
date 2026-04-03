@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { collection, addDoc, updateDoc, doc, onSnapshot, query, orderBy, getDocs, where } from 'firebase/firestore'
-import { Calendar, Clock, MapPin, Plus, X, Copy, BarChart2, RefreshCcw, DollarSign, Users as UsersIcon, Loader2, AlertTriangle } from 'lucide-vue-next'
+import { collection, addDoc, updateDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore'
+import { Calendar, Clock3, Copy, Loader2, MapPin, Plus, RefreshCcw, Users as UsersIcon, X } from 'lucide-vue-next'
 
 definePageMeta({
   layout: 'admin',
@@ -12,58 +12,26 @@ const sessionsRef = collection(db, 'sessions')
 const sessions = ref<any[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
-
-// Create Session Form State
 const showCreateForm = ref(false)
+const adding = ref(false)
 const newSession = ref({
   date: new Date().toISOString().split('T')[0],
   time: '18:00',
   location: 'Badminton Court A',
 })
-const adding = ref(false)
 
-// Financials State
-const playerCounts = ref<Record<string, number>>({})
-const syncing = ref<Record<string, boolean>>({})
-
-const syncFromRSVP = async (sessionId: string) => {
-  syncing.value[sessionId] = true
-  try {
-    const attendancesRef = collection(db, `sessions/${sessionId}/attendances`)
-    const q = query(attendancesRef, where('isJoining', '==', true))
-    const snap = await getDocs(q)
-    
-    // Sum of joining players + their guests
-    let total = 0
-    snap.docs.forEach(doc => {
-      const data = doc.data()
-      total += 1 + (data.guestCount || 0)
-    })
-    
-    playerCounts.value[sessionId] = total
-    
-    // Auto-update financials if it changes
-    const session = sessions.value.find(s => s.id === sessionId)
-    if (session) updateFinancials(session)
-  } catch (e) {
-    console.error('Error syncing RSVP count:', e)
-  } finally {
-    syncing.value[sessionId] = false
-  }
-}
-
-// Fetch sessions in real-time
 onMounted(() => {
   const q = query(sessionsRef, orderBy('date', 'desc'))
-  const unsubscribe = onSnapshot(q, 
-    (snapshot) => {
+  const unsubscribe = onSnapshot(
+    q,
+    snapshot => {
       sessions.value = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }))
       loading.value = false
     },
-    (err) => {
+    err => {
       console.error('Firestore Error:', err)
       error.value = 'Failed to fetch sessions.'
       loading.value = false
@@ -87,6 +55,7 @@ const createSession = async () => {
       },
       createdAt: new Date().toISOString()
     })
+
     showCreateForm.value = false
     newSession.value = {
       date: new Date().toISOString().split('T')[0],
@@ -104,11 +73,9 @@ const toggleStatus = async (session: any) => {
   const statusOrder: ('open' | 'locked' | 'completed')[] = ['open', 'locked', 'completed']
   const currentIndex = statusOrder.indexOf(session.status)
   const nextStatus = statusOrder[(currentIndex + 1) % statusOrder.length]
-  
-  if (nextStatus === 'completed') {
-    if (!window.confirm('Are you sure you want to mark this session as COMPLETED? This should only be done after the match to finalize financials.')) {
-      return
-    }
+
+  if (nextStatus === 'completed' && !window.confirm('Mark this session as completed?')) {
+    return
   }
 
   try {
@@ -119,29 +86,6 @@ const toggleStatus = async (session: any) => {
   }
 }
 
-const updateFinancials = async (session: any) => {
-  const fee = calculateFee(session)
-  try {
-    const docRef = doc(db, 'sessions', session.id)
-    await updateDoc(docRef, {
-      'financials.courtCost': session.financials.courtCost,
-      'financials.shuttlecocksUsed': session.financials.shuttlecocksUsed,
-      'financials.shuttlecockPrice': session.financials.shuttlecockPrice,
-      'financials.calculatedFeePerPerson': fee
-    })
-  } catch (e) {
-    console.error('Error updating financials:', e)
-  }
-}
-
-const calculateFee = (session: any) => {
-  const totalPlayers = playerCounts.value[session.id] || 1
-  const courtCost = session.financials.courtCost || 0
-  const shuttleUsage = session.financials.shuttlecocksUsed || 0
-  const shuttlePrice = session.financials.shuttlecockPrice || 0
-  return Number(((courtCost + (shuttleUsage * shuttlePrice)) / totalPlayers).toFixed(2))
-}
-
 const copySessionLink = (id: string) => {
   const url = `${window.location.origin}/session/${id}`
   navigator.clipboard.writeText(url)
@@ -149,198 +93,115 @@ const copySessionLink = (id: string) => {
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'open': return 'text-green-400 bg-green-400/10'
-    case 'locked': return 'text-amber-400 bg-amber-400/10'
-    case 'completed': return 'text-blue-400 bg-blue-400/10'
-    default: return 'text-slate-400 bg-slate-400/10'
+    case 'open':
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200'
+    case 'locked':
+      return 'bg-amber-50 text-amber-700 border-amber-200'
+    case 'completed':
+      return 'bg-slate-100 text-slate-700 border-slate-200'
+    default:
+      return 'bg-white text-brand-slate border-brand-line'
   }
 }
 </script>
 
 <template>
-  <div class="space-y-12 pb-20">
-    <!-- Page Header -->
-    <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-      <div class="space-y-1">
-        <h1 class="text-4xl font-black bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
-          Sessions
-        </h1>
-        <p class="text-white/70 font-bold uppercase tracking-[0.2em] text-xs">Manage weekly matches & financials</p>
+  <div class="space-y-8 pb-16">
+    <section class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div>
+        <p class="section-kicker">Admin</p>
+        <h1 class="mt-2 text-3xl font-black tracking-tight">Sessions</h1>
       </div>
-      
-      <UIGlassButton @click="showCreateForm = !showCreateForm" class="!px-8">
-        <template #icon-left>
-           <X v-if="showCreateForm" :size="20" />
-           <Plus v-else :size="20" />
-        </template>
-        {{ showCreateForm ? 'Cancel Creation' : 'New Session' }}
-      </UIGlassButton>
-    </header>
 
-    <!-- Create Session Form -->
+      <UIGlassButton @click="showCreateForm = !showCreateForm">
+        <template #icon-left>
+          <X v-if="showCreateForm" :size="18" />
+          <Plus v-else :size="18" />
+        </template>
+        {{ showCreateForm ? 'Cancel' : 'New Session' }}
+      </UIGlassButton>
+    </section>
+
     <transition name="fade">
       <UIGlassCard v-if="showCreateForm" class="!p-8">
-        <div class="mb-8">
-          <h2 class="text-2xl font-black">Plan Next Match</h2>
-          <p class="text-white/40 text-sm font-medium">Coordinate venue and schedule</p>
-        </div>
-        
-        <form @submit.prevent="createSession" class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <UIGlassInput v-model="newSession.date" type="date" label="Court Date" required>
-            <template #icon><Calendar :size="20" /></template>
+        <form @submit.prevent="createSession" class="grid grid-cols-1 gap-5 md:grid-cols-3">
+          <UIGlassInput v-model="newSession.date" type="date" label="Date" required>
+            <template #icon><Calendar :size="18" /></template>
           </UIGlassInput>
-          <UIGlassInput v-model="newSession.time" type="time" label="Match Time" required>
-            <template #icon><Clock :size="20" /></template>
+          <UIGlassInput v-model="newSession.time" type="time" label="Time" required>
+            <template #icon><Clock3 :size="18" /></template>
           </UIGlassInput>
-          <UIGlassInput v-model="newSession.location" type="text" label="Venue Location" placeholder="e.g., Badminton Court A" required>
-            <template #icon><MapPin :size="20" /></template>
+          <UIGlassInput v-model="newSession.location" type="text" label="Location" placeholder="Badminton Court A" required>
+            <template #icon><MapPin :size="18" /></template>
           </UIGlassInput>
-          
-          <div class="md:col-span-3 flex justify-end pt-4">
-            <UIGlassButton type="submit" :disabled="adding" class="!px-12">
-              <Loader2 v-if="adding" class="animate-spin" :size="20" />
-              <span v-else>Confirm & Create</span>
+
+          <div class="md:col-span-3 flex justify-end">
+            <UIGlassButton type="submit" :disabled="adding">
+              <Loader2 v-if="adding" class="animate-spin" :size="18" />
+              <span v-else>Create</span>
             </UIGlassButton>
           </div>
         </form>
       </UIGlassCard>
     </transition>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="py-20 flex flex-col items-center gap-4">
-      <Loader2 class="animate-spin text-brand-indigo" :size="48" />
-      <p class="text-white/50 font-black uppercase tracking-widest text-sm">Fetching Court Data...</p>
-    </div>
+    <section v-if="loading" class="space-y-4">
+      <UIGlassCard v-for="i in 3" :key="i" class="animate-pulse">
+        <div class="h-10 rounded-2xl bg-brand-sand" />
+      </UIGlassCard>
+    </section>
 
-    <!-- Empty State -->
-    <UIGlassCard v-else-if="sessions.length === 0" class="!py-32 text-center">
-      <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 border border-white/10">
-        <Calendar class="text-white/20" :size="40" />
-      </div>
-      <h3 class="text-2xl font-black">No sessions scheduled</h3>
-      <p class="text-white/40 font-medium mb-8">Start your first match management by clicking "New Session"</p>
+    <UIGlassCard v-else-if="error" class="border-red-200 bg-red-50 text-red-700">
+      {{ error }}
     </UIGlassCard>
 
-    <!-- Sessions List -->
-    <div v-else class="grid grid-cols-1 gap-6">
-      <UIGlassCard v-for="session in sessions" :key="session.id" class="relative group !p-8 flex flex-col lg:flex-row gap-10">
-        <!-- Floating Badge -->
-        <div class="absolute top-6 right-6">
-           <span :class="getStatusColor(session.status)" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/5">
+    <section v-else class="space-y-4">
+      <UIGlassCard v-for="session in sessions" :key="session.id" class="space-y-5">
+        <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div class="space-y-4">
+            <div class="flex items-center gap-3">
+              <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-sand text-brand-court">
+                <Calendar :size="20" />
+              </div>
+              <div>
+                <p class="text-2xl font-black">{{ session.date }}</p>
+                <p class="text-sm font-medium text-brand-slate">{{ session.time }} · {{ session.location }}</p>
+              </div>
+            </div>
+            <span :class="getStatusColor(session.status)" class="inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]">
               {{ session.status }}
-           </span>
-        </div>
+            </span>
+          </div>
 
-        <!-- Left: Core Info -->
-        <div class="flex-1 space-y-8">
-           <div class="space-y-4">
-              <div class="flex items-center gap-4">
-                 <div class="w-14 h-14 rounded-2xl bg-brand-indigo/10 flex items-center justify-center text-brand-indigo">
-                    <Calendar :size="28" />
-                 </div>
-                 <div>
-                    <h3 class="text-2xl font-black tracking-tight">{{ session.date }}</h3>
-                    <div class="flex items-center gap-4 text-white/40 font-bold text-xs uppercase tracking-widest">
-                       <span class="flex items-center gap-1"><Clock :size="12" /> {{ session.time }}</span>
-                       <span class="flex items-center gap-1 truncate max-w-[200px]"><MapPin :size="12" /> {{ session.location }}</span>
-                    </div>
-                 </div>
-              </div>
-           </div>
-
-           <div class="flex flex-wrap gap-2">
-              <UIGlassButton variant="secondary" @click="copySessionLink(session.id)" class="!px-4 !py-2 !text-xs">
-                 <template #icon-left><Copy :size="14" /></template>
-                 Copy Link
+          <div class="flex flex-wrap gap-3">
+            <UIGlassButton variant="secondary" class="!px-4 !py-2 !text-sm" @click="copySessionLink(session.id)">
+              <template #icon-left><Copy :size="14" /></template>
+              Copy Link
+            </UIGlassButton>
+            <NuxtLink :to="`/admin/session/${session.id}`">
+              <UIGlassButton variant="secondary" class="!px-4 !py-2 !text-sm">
+                <template #icon-left><UsersIcon :size="14" /></template>
+                Open
               </UIGlassButton>
-              <NuxtLink :to="'/admin/session/' + session.id">
-                 <UIGlassButton variant="secondary" class="!px-4 !py-2 !text-xs">
-                    <template #icon-left><UsersIcon :size="14" /></template>
-                    RSVP List
-                 </UIGlassButton>
-              </NuxtLink>
-              <UIGlassButton variant="ghost" @click="toggleStatus(session)" class="!px-4 !py-2 !text-xs !bg-white/5">
-                 <template #icon-left><RefreshCcw :size="14" /></template>
-                 Update Status
-              </UIGlassButton>
-           </div>
+            </NuxtLink>
+            <UIGlassButton variant="ghost" class="!px-4 !py-2 !text-sm" @click="toggleStatus(session)">
+              <template #icon-left><RefreshCcw :size="14" /></template>
+              Status
+            </UIGlassButton>
+          </div>
         </div>
-
-        <!-- Right: Financial Dashboard (Visible when processing or completed) -->
-        <div v-if="session.status !== 'open'" class="w-full lg:w-[400px] bg-white/5 p-6 rounded-3xl border border-white/10 space-y-6 animate-fade-in">
-           <div class="flex items-center justify-between">
-              <h4 class="text-xs font-black uppercase tracking-[0.2em] text-white/40">Financial Controller</h4>
-              <BarChart2 class="text-brand-purple" :size="16" />
-           </div>
-
-           <div class="grid grid-cols-2 gap-4">
-              <div class="space-y-2">
-                 <label class="text-[10px] font-black uppercase text-white/50 px-1">Court Cost</label>
-                 <div class="relative">
-                    <DollarSign class="absolute left-3 top-1/2 -translate-y-1/2 text-white/20" :size="12" />
-                    <input v-model.number="session.financials.courtCost" @change="updateFinancials(session)" @focus="($event.target as HTMLInputElement).select()" type="number" class="w-full pl-8 pr-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm outline-none focus:border-brand-purple/50" />
-                 </div>
-              </div>
-              <div class="space-y-2">
-                  <div class="flex items-center justify-between px-1">
-                     <label class="text-[10px] font-black uppercase text-white/50">Actual Players</label>
-                     <button @click="syncFromRSVP(session.id)" class="text-[9px] font-black text-brand-indigo hover:text-brand-purple flex items-center gap-1 transition-colors uppercase" :disabled="syncing[session.id]">
-                        <RefreshCcw :size="10" :class="{ 'animate-spin': syncing[session.id] }" />
-                        Sync
-                     </button>
-                  </div>
-                  <div class="relative">
-                     <UsersIcon class="absolute left-3 top-1/2 -translate-y-1/2 text-white/20" :size="12" />
-                     <input v-model.number="playerCounts[session.id]" @input="updateFinancials(session)" @focus="($event.target as HTMLInputElement).select()" type="number" class="w-full pl-8 pr-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm outline-none focus:border-brand-purple/50" />
-                  </div>
-              </div>
-              <div class="space-y-2">
-                 <label class="text-[10px] font-black uppercase text-white/50 px-1">Shuttle Count</label>
-                 <input v-model.number="session.financials.shuttlecocksUsed" @change="updateFinancials(session)" @focus="($event.target as HTMLInputElement).select()" type="number" class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm outline-none focus:border-brand-purple/50" />
-              </div>
-              <div class="space-y-2">
-                 <label class="text-[10px] font-black uppercase text-white/50 px-1">Price/Shuttle</label>
-                 <input v-model.number="session.financials.shuttlecockPrice" @change="updateFinancials(session)" @focus="($event.target as HTMLInputElement).select()" type="number" class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm outline-none focus:border-brand-purple/50" />
-              </div>
-           </div>
-
-           <div class="pt-4 border-t border-white/10 flex justify-between items-end">
-              <span class="text-xs font-bold text-white/40">Suggested Fee:</span>
-              <div class="flex items-baseline gap-1">
-                 <span class="text-3xl font-black text-white">${{ calculateFee(session) }}</span>
-                 <span class="text-[10px] font-black uppercase text-white/30">/ person</span>
-              </div>
-           </div>
-        </div>
-        
-        <!-- Hover Glow -->
-        <div class="absolute inset-0 bg-brand-indigo/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-3xl" />
       </UIGlassCard>
-    </div>
+    </section>
   </div>
 </template>
 
 <style scoped>
 .fade-enter-active, .fade-leave-active {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease;
 }
+
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
-  transform: translateY(-20px) scale(0.98);
-}
-
-.animate-fade-in {
-  animation: slideUp 0.6s ease-out forwards;
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="time"]::-webkit-calendar-picker-indicator {
-  filter: invert(1);
-  opacity: 0.2;
+  transform: translateY(-10px);
 }
 </style>
