@@ -2,10 +2,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
 
-  modules: [
-    '@pinia/nuxt',
-    '@nuxtjs/tailwindcss'
-  ],
+  modules: ['@pinia/nuxt', '@nuxtjs/tailwindcss', '@primevue/nuxt-module'],
 
   // Nuxt 4 folder structure
   future: {
@@ -15,7 +12,7 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   vite: {
-    plugins: []
+    plugins: [],
   },
 
   runtimeConfig: {
@@ -26,8 +23,8 @@ export default defineNuxtConfig({
         projectId: process.env.NUXT_PUBLIC_FIREBASE_PROJECT_ID,
         storageBucket: process.env.NUXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
         messagingSenderId: process.env.NUXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-        appId: process.env.NUXT_PUBLIC_FIREBASE_APP_ID
-      }
-    }
-  }
-})
+        appId: process.env.NUXT_PUBLIC_FIREBASE_APP_ID,
+      },
+    },
+  },
+});

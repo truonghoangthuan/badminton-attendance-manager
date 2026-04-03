@@ -13,12 +13,17 @@
     "@fontsource-variable/plus-jakarta-sans": "^5.2.8",
     "@nuxtjs/tailwindcss": "^6.14.0",
     "@pinia/nuxt": "^0.11.3",
+    "@primeuix/themes": "^2.0.3",
     "firebase": "^12.11.0",
     "lucide-vue-next": "^1.0.0",
     "nuxt": "^4.4.2",
     "pinia": "^3.0.4",
+    "primevue": "^4.5.4",
     "tailwindcss": "^3.4.19",
     "vue": "^3.5.31",
     "vue-router": "^5.0.4"
+  },
+  "devDependencies": {
+    "@primevue/nuxt-module": "^4.5.4"
   }
 }
