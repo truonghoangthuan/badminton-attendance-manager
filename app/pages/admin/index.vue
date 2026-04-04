@@ -21,6 +21,35 @@ const newSession = ref({
   location: 'Badminton Court A',
 });
 
+const formatSessionDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
+
+const parseSessionDate = (value: string) => {
+  if (!value) {
+    return null;
+  }
+
+  const [year, month, day] = value.split('-').map(Number);
+
+  if (!year || !month || !day) {
+    return null;
+  }
+
+  return new Date(year, month - 1, day);
+};
+
+const selectedSessionDate = computed<Date | null>({
+  get: () => parseSessionDate(newSession.value.date),
+  set: (value) => {
+    newSession.value.date = value ? formatSessionDate(value) : '';
+  },
+});
+
 onMounted(() => {
   const q = query(sessionsRef, orderBy('date', 'desc'));
   const unsubscribe = onSnapshot(
@@ -139,43 +168,13 @@ const getStatusColor = (status: string) => {
         <h1 class="mt-2 text-3xl font-black tracking-tight">Sessions</h1>
       </div>
 
-      <UIGlassButton @click="showCreateForm = !showCreateForm">
+      <UIGlassButton @click="showCreateForm = true">
         <template #icon-left>
-          <X v-if="showCreateForm" :size="18" />
-          <Plus v-else :size="18" />
+          <Plus :size="18" />
         </template>
-        {{ showCreateForm ? 'Cancel' : 'New Session' }}
+        New Session
       </UIGlassButton>
     </section>
-
-    <transition name="fade">
-      <UIGlassCard v-if="showCreateForm" class="!p-8">
-        <form @submit.prevent="createSession" class="grid grid-cols-1 gap-5 md:grid-cols-3">
-          <UIGlassInput v-model="newSession.date" type="date" label="Date" required>
-            <template #icon><Calendar :size="18" /></template>
-          </UIGlassInput>
-          <UIGlassInput v-model="newSession.time" type="time" label="Time" required>
-            <template #icon><Clock3 :size="18" /></template>
-          </UIGlassInput>
-          <UIGlassInput
-            v-model="newSession.location"
-            type="text"
-            label="Location"
-            placeholder="Badminton Court A"
-            required
-          >
-            <template #icon><MapPin :size="18" /></template>
-          </UIGlassInput>
-
-          <div class="md:col-span-3 flex justify-end">
-            <UIGlassButton type="submit" :disabled="adding">
-              <Loader2 v-if="adding" class="animate-spin" :size="18" />
-              <span v-else>Create</span>
-            </UIGlassButton>
-          </div>
-        </form>
-      </UIGlassCard>
-    </transition>
 
     <div class="md:min-h-0 md:flex-1 md:overflow-hidden">
       <section v-if="loading" class="space-y-4 md:h-full md:overflow-y-auto md:pr-4">
@@ -245,17 +244,52 @@ const getStatusColor = (status: string) => {
       </section>
     </div>
   </div>
+
+  <UIGlassModal v-model="showCreateForm">
+    <template #header>
+      <div class="flex flex-col gap-2 text-center">
+        <p class="text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">Session Setup</p>
+        <div>
+          <h2 class="text-2xl font-black tracking-tight text-brand-ink">Create a New Session</h2>
+          <p class="mt-1 text-sm font-medium text-brand-slate">
+            Add the date, time, and location to open attendance for players.
+          </p>
+        </div>
+      </div>
+    </template>
+
+    <form @submit.prevent="createSession" class="flex flex-col gap-5">
+      <div class="flex w-full flex-col gap-2">
+        <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">
+          Date
+        </label>
+        <div class="relative">
+          <div class="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate">
+            <Calendar :size="18" />
+          </div>
+          <DatePicker
+            v-model="selectedSessionDate"
+            dateFormat="yy-mm-dd"
+            :manualInput="false"
+            class="w-full"
+            inputClass="w-full rounded-2xl border border-brand-line bg-[#fcfcf9] py-4 pl-12 pr-4 text-brand-ink placeholder:text-brand-slate/70 focus:border-brand-court focus:ring-4 focus:ring-brand-court/10 transition-all outline-none"
+            required
+          />
+        </div>
+      </div>
+      <UIGlassInput v-model="newSession.time" type="time" label="Time" required>
+        <template #icon><Clock3 :size="18" /></template>
+      </UIGlassInput>
+      <UIGlassInput v-model="newSession.location" type="text" label="Location" placeholder="Badminton Court A" required>
+        <template #icon><MapPin :size="18" /></template>
+      </UIGlassInput>
+
+      <div class="flex justify-end md:col-span-3">
+        <UIGlassButton type="submit" :disabled="adding">
+          <Loader2 v-if="adding" class="animate-spin" :size="18" />
+          <span v-else>Create</span>
+        </UIGlassButton>
+      </div>
+    </form>
+  </UIGlassModal>
 </template>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-</style>
