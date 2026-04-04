@@ -277,7 +277,9 @@ const getStatusColor = (status: string) => {
       </NuxtLink>
 
       <div v-if="loading" class="py-16 text-center">
-        <div class="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-brand-court border-t-transparent" />
+        <div
+          class="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-brand-court border-t-transparent"
+        />
         <p class="text-sm font-bold text-brand-slate">Loading session details...</p>
       </div>
 
@@ -355,180 +357,184 @@ const getStatusColor = (status: string) => {
           </UIGlassCard>
 
           <UIGlassCard class="space-y-6">
-          <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p class="section-kicker">Attendance</p>
-              <h2 class="mt-2 text-2xl font-black tracking-tight">Player Check-In</h2>
-              <p class="mt-1 text-sm font-medium text-brand-slate">
-                Confirm who showed up, keep payments moving, and spot gaps fast.
+            <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p class="section-kicker">Attendance</p>
+                <h2 class="mt-2 text-2xl font-black tracking-tight">Player Check-In</h2>
+                <p class="mt-1 text-sm font-medium text-brand-slate">
+                  Confirm who showed up, keep payments moving, and spot gaps fast.
+                </p>
+              </div>
+
+              <div class="flex flex-wrap gap-2">
+                <span class="score-chip">{{ attendances.length }} responses</span>
+                <span class="score-chip">{{ totalExpectedPlayers }} expected</span>
+                <span class="score-chip">{{ unpaidPlayers }} unpaid</span>
+              </div>
+            </div>
+
+            <div
+              v-if="attendances.length === 0"
+              class="rounded-[24px] border border-dashed border-brand-line bg-brand-sand px-6 py-12 text-center"
+            >
+              <Users :size="28" class="mx-auto text-brand-slate" />
+              <p class="mt-4 text-lg font-black text-brand-ink">No attendance responses yet</p>
+              <p class="mt-2 text-sm font-medium text-brand-slate">
+                Once players RSVP, this board will show attendance and payment progress.
               </p>
             </div>
 
-            <div class="flex flex-wrap gap-2">
-              <span class="score-chip">{{ attendances.length }} responses</span>
-              <span class="score-chip">{{ totalExpectedPlayers }} expected</span>
-              <span class="score-chip">{{ unpaidPlayers }} unpaid</span>
-            </div>
-          </div>
-
-          <div
-            v-if="attendances.length === 0"
-            class="rounded-[24px] border border-dashed border-brand-line bg-brand-sand px-6 py-12 text-center"
-          >
-            <Users :size="28" class="mx-auto text-brand-slate" />
-            <p class="mt-4 text-lg font-black text-brand-ink">No attendance responses yet</p>
-            <p class="mt-2 text-sm font-medium text-brand-slate">
-              Once players RSVP, this board will show attendance and payment progress.
-            </p>
-          </div>
-
-          <div v-else class="space-y-3 md:hidden">
-            <div
-              v-for="att in attendances"
-              :key="att.id"
-              class="rounded-[24px] border p-4 transition-colors"
-              :class="att.actualAttended ? 'border-brand-court/25 bg-emerald-50/60' : 'border-brand-line bg-white'"
-            >
-              <div class="flex items-start justify-between gap-4">
-                <div>
-                  <p class="text-lg font-black tracking-tight">{{ att.name }}</p>
-                  <div class="mt-2 flex flex-wrap gap-2">
-                    <span
-                      class="status-chip"
-                      :class="
-                        att.isJoining
-                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                          : 'border-red-200 bg-red-50 text-red-600'
-                      "
-                    >
-                      {{ att.isJoining ? 'Joining' : 'Not joining' }}
-                    </span>
-                    <span class="status-chip">
-                      {{ att.guestCount ? `+${att.guestCount} guests` : 'No guests' }}
-                    </span>
-                  </div>
-                </div>
-                <span class="text-xs font-bold uppercase tracking-[0.18em] text-brand-slate">
-                  {{ att.actualAttended ? 'Present' : 'Pending' }}
-                </span>
-              </div>
-
-              <div class="mt-4 grid gap-3 sm:grid-cols-2">
-                <button
-                  type="button"
-                  class="action-pill"
-                  :class="
-                    att.actualAttended
-                      ? 'border-brand-court bg-brand-court text-white'
-                      : 'border-brand-line bg-brand-sand text-brand-slate'
-                  "
-                  @click="toggleAttendanceAttr(att.id, 'actualAttended', !att.actualAttended)"
-                >
-                  <UserCheck :size="16" />
-                  {{ att.actualAttended ? 'Checked in' : 'Mark present' }}
-                </button>
-
-                <button
-                  type="button"
-                  class="action-pill"
-                  :class="
-                    att.hasPaid
-                      ? 'border-brand-court bg-brand-court text-white'
-                      : 'border-brand-line bg-white text-brand-slate'
-                  "
-                  @click="toggleAttendanceAttr(att.id, 'hasPaid', !att.hasPaid)"
-                >
-                  <ReceiptText :size="16" />
-                  {{ att.hasPaid ? 'Paid' : 'Collect payment' }}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div
-            v-if="attendances.length > 0"
-            class="hidden overflow-hidden rounded-[24px] border border-brand-line md:block"
-          >
-            <table class="w-full">
-              <thead class="bg-brand-sand/90">
-                <tr class="text-left">
-                  <th class="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">Player</th>
-                  <th class="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">RSVP</th>
-                  <th class="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">Guests</th>
-                  <th class="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">Check-In</th>
-                  <th class="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">Payment</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-brand-line bg-white">
-                <tr
-                  v-for="att in attendances"
-                  :key="att.id"
-                  class="transition-colors hover:bg-brand-sand/45"
-                  :class="att.actualAttended ? 'bg-emerald-50/45' : ''"
-                >
-                  <td class="px-5 py-4">
-                    <div class="flex flex-col">
-                      <span class="font-black text-brand-ink">{{ att.name }}</span>
-                      <span class="text-sm font-medium text-brand-slate">
-                        {{ att.actualAttended ? 'Checked in on-site' : 'Awaiting check-in' }}
+            <div v-else class="space-y-3 md:hidden">
+              <div
+                v-for="att in attendances"
+                :key="att.id"
+                class="rounded-[24px] border p-4 transition-colors"
+                :class="att.actualAttended ? 'border-brand-court/25 bg-emerald-50/60' : 'border-brand-line bg-white'"
+              >
+                <div class="flex items-start justify-between gap-4">
+                  <div>
+                    <p class="text-lg font-black tracking-tight">{{ att.name }}</p>
+                    <div class="mt-2 flex flex-wrap gap-2">
+                      <span
+                        class="status-chip"
+                        :class="
+                          att.isJoining
+                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                            : 'border-red-200 bg-red-50 text-red-600'
+                        "
+                      >
+                        {{ att.isJoining ? 'Joining' : 'Not joining' }}
+                      </span>
+                      <span class="status-chip">
+                        {{ att.guestCount ? `+${att.guestCount} guests` : 'No guests' }}
                       </span>
                     </div>
-                  </td>
-                  <td class="px-5 py-4">
-                    <span
-                      class="status-chip"
-                      :class="
-                        att.isJoining
-                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                          : 'border-red-200 bg-red-50 text-red-600'
-                      "
-                    >
-                      {{ att.isJoining ? 'Joining' : 'No' }}
-                    </span>
-                  </td>
-                  <td class="px-5 py-4">
-                    <span
-                      v-if="att.guestCount"
-                      class="status-chip border-brand-court/20 bg-brand-court/10 text-brand-court"
-                    >
-                      +{{ att.guestCount }}
-                    </span>
-                    <span v-else class="text-sm font-medium text-brand-slate/70">None</span>
-                  </td>
-                  <td class="px-5 py-4">
-                    <button
-                      type="button"
-                      class="action-pill !px-4 !py-2 text-sm"
-                      :class="
-                        att.actualAttended
-                          ? 'border-brand-court bg-brand-court text-white'
-                          : 'border-brand-line bg-brand-sand text-brand-slate'
-                      "
-                      @click="toggleAttendanceAttr(att.id, 'actualAttended', !att.actualAttended)"
-                    >
-                      <UserCheck :size="16" />
-                      {{ att.actualAttended ? 'Present' : 'Mark present' }}
-                    </button>
-                  </td>
-                  <td class="px-5 py-4">
-                    <button
-                      type="button"
-                      class="action-pill !px-4 !py-2 text-sm"
-                      :class="
-                        att.hasPaid
-                          ? 'border-brand-court bg-brand-court text-white'
-                          : 'border-brand-line bg-white text-brand-slate'
-                      "
-                      @click="toggleAttendanceAttr(att.id, 'hasPaid', !att.hasPaid)"
-                    >
-                      <ReceiptText :size="16" />
-                      {{ att.hasPaid ? 'Paid' : 'Unpaid' }}
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                  </div>
+                  <span class="text-xs font-bold uppercase tracking-[0.18em] text-brand-slate">
+                    {{ att.actualAttended ? 'Present' : 'Pending' }}
+                  </span>
+                </div>
+
+                <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    class="action-pill"
+                    :class="
+                      att.actualAttended
+                        ? 'border-brand-court bg-brand-court text-white'
+                        : 'border-brand-line bg-brand-sand text-brand-slate'
+                    "
+                    @click="toggleAttendanceAttr(att.id, 'actualAttended', !att.actualAttended)"
+                  >
+                    <UserCheck :size="16" />
+                    {{ att.actualAttended ? 'Checked in' : 'Mark present' }}
+                  </button>
+
+                  <button
+                    type="button"
+                    class="action-pill"
+                    :class="
+                      att.hasPaid
+                        ? 'border-brand-court bg-brand-court text-white'
+                        : 'border-brand-line bg-white text-brand-slate'
+                    "
+                    @click="toggleAttendanceAttr(att.id, 'hasPaid', !att.hasPaid)"
+                  >
+                    <ReceiptText :size="16" />
+                    {{ att.hasPaid ? 'Paid' : 'Collect payment' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div
+              v-if="attendances.length > 0"
+              class="hidden overflow-hidden rounded-[24px] border border-brand-line md:block"
+            >
+              <table class="w-full">
+                <thead class="bg-brand-sand/90">
+                  <tr class="text-left">
+                    <th class="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">Player</th>
+                    <th class="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">RSVP</th>
+                    <th class="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">Guests</th>
+                    <th class="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">
+                      Check-In
+                    </th>
+                    <th class="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">
+                      Payment
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-brand-line bg-white">
+                  <tr
+                    v-for="att in attendances"
+                    :key="att.id"
+                    class="transition-colors hover:bg-brand-sand/45"
+                    :class="att.actualAttended ? 'bg-emerald-50/45' : ''"
+                  >
+                    <td class="px-5 py-4">
+                      <div class="flex flex-col">
+                        <span class="font-black text-brand-ink">{{ att.name }}</span>
+                        <span class="text-sm font-medium text-brand-slate">
+                          {{ att.actualAttended ? 'Checked in on-site' : 'Awaiting check-in' }}
+                        </span>
+                      </div>
+                    </td>
+                    <td class="px-5 py-4">
+                      <span
+                        class="status-chip"
+                        :class="
+                          att.isJoining
+                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                            : 'border-red-200 bg-red-50 text-red-600'
+                        "
+                      >
+                        {{ att.isJoining ? 'Joining' : 'No' }}
+                      </span>
+                    </td>
+                    <td class="px-5 py-4">
+                      <span
+                        v-if="att.guestCount"
+                        class="status-chip border-brand-court/20 bg-brand-court/10 text-brand-court"
+                      >
+                        +{{ att.guestCount }}
+                      </span>
+                      <span v-else class="text-sm font-medium text-brand-slate/70">None</span>
+                    </td>
+                    <td class="px-5 py-4">
+                      <button
+                        type="button"
+                        class="action-pill !px-4 !py-2 text-sm"
+                        :class="
+                          att.actualAttended
+                            ? 'border-brand-court bg-brand-court text-white'
+                            : 'border-brand-line bg-brand-sand text-brand-slate'
+                        "
+                        @click="toggleAttendanceAttr(att.id, 'actualAttended', !att.actualAttended)"
+                      >
+                        <UserCheck :size="16" />
+                        {{ att.actualAttended ? 'Present' : 'Mark present' }}
+                      </button>
+                    </td>
+                    <td class="px-5 py-4">
+                      <button
+                        type="button"
+                        class="action-pill !px-4 !py-2 text-sm"
+                        :class="
+                          att.hasPaid
+                            ? 'border-brand-court bg-brand-court text-white'
+                            : 'border-brand-line bg-white text-brand-slate'
+                        "
+                        @click="toggleAttendanceAttr(att.id, 'hasPaid', !att.hasPaid)"
+                      >
+                        <ReceiptText :size="16" />
+                        {{ att.hasPaid ? 'Paid' : 'Unpaid' }}
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </UIGlassCard>
         </div>
 
@@ -549,7 +555,9 @@ const getStatusColor = (status: string) => {
 
             <div class="space-y-4">
               <div class="space-y-2">
-                <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">Court Cost</label>
+                <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate"
+                  >Court Cost</label
+                >
                 <input
                   v-model.number="session.financials.courtCost"
                   type="number"
@@ -561,7 +569,9 @@ const getStatusColor = (status: string) => {
 
               <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
                 <div class="space-y-2">
-                  <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">Shuttles Used</label>
+                  <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate"
+                    >Shuttles Used</label
+                  >
                   <input
                     v-model.number="session.financials.shuttlecocksUsed"
                     type="number"
@@ -572,7 +582,9 @@ const getStatusColor = (status: string) => {
                 </div>
 
                 <div class="space-y-2">
-                  <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">Shuttle Price</label>
+                  <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate"
+                    >Shuttle Price</label
+                  >
                   <input
                     v-model.number="session.financials.shuttlecockPrice"
                     type="number"
@@ -591,7 +603,9 @@ const getStatusColor = (status: string) => {
                 <p class="mt-1 text-sm font-medium text-brand-slate">Includes guests marked as present.</p>
               </div>
 
-              <div class="rounded-[24px] border border-brand-court/15 bg-[linear-gradient(180deg,rgba(47,122,83,0.12),rgba(255,255,255,0.95))] px-4 py-4">
+              <div
+                class="rounded-[24px] border border-brand-court/15 bg-[linear-gradient(180deg,rgba(47,122,83,0.12),rgba(255,255,255,0.95))] px-4 py-4"
+              >
                 <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">Fee per person</p>
                 <p class="mt-2 text-3xl font-black tracking-tight text-brand-ink">
                   {{ formatCurrency(calculatedFeePerPerson) }}
