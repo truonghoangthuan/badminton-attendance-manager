@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { signOut } from 'firebase/auth'
-import { ArrowLeft, LayoutDashboard, LogOut, Menu, ShieldCheck, Users, X } from 'lucide-vue-next'
+import { ArrowLeft, LayoutDashboard, LogOut, Menu, ShieldCheck, X } from 'lucide-vue-next'
 
 const { auth } = useFirebase()
 const router = useRouter()
@@ -68,7 +68,7 @@ const handleLogout = async () => {
         <div class="rounded-[24px] border border-brand-line bg-brand-sand p-4">
           <p class="section-kicker">Workflow</p>
           <p class="mt-2 text-sm font-medium leading-6 text-brand-slate">
-            Review upcoming sessions, then drill into a single match to manage roster and finance.
+            Review upcoming sessions, then drill into a single match to manage attendance and finance.
           </p>
         </div>
 
@@ -81,16 +81,6 @@ const handleLogout = async () => {
             >
               <template #icon-left><LayoutDashboard :size="20" /></template>
               Dashboard
-            </UIGlassButton>
-          </NuxtLink>
-          <NuxtLink to="/admin/roster">
-            <UIGlassButton 
-              variant="secondary" 
-              class="w-full !justify-start !px-4 !py-4 transition-all"
-              :class="{ '!border-brand-court !bg-brand-court !text-white': $route.path === '/admin/roster' }"
-            >
-              <template #icon-left><Users :size="20" /></template>
-              Team Roster
             </UIGlassButton>
           </NuxtLink>
         </nav>

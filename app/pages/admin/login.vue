@@ -16,7 +16,7 @@ const handleLogin = async () => {
   error.value = ''
   try {
     await signInWithEmailAndPassword(auth, email.value, password.value)
-    router.push('/admin/roster')
+    router.push('/admin')
   } catch (e: any) {
     error.value = e.message || 'Failed to login'
   } finally {
@@ -60,7 +60,7 @@ definePageMeta({
                 Run every badminton session with less friction.
               </h1>
               <p class="max-w-lg text-base font-medium leading-7 text-white/78">
-                Access the admin workspace to manage rosters, keep attendance current, and handle session operations from one polished control surface.
+                Access the admin workspace to manage sessions, keep attendance current, and handle operations from one polished control surface.
               </p>
             </div>
           </div>
@@ -98,7 +98,7 @@ definePageMeta({
                     Welcome back
                   </h2>
                   <p class="mt-2 text-sm font-medium leading-6 text-brand-slate">
-                    Use your admin credentials to enter the roster management workspace.
+                    Use your admin credentials to enter the session management workspace.
                   </p>
                 </div>
               </div>
