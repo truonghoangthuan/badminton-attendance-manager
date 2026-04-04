@@ -34,7 +34,7 @@ const welcomeMessage = computed(() => {
               🏸
             </div>
             <div>
-              <p class="section-kicker">Gravity Club</p>
+              <p class="section-kicker">Gravity Team</p>
               <span class="text-xl font-black tracking-tight text-brand-ink"
                 >Gravity <span class="text-brand-court">Badminton</span></span
               >
