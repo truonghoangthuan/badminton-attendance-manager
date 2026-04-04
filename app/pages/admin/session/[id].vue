@@ -276,116 +276,85 @@ const getStatusColor = (status: string) => {
         Back to Sessions
       </NuxtLink>
 
-      <div v-if="session" class="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,0.9fr)]">
-        <UIGlassCard class="overflow-hidden !p-0">
-          <div class="hero-panel relative overflow-hidden px-6 py-7 sm:px-8">
-            <div
-              class="absolute inset-y-0 right-0 hidden w-1/2 bg-[radial-gradient(circle_at_top_right,rgba(244,201,93,0.28),transparent_55%)] lg:block"
-            />
+      <div v-if="loading" class="py-16 text-center">
+        <div class="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-brand-court border-t-transparent" />
+        <p class="text-sm font-bold text-brand-slate">Loading session details...</p>
+      </div>
 
-            <div class="relative flex flex-col gap-6">
-              <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div class="space-y-3">
-                  <p class="section-kicker">Session Control</p>
-                  <div class="space-y-2">
-                    <h1 class="text-3xl font-black tracking-tight text-brand-ink sm:text-[2.5rem]">
-                      {{ session.date }}
-                    </h1>
-                    <div class="flex flex-wrap gap-3">
+      <UIGlassCard v-else-if="error" class="border-red-200 bg-red-50 text-center text-red-700">
+        {{ error }}
+      </UIGlassCard>
+
+      <div v-else-if="session" class="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,0.9fr)] xl:items-start">
+        <div class="space-y-6">
+          <UIGlassCard class="overflow-hidden !p-0">
+            <div class="hero-panel relative overflow-hidden px-6 py-7 sm:px-8">
+              <div
+                class="absolute inset-y-0 right-0 hidden w-1/2 bg-[radial-gradient(circle_at_top_right,rgba(244,201,93,0.28),transparent_55%)] lg:block"
+              />
+
+              <div class="relative flex flex-col gap-6">
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div class="space-y-3">
+                    <p class="section-kicker">Session Control</p>
+                    <div class="space-y-2">
+                      <h1 class="text-3xl font-black tracking-tight text-brand-ink sm:text-[2.5rem]">
+                        {{ session.date }}
+                      </h1>
+                      <div class="flex flex-wrap gap-3">
+                        <div
+                          v-for="meta in sessionMeta"
+                          :key="meta.label"
+                          class="inline-flex items-center gap-2 rounded-2xl border border-white/70 bg-white/75 px-4 py-3 text-sm font-medium text-brand-ink shadow-[0_10px_25px_rgba(18,55,42,0.06)]"
+                        >
+                          <component :is="meta.icon" :size="16" class="text-brand-court" />
+                          <span class="text-brand-slate">{{ meta.label }}</span>
+                          <span class="font-bold">{{ meta.value }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <span
+                    :class="getStatusColor(session.status)"
+                    class="inline-flex items-center justify-center rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em]"
+                  >
+                    {{ session.status }}
+                  </span>
+                </div>
+
+                <div class="grid gap-3 md:grid-cols-3">
+                  <div
+                    v-for="stat in summaryStats"
+                    :key="stat.label"
+                    class="rounded-[24px] border border-white/70 bg-white/80 p-4 shadow-[0_14px_30px_rgba(18,55,42,0.05)]"
+                  >
+                    <div class="flex items-center justify-between gap-4">
+                      <div>
+                        <p class="text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">
+                          {{ stat.label }}
+                        </p>
+                        <p class="mt-3 text-3xl font-black tracking-tight text-brand-ink">
+                          {{ stat.value }}
+                        </p>
+                        <p class="mt-1 text-sm font-medium text-brand-slate">
+                          {{ stat.hint }}
+                        </p>
+                      </div>
                       <div
-                        v-for="meta in sessionMeta"
-                        :key="meta.label"
-                        class="inline-flex items-center gap-2 rounded-2xl border border-white/70 bg-white/75 px-4 py-3 text-sm font-medium text-brand-ink shadow-[0_10px_25px_rgba(18,55,42,0.06)]"
+                        class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br"
+                        :class="stat.accent"
                       >
-                        <component :is="meta.icon" :size="16" class="text-brand-court" />
-                        <span class="text-brand-slate">{{ meta.label }}</span>
-                        <span class="font-bold">{{ meta.value }}</span>
+                        <component :is="stat.icon" :size="22" />
                       </div>
                     </div>
                   </div>
                 </div>
-
-                <span
-                  :class="getStatusColor(session.status)"
-                  class="inline-flex items-center justify-center rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em]"
-                >
-                  {{ session.status }}
-                </span>
-              </div>
-
-              <div class="grid gap-3 md:grid-cols-3">
-                <div
-                  v-for="stat in summaryStats"
-                  :key="stat.label"
-                  class="rounded-[24px] border border-white/70 bg-white/80 p-4 shadow-[0_14px_30px_rgba(18,55,42,0.05)]"
-                >
-                  <div class="flex items-center justify-between gap-4">
-                    <div>
-                      <p class="text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">
-                        {{ stat.label }}
-                      </p>
-                      <p class="mt-3 text-3xl font-black tracking-tight text-brand-ink">
-                        {{ stat.value }}
-                      </p>
-                      <p class="mt-1 text-sm font-medium text-brand-slate">
-                        {{ stat.hint }}
-                      </p>
-                    </div>
-                    <div
-                      class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br"
-                      :class="stat.accent"
-                    >
-                      <component :is="stat.icon" :size="22" />
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
-          </div>
-        </UIGlassCard>
+          </UIGlassCard>
 
-        <UIGlassCard class="space-y-4">
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <p class="section-kicker">Fee Snapshot</p>
-              <h2 class="mt-2 text-2xl font-black tracking-tight text-brand-ink">
-                {{ formatCurrency(calculatedFeePerPerson) }}
-              </h2>
-              <p class="mt-1 text-sm font-medium text-brand-slate">
-                Per active player, synced from the live attendance count.
-              </p>
-            </div>
-            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-sand text-brand-court">
-              <BadgeDollarSign :size="22" />
-            </div>
-          </div>
-
-          <div class="grid gap-3 sm:grid-cols-2">
-            <div class="rounded-2xl border border-brand-line bg-brand-sand px-4 py-4">
-              <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">Total cost</p>
-              <p class="mt-2 text-2xl font-black tracking-tight">{{ formatCurrency(totalSessionCost) }}</p>
-            </div>
-            <div class="rounded-2xl border border-brand-line bg-brand-sand px-4 py-4">
-              <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">Expected headcount</p>
-              <p class="mt-2 text-2xl font-black tracking-tight">{{ totalExpectedPlayers }}</p>
-            </div>
-          </div>
-        </UIGlassCard>
-      </div>
-    </section>
-
-    <div v-if="loading" class="py-16 text-center">
-      <div class="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-brand-court border-t-transparent" />
-      <p class="text-sm font-bold text-brand-slate">Loading session details...</p>
-    </div>
-
-    <UIGlassCard v-else-if="error" class="border-red-200 bg-red-50 text-center text-red-700">
-      {{ error }}
-    </UIGlassCard>
-
-    <div v-else-if="session" class="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,0.9fr)]">
-      <div class="space-y-6">
-        <UIGlassCard class="space-y-6">
+          <UIGlassCard class="space-y-6">
           <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p class="section-kicker">Attendance</p>
@@ -560,43 +529,29 @@ const getStatusColor = (status: string) => {
               </tbody>
             </table>
           </div>
-        </UIGlassCard>
-      </div>
+          </UIGlassCard>
+        </div>
 
-      <div class="space-y-6">
-        <UIGlassCard class="sticky top-8 space-y-6">
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <p class="section-kicker">Finance</p>
-              <h2 class="mt-2 text-2xl font-black tracking-tight">Settlement Panel</h2>
-              <p class="mt-1 text-sm font-medium text-brand-slate">
-                Update costs and the per-person split recalculates automatically.
-              </p>
-            </div>
-            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-sand text-brand-court">
-              <BadgeDollarSign :size="22" />
-            </div>
-          </div>
-
-          <div class="space-y-4">
-            <div class="space-y-2">
-              <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">Court Cost</label>
-              <input
-                v-model.number="session.financials.courtCost"
-                type="number"
-                min="0"
-                @change="updateFinancials"
-                class="finance-input"
-              />
+        <div class="space-y-6">
+          <UIGlassCard class="sticky top-8 space-y-6">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <p class="section-kicker">Finance</p>
+                <h2 class="mt-2 text-2xl font-black tracking-tight">Settlement Panel</h2>
+                <p class="mt-1 text-sm font-medium text-brand-slate">
+                  Update costs and the per-person split recalculates automatically.
+                </p>
+              </div>
+              <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-sand text-brand-court">
+                <BadgeDollarSign :size="22" />
+              </div>
             </div>
 
-            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+            <div class="space-y-4">
               <div class="space-y-2">
-                <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate"
-                  >Shuttles Used</label
-                >
+                <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">Court Cost</label>
                 <input
-                  v-model.number="session.financials.shuttlecocksUsed"
+                  v-model.number="session.financials.courtCost"
                   type="number"
                   min="0"
                   @change="updateFinancials"
@@ -604,67 +559,76 @@ const getStatusColor = (status: string) => {
                 />
               </div>
 
-              <div class="space-y-2">
-                <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate"
-                  >Shuttle Price</label
-                >
-                <input
-                  v-model.number="session.financials.shuttlecockPrice"
-                  type="number"
-                  min="0"
-                  @change="updateFinancials"
-                  class="finance-input"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-            <div class="rounded-[24px] border border-brand-line bg-brand-sand px-4 py-4">
-              <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">Active players</p>
-              <p class="mt-2 text-3xl font-black tracking-tight text-brand-ink">{{ totalActualPlayers }}</p>
-              <p class="mt-1 text-sm font-medium text-brand-slate">Includes guests marked as present.</p>
-            </div>
-
-            <div
-              class="rounded-[24px] border border-brand-court/15 bg-[linear-gradient(180deg,rgba(47,122,83,0.12),rgba(255,255,255,0.95))] px-4 py-4"
-            >
-              <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">Fee per person</p>
-              <p class="mt-2 text-3xl font-black tracking-tight text-brand-ink">
-                {{ formatCurrency(calculatedFeePerPerson) }}
-              </p>
-              <p class="mt-1 text-sm font-medium text-brand-slate">Live sync from attendance and cost inputs.</p>
-            </div>
-          </div>
-
-          <div class="space-y-3 border-t border-brand-line pt-5">
-            <div
-              v-for="action in sessionActions"
-              :key="action.label"
-              class="rounded-[24px] border border-brand-line bg-brand-sand/70 p-3"
-            >
-              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div class="pr-2">
-                  <p class="font-black text-brand-ink">{{ action.label }}</p>
-                  <p class="text-sm font-medium text-brand-slate">{{ action.description }}</p>
+              <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                <div class="space-y-2">
+                  <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">Shuttles Used</label>
+                  <input
+                    v-model.number="session.financials.shuttlecocksUsed"
+                    type="number"
+                    min="0"
+                    @change="updateFinancials"
+                    class="finance-input"
+                  />
                 </div>
-                <UIGlassButton
-                  :variant="action.variant"
-                  class="sm:shrink-0"
-                  :loading="statusUpdating"
-                  @click="action.action"
-                >
-                  <template #icon-left>
-                    <component :is="action.icon" :size="16" />
-                  </template>
-                  {{ action.label }}
-                </UIGlassButton>
+
+                <div class="space-y-2">
+                  <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">Shuttle Price</label>
+                  <input
+                    v-model.number="session.financials.shuttlecockPrice"
+                    type="number"
+                    min="0"
+                    @change="updateFinancials"
+                    class="finance-input"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </UIGlassCard>
+
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+              <div class="rounded-[24px] border border-brand-line bg-brand-sand px-4 py-4">
+                <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">Active players</p>
+                <p class="mt-2 text-3xl font-black tracking-tight text-brand-ink">{{ totalActualPlayers }}</p>
+                <p class="mt-1 text-sm font-medium text-brand-slate">Includes guests marked as present.</p>
+              </div>
+
+              <div class="rounded-[24px] border border-brand-court/15 bg-[linear-gradient(180deg,rgba(47,122,83,0.12),rgba(255,255,255,0.95))] px-4 py-4">
+                <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">Fee per person</p>
+                <p class="mt-2 text-3xl font-black tracking-tight text-brand-ink">
+                  {{ formatCurrency(calculatedFeePerPerson) }}
+                </p>
+                <p class="mt-1 text-sm font-medium text-brand-slate">Live sync from attendance and cost inputs.</p>
+              </div>
+            </div>
+
+            <div class="space-y-3 border-t border-brand-line pt-5">
+              <div
+                v-for="action in sessionActions"
+                :key="action.label"
+                class="rounded-[24px] border border-brand-line bg-brand-sand/70 p-3"
+              >
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div class="pr-2">
+                    <p class="font-black text-brand-ink">{{ action.label }}</p>
+                    <p class="text-sm font-medium text-brand-slate">{{ action.description }}</p>
+                  </div>
+                  <UIGlassButton
+                    :variant="action.variant"
+                    class="sm:shrink-0"
+                    :loading="statusUpdating"
+                    @click="action.action"
+                  >
+                    <template #icon-left>
+                      <component :is="action.icon" :size="16" />
+                    </template>
+                    {{ action.label }}
+                  </UIGlassButton>
+                </div>
+              </div>
+            </div>
+          </UIGlassCard>
+        </div>
       </div>
-    </div>
+    </section>
   </div>
 </template>
 
