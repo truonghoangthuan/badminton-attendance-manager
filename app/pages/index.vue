@@ -72,7 +72,7 @@ const getStatusStyles = (status: string) => {
         </template>
 
         <template v-else-if="featuredSession">
-          <div class="rounded-[28px] border border-brand-line bg-brand-sand p-6">
+          <div class="mx-auto rounded-[28px] border border-brand-line bg-brand-sand p-6 md:w-1/2">
             <div class="flex items-start justify-between gap-3">
               <div>
                 <p class="text-3xl font-black tracking-tight">{{ featuredSession.date }}</p>
