@@ -558,12 +558,16 @@ const getStatusColor = (status: string) => {
                 <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate"
                   >Court Cost</label
                 >
-                <input
-                  v-model.number="session.financials.courtCost"
-                  type="number"
-                  min="0"
-                  @change="updateFinancials"
-                  class="finance-input"
+                <InputNumber
+                  v-model="session.financials.courtCost"
+                  :min="0"
+                  locale="en-US"
+                  :use-grouping="true"
+                  :min-fraction-digits="0"
+                  :max-fraction-digits="0"
+                  fluid
+                  input-class="finance-input"
+                  @blur="updateFinancials"
                 />
               </div>
 
@@ -572,12 +576,16 @@ const getStatusColor = (status: string) => {
                   <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate"
                     >Shuttles Used</label
                   >
-                  <input
-                    v-model.number="session.financials.shuttlecocksUsed"
-                    type="number"
-                    min="0"
-                    @change="updateFinancials"
-                    class="finance-input"
+                  <InputNumber
+                    v-model="session.financials.shuttlecocksUsed"
+                    :min="0"
+                    locale="en-US"
+                    :use-grouping="true"
+                    :min-fraction-digits="0"
+                    :max-fraction-digits="0"
+                    fluid
+                    input-class="finance-input"
+                    @blur="updateFinancials"
                   />
                 </div>
 
@@ -585,12 +593,16 @@ const getStatusColor = (status: string) => {
                   <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate"
                     >Shuttle Price</label
                   >
-                  <input
-                    v-model.number="session.financials.shuttlecockPrice"
-                    type="number"
-                    min="0"
-                    @change="updateFinancials"
-                    class="finance-input"
+                  <InputNumber
+                    v-model="session.financials.shuttlecockPrice"
+                    :min="0"
+                    locale="en-US"
+                    :use-grouping="true"
+                    :min-fraction-digits="0"
+                    :max-fraction-digits="0"
+                    fluid
+                    input-class="finance-input"
+                    @blur="updateFinancials"
                   />
                 </div>
               </div>
@@ -661,7 +673,7 @@ const getStatusColor = (status: string) => {
   @apply inline-flex items-center justify-center gap-2 rounded-2xl border px-5 py-3 font-bold transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(18,55,42,0.08)];
 }
 
-.finance-input {
+:deep(.finance-input) {
   @apply w-full rounded-2xl border border-brand-line bg-[#fcfcf9] px-4 py-4 text-brand-ink outline-none transition-all placeholder:text-brand-slate/70 focus:border-brand-court focus:ring-4 focus:ring-brand-court/10;
 }
 </style>
