@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { collection, addDoc, updateDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { Calendar, Clock3, Copy, Loader2, MapPin, Plus, RefreshCcw, Users as UsersIcon, X } from 'lucide-vue-next';
 
 definePageMeta({
@@ -14,6 +14,7 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 const showCreateForm = ref(false);
 const adding = ref(false);
+const deletingSessionId = ref<string | null>(null);
 const newSession = ref({
   date: new Date().toISOString().split('T')[0],
   time: '18:00',
@@ -83,6 +84,31 @@ const toggleStatus = async (session: any) => {
     await updateDoc(docRef, { status: nextStatus });
   } catch (e) {
     console.error('Error updating status:', e);
+  }
+};
+
+const deleteSession = async (session: any) => {
+  if (deletingSessionId.value) {
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `Delete the session on ${session.date} at ${session.time}? This removes it from the admin and public session lists.`,
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  deletingSessionId.value = session.id;
+
+  try {
+    await deleteDoc(doc(db, 'sessions', session.id));
+  } catch (e) {
+    console.error('Error deleting session:', e);
+    error.value = 'Failed to delete session.';
+  } finally {
+    deletingSessionId.value = null;
   }
 };
 
@@ -166,7 +192,7 @@ const getStatusColor = (status: string) => {
 
       <section v-else class="md:h-full md:overflow-y-auto md:pr-4">
         <div class="grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:grid-cols-3">
-          <UIGlassCard v-for="session in sessions" :key="session.id" class="space-y-5">
+          <UIGlassCard v-for="session in sessions" :key="session.id" class="relative space-y-5">
             <div class="flex flex-col gap-4">
               <div class="space-y-4">
                 <div class="flex items-center gap-3">
@@ -177,6 +203,17 @@ const getStatusColor = (status: string) => {
                     <p class="text-2xl font-black">{{ session.date }}</p>
                     <p class="text-sm font-medium text-brand-slate">{{ session.time }} · {{ session.location }}</p>
                   </div>
+
+                  <button
+                    type="button"
+                    class="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-100 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    :disabled="deletingSessionId === session.id"
+                    aria-label="Delete session"
+                    @click="deleteSession(session)"
+                  >
+                    <Loader2 v-if="deletingSessionId === session.id" class="animate-spin" :size="14" />
+                    <X v-else :size="16" stroke-width="2.5" />
+                  </button>
                 </div>
                 <span
                   :class="getStatusColor(session.status)"
