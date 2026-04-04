@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { doc, getDoc, collection, setDoc, orderBy, onSnapshot, query } from 'firebase/firestore'
-import { Check, Clock3, Loader2, MapPin, User, Users as UsersIcon, XCircle } from 'lucide-vue-next'
+import { BadgeDollarSign, Check, Clock3, Loader2, MapPin, ReceiptText, User, Users as UsersIcon } from 'lucide-vue-next'
 
 const route = useRoute()
 const sessionId = route.params.id as string
@@ -16,6 +16,33 @@ const newName = ref('')
 const vote = ref({
   isJoining: true,
   guestCount: 0
+})
+
+const totalActualPlayers = computed(() => {
+  return attendanceList.value.reduce((acc, curr) => {
+    if (curr.actualAttended) {
+      return acc + 1 + (curr.guestCount || 0)
+    }
+
+    return acc
+  }, 0)
+})
+
+const totalSessionCost = computed(() => {
+  if (!session.value) {
+    return 0
+  }
+
+  const financials = session.value.financials || {}
+  return (financials.courtCost || 0) + (financials.shuttlecocksUsed || 0) * (financials.shuttlecockPrice || 0)
+})
+
+const calculatedFeePerPerson = computed(() => {
+  if (!session.value || totalActualPlayers.value === 0) {
+    return 0
+  }
+
+  return Number((totalSessionCost.value / totalActualPlayers.value).toFixed(2))
 })
 
 onMounted(async () => {
@@ -117,6 +144,15 @@ const getStatusColor = (status: string) => {
       return 'bg-white text-brand-slate border-brand-line'
   }
 }
+
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'VND',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(value || 0)
+}
 </script>
 
 <template>
@@ -160,6 +196,27 @@ const getStatusColor = (status: string) => {
 
           <div class="rounded-[24px] border border-brand-line bg-brand-sand px-4 py-4">
             <p class="text-sm font-medium text-brand-slate">{{ attendanceList.length }} responses so far</p>
+          </div>
+
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div
+              class="rounded-[24px] border border-brand-court/15 bg-[linear-gradient(180deg,rgba(47,122,83,0.12),rgba(255,255,255,0.95))] px-4 py-4"
+            >
+              <div class="flex items-center gap-2 text-brand-court">
+                <BadgeDollarSign :size="18" />
+                <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">Fee per person</p>
+              </div>
+              <p class="mt-2 text-3xl font-black tracking-tight text-brand-ink">
+                {{ formatCurrency(calculatedFeePerPerson) }}
+              </p>
+              <p class="mt-1 text-sm font-medium text-brand-slate">Based on actual attendees and session costs.</p>
+            </div>
+
+            <div class="rounded-[24px] border border-brand-line bg-brand-sand px-4 py-4">
+              <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">Players counted</p>
+              <p class="mt-2 text-3xl font-black tracking-tight text-brand-ink">{{ totalActualPlayers }}</p>
+              <p class="mt-1 text-sm font-medium text-brand-slate">Guests are included in the split.</p>
+            </div>
           </div>
         </UIGlassCard>
 
@@ -249,9 +306,17 @@ const getStatusColor = (status: string) => {
                   {{ att.isJoining ? `Joining${att.guestCount ? ` with ${att.guestCount} guest${att.guestCount > 1 ? 's' : ''}` : ''}` : 'Unavailable' }}
                 </p>
               </div>
-              <div>
-                <Check v-if="att.hasPaid" :size="18" class="text-brand-court" />
-                <XCircle v-else :size="18" class="text-brand-slate" />
+              <div
+                class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em]"
+                :class="
+                  att.hasPaid
+                    ? 'border-brand-court/20 bg-emerald-50 text-brand-court'
+                    : 'border-brand-line bg-white text-brand-slate'
+                "
+              >
+                <Check v-if="att.hasPaid" :size="14" />
+                <ReceiptText v-else :size="14" />
+                {{ att.hasPaid ? 'Paid' : 'Unpaid' }}
               </div>
             </div>
           </div>
