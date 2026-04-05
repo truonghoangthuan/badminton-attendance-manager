@@ -6,6 +6,7 @@ const route = useRoute()
 const sessionId = route.params.id as string
 const { user, profile, loading: authLoading, setProfile } = useUserProfile()
 const { db } = useFirebase()
+const toast = useToast()
 
 const session = ref<any>(null)
 const attendanceList = ref<any[]>([])
@@ -83,19 +84,34 @@ onMounted(async () => {
 
 const submitVote = async () => {
   if (!user.value) {
-    message.value = { text: 'Please wait a moment.', type: 'error' }
+    toast.add({
+      severity: 'error',
+      summary: 'Unable to save RSVP',
+      detail: 'Please wait a moment.',
+      life: 3000
+    })
     return
   }
 
   if (!profile.value?.displayName) {
     if (!newName.value.trim()) {
-      message.value = { text: 'Please enter your name.', type: 'error' }
+      toast.add({
+        severity: 'error',
+        summary: 'Missing name',
+        detail: 'Please enter your name.',
+        life: 3000
+      })
       return
     }
 
     const success = await setProfile(newName.value.trim())
     if (!success) {
-      message.value = { text: 'Could not save your name.', type: 'error' }
+      toast.add({
+        severity: 'error',
+        summary: 'Profile update failed',
+        detail: 'Could not save your name.',
+        life: 3000
+      })
       return
     }
   }
@@ -116,17 +132,20 @@ const submitVote = async () => {
       updatedAt: new Date().toISOString()
     })
 
-    message.value = {
-      text: vote.value.isJoining ? 'You are in.' : 'You are marked unavailable.',
-      type: 'success'
-    }
-
-    setTimeout(() => {
-      message.value = { text: '', type: '' }
-    }, 3000)
+    toast.add({
+      severity: 'success',
+      summary: vote.value.isJoining ? 'RSVP confirmed' : 'RSVP updated',
+      detail: vote.value.isJoining ? 'You are in.' : 'You are marked unavailable.',
+      life: 3000
+    })
   } catch (e) {
     console.error('Error submitting vote:', e)
-    message.value = { text: 'Failed to save your RSVP.', type: 'error' }
+    toast.add({
+      severity: 'error',
+      summary: 'Save failed',
+      detail: 'Failed to save your RSVP.',
+      life: 3000
+    })
   } finally {
     submitting.value = false
   }
@@ -157,6 +176,8 @@ const formatCurrency = (value: number) => {
 
 <template>
   <div class="space-y-8 pb-14">
+    <Toast position="top-right" />
+
     <section v-if="loading" class="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
       <UIGlassCard class="animate-pulse space-y-4">
         <div class="h-8 w-40 rounded bg-brand-sand" />
@@ -224,14 +245,6 @@ const formatCurrency = (value: number) => {
           <div>
             <p class="section-kicker">RSVP</p>
             <h2 class="mt-2 text-2xl font-black tracking-tight">Let everyone know if you can make it</h2>
-          </div>
-
-          <div
-            v-if="message.text"
-            :class="message.type === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-700'"
-            class="rounded-[22px] border px-4 py-4 text-sm font-bold"
-          >
-            {{ message.text }}
           </div>
 
           <form @submit.prevent="submitVote" class="space-y-4">
