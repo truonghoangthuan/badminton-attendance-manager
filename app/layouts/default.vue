@@ -1,25 +1,102 @@
 <script setup lang="ts">
-import { Home, LayoutDashboard } from 'lucide-vue-next';
+import { Home, LayoutDashboard, Loader2, PencilLine } from 'lucide-vue-next';
 
-const { profile, loading } = useUserProfile();
+const { profile, loading, setProfile } = useUserProfile();
+const toast = useToast();
 const welcomeInitial = computed(() => profile.value?.displayName?.trim()?.charAt(0)?.toUpperCase() || '?');
 const welcomeMessage = computed(() => {
   const hour = new Date().getHours();
 
   if (hour < 12) {
-    return 'Good morning. Ready for the next rally?';
+    return 'Good morning!';
   }
 
   if (hour < 18) {
-    return 'Good afternoon. Ready for the next rally?';
+    return 'Good afternoon!';
   }
 
-  return 'Good evening. Ready for the next rally?';
+  return 'Good evening!';
 });
+
+const isEditNameOpen = ref(false);
+const editedName = ref('');
+const savingName = ref(false);
+const editNameError = ref('');
+
+watch(
+  () => profile.value?.displayName,
+  (displayName) => {
+    if (!isEditNameOpen.value) {
+      editedName.value = displayName || '';
+    }
+  },
+  { immediate: true },
+);
+
+const openEditNameModal = () => {
+  editedName.value = profile.value?.displayName || '';
+  editNameError.value = '';
+  isEditNameOpen.value = true;
+};
+
+const closeEditNameModal = () => {
+  if (savingName.value) {
+    return;
+  }
+
+  isEditNameOpen.value = false;
+  editNameError.value = '';
+};
+
+const handleNameUpdate = async () => {
+  const trimmedName = editedName.value.trim();
+
+  if (!trimmedName) {
+    editNameError.value = 'Please enter a name';
+    return;
+  }
+
+  if (trimmedName.length < 2) {
+    editNameError.value = 'Name is too short';
+    return;
+  }
+
+  if (trimmedName === profile.value?.displayName) {
+    closeEditNameModal();
+    return;
+  }
+
+  savingName.value = true;
+  editNameError.value = '';
+
+  try {
+    const success = await setProfile(trimmedName);
+
+    if (!success) {
+      editNameError.value = 'Failed to save name. Please try again.';
+      return;
+    }
+
+    isEditNameOpen.value = false;
+    editNameError.value = '';
+    toast.add({
+      severity: 'success',
+      summary: 'Name updated',
+      detail: 'Your display name was changed successfully.',
+      life: 3000
+    });
+  } catch {
+    editNameError.value = 'An unexpected error occurred.';
+  } finally {
+    savingName.value = false;
+  }
+};
 </script>
 
 <template>
   <div class="relative min-h-screen overflow-x-hidden">
+    <Toast position="top-right" />
+
     <div class="bg-mesh" />
     <div class="mesh-glow top-[-10%] left-[-10%] animate-pulse-slow" />
     <div class="mesh-glow bottom-[-10%] right-[-10%] animate-pulse-slow" style="animation-delay: -4s" />
@@ -42,8 +119,13 @@ const welcomeMessage = computed(() => {
           </NuxtLink>
           <div v-if="!loading && profile?.displayName" class="hidden min-w-0 flex-1 justify-center lg:flex">
             <div
-              class="flex min-w-0 max-w-[360px] items-center gap-2.5 rounded-full border border-white/70 bg-white/65 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur-sm"
+              class="flex min-w-0 max-w-[440px] items-center gap-3 rounded-full border border-white/70 bg-white/65 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur-sm"
             >
+              <div
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-court text-sm font-black text-white"
+              >
+                {{ welcomeInitial }}
+              </div>
               <div class="min-w-0">
                 <p class="text-[8px] font-black uppercase tracking-[0.24em] text-brand-slate/70">Welcome back</p>
                 <div class="flex min-w-0 items-baseline gap-2">
@@ -55,9 +137,26 @@ const welcomeMessage = computed(() => {
                   </p>
                 </div>
               </div>
+              <button
+                type="button"
+                class="inline-flex shrink-0 items-center gap-2 rounded-full border border-brand-line bg-white/80 px-3 py-2 text-xs font-black uppercase tracking-[0.16em] text-brand-slate transition-colors hover:border-brand-court hover:text-brand-court"
+                @click="openEditNameModal"
+              >
+                <PencilLine :size="14" />
+                Edit
+              </button>
             </div>
           </div>
           <div class="flex items-center gap-2 md:gap-3">
+            <button
+              v-if="!loading && profile?.displayName"
+              type="button"
+              class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-brand-line bg-white/80 text-brand-slate transition-colors hover:border-brand-court hover:text-brand-court lg:hidden"
+              aria-label="Change display name"
+              @click="openEditNameModal"
+            >
+              <PencilLine :size="18" />
+            </button>
             <NuxtLink
               to="/"
               class="hidden items-center gap-2 rounded-2xl px-4 py-2 text-sm font-bold text-brand-slate transition-colors hover:bg-brand-sand hover:text-brand-ink md:flex"
@@ -77,6 +176,64 @@ const welcomeMessage = computed(() => {
     </nav>
 
     <UsernamePrompt />
+
+    <UIGlassModal :modelValue="isEditNameOpen" @update:modelValue="closeEditNameModal">
+      <template #header>
+        <div class="flex flex-col items-center gap-4 text-center">
+          <div
+            class="flex h-16 w-16 items-center justify-center rounded-2xl border border-brand-line bg-brand-sand text-3xl"
+          >
+            {{ welcomeInitial }}
+          </div>
+          <div>
+            <h2 class="text-2xl font-black tracking-tight text-brand-ink">Update your display name</h2>
+            <p class="mt-1 text-sm font-medium text-brand-slate">
+              This changes how your name appears the next time you join a session.
+            </p>
+          </div>
+        </div>
+      </template>
+
+      <form class="space-y-6" @submit.prevent="handleNameUpdate">
+        <div class="space-y-2">
+          <UIGlassInput
+            v-model="editedName"
+            label="Display Name"
+            placeholder="e.g. John Doe"
+            :disabled="savingName"
+            required
+            autofocus
+            maxlength="255"
+          />
+          <p v-if="editNameError" class="ml-2 text-xs font-medium text-red-500">
+            {{ editNameError }}
+          </p>
+        </div>
+
+        <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            class="rounded-2xl border border-brand-line px-4 py-3 text-sm font-bold text-brand-slate transition-colors hover:bg-brand-sand hover:text-brand-ink"
+            :disabled="savingName"
+            @click="closeEditNameModal"
+          >
+            Cancel
+          </button>
+          <UIGlassButton
+            type="submit"
+            class="sm:min-w-[180px] !py-3"
+            :loading="savingName"
+            :disabled="!editedName.trim() || savingName"
+          >
+            <template #icon-left>
+              <Loader2 v-if="savingName" :size="16" class="animate-spin" />
+              <PencilLine v-else :size="16" />
+            </template>
+            Save Name
+          </UIGlassButton>
+        </div>
+      </form>
+    </UIGlassModal>
 
     <main class="relative z-10 mx-auto max-w-7xl px-4 py-8 md:px-6 md:py-10">
       <slot />
