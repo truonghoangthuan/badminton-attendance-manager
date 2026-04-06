@@ -15,10 +15,12 @@ const error = ref<string | null>(null);
 const showCreateForm = ref(false);
 const adding = ref(false);
 const deletingSessionId = ref<string | null>(null);
+const isEditing = ref(false);
+const editingSessionId = ref<string | null>(null);
 const newSession = ref({
   date: new Date().toISOString().split('T')[0],
-  time: '18:00',
-  location: 'Badminton Court A',
+  time: '19:00',
+  location: 'Sân cầu lông Quang Sport',
 });
 
 const formatSessionDate = (date: Date) => {
@@ -74,29 +76,56 @@ onMounted(() => {
 const createSession = async () => {
   adding.value = true;
   try {
-    await addDoc(sessionsRef, {
-      ...newSession.value,
-      status: 'open',
-      financials: {
-        courtCost: 0,
-        shuttlecocksUsed: 0,
-        shuttlecockPrice: 0,
-        calculatedFeePerPerson: 0,
-      },
-      createdAt: new Date().toISOString(),
-    });
+    if (isEditing.value && editingSessionId.value) {
+      const docRef = doc(db, 'sessions', editingSessionId.value);
+      await updateDoc(docRef, { ...newSession.value });
+    } else {
+      await addDoc(sessionsRef, {
+        ...newSession.value,
+        status: 'open',
+        financials: {
+          courtCost: 0,
+          shuttlecocksUsed: 0,
+          shuttlecockPrice: 0,
+          calculatedFeePerPerson: 0,
+        },
+        createdAt: new Date().toISOString(),
+      });
+    }
 
     showCreateForm.value = false;
-    newSession.value = {
-      date: new Date().toISOString().split('T')[0],
-      time: '18:00',
-      location: 'Badminton Court A',
-    };
+    resetForm();
   } catch (e) {
-    console.error('Error creating session:', e);
+    console.error('Error saving session:', e);
   } finally {
     adding.value = false;
   }
+};
+
+const resetForm = () => {
+  isEditing.value = false;
+  editingSessionId.value = null;
+  newSession.value = {
+    date: new Date().toISOString().split('T')[0],
+    time: '18:00',
+    location: 'Badminton Court A',
+  };
+};
+
+const openCreateModal = () => {
+  resetForm();
+  showCreateForm.value = true;
+};
+
+const openEditModal = (session: any) => {
+  isEditing.value = true;
+  editingSessionId.value = session.id;
+  newSession.value = {
+    date: session.date,
+    time: session.time,
+    location: session.location,
+  };
+  showCreateForm.value = true;
 };
 
 const toggleStatus = async (session: any) => {
@@ -168,7 +197,7 @@ const getStatusColor = (status: string) => {
         <h1 class="mt-2 text-3xl font-black tracking-tight">Sessions</h1>
       </div>
 
-      <UIGlassButton @click="showCreateForm = true">
+      <UIGlassButton @click="openCreateModal">
         <template #icon-left>
           <Plus :size="18" />
         </template>
@@ -233,6 +262,10 @@ const getStatusColor = (status: string) => {
                     Open
                   </UIGlassButton>
                 </NuxtLink>
+                <UIGlassButton variant="ghost" class="!px-4 !py-2 !text-sm" @click="openEditModal(session)">
+                  <template #icon-left><Clock3 :size="14" /></template>
+                  Edit
+                </UIGlassButton>
                 <UIGlassButton variant="ghost" class="!px-4 !py-2 !text-sm" @click="toggleStatus(session)">
                   <template #icon-left><RefreshCcw :size="14" /></template>
                   Status
@@ -250,10 +283,12 @@ const getStatusColor = (status: string) => {
       <div class="flex flex-col gap-2 text-center">
         <p class="text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">Session Setup</p>
         <div>
-          <h2 class="text-2xl font-black tracking-tight text-brand-ink">Create a New Session</h2>
-          <p class="mt-1 text-sm font-medium text-brand-slate">
-            Add the date, time, and location to open attendance for players.
-          </p>
+        <h2 class="text-2xl font-black tracking-tight text-brand-ink">
+          {{ isEditing ? 'Edit Session' : 'Create a New Session' }}
+        </h2>
+        <p class="mt-1 text-sm font-medium text-brand-slate">
+          {{ isEditing ? 'Update the session details below.' : 'Add the date, time, and location to open attendance for players.' }}
+        </p>
         </div>
       </div>
     </template>
@@ -287,7 +322,7 @@ const getStatusColor = (status: string) => {
       <div class="flex justify-end md:col-span-3">
         <UIGlassButton type="submit" :disabled="adding">
           <Loader2 v-if="adding" class="animate-spin" :size="18" />
-          <span v-else>Create</span>
+          <span v-else>{{ isEditing ? 'Save Changes' : 'Create' }}</span>
         </UIGlassButton>
       </div>
     </form>

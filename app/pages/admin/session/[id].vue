@@ -2,18 +2,21 @@
 import {
   ArrowLeft,
   BadgeDollarSign,
+  Calendar,
   CheckCheck,
   CircleDollarSign,
   Clock3,
+  Edit2,
   Lock,
   MapPin,
   ReceiptText,
   ShieldCheck,
+  Trash2,
   UserCheck,
   UserPlus,
   Users,
 } from 'lucide-vue-next';
-import { doc, onSnapshot, collection, updateDoc, query, orderBy } from 'firebase/firestore';
+import { doc, onSnapshot, collection, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 
 definePageMeta({
   layout: 'admin',
@@ -29,6 +32,14 @@ const attendances = ref<any[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const statusUpdating = ref(false);
+const showEditModal = ref(false);
+const savingEdits = ref(false);
+
+const editForm = ref({
+  date: '',
+  time: '',
+  location: '',
+});
 
 onMounted(() => {
   const sessionRef = doc(db, 'sessions', sessionId);
@@ -40,6 +51,11 @@ onMounted(() => {
     }
 
     session.value = { id: snap.id, ...snap.data() };
+    editForm.value = {
+      date: session.value.date || '',
+      time: session.value.time || '',
+      location: session.value.location || '',
+    };
   });
 
   const attendancesRef = collection(db, `sessions/${sessionId}/attendances`);
@@ -208,6 +224,42 @@ const sessionActions = computed(() => {
     },
   ];
 });
+const openEditModal = () => {
+  if (!session.value) return;
+  editForm.value = {
+    date: session.value.date,
+    time: session.value.time,
+    location: session.value.location,
+  };
+  showEditModal.value = true;
+};
+
+const saveSessionEdits = async () => {
+  if (!session.value || savingEdits.value) return;
+  savingEdits.value = true;
+  try {
+    const docRef = doc(db, 'sessions', sessionId);
+    await updateDoc(docRef, { ...editForm.value });
+    showEditModal.value = false;
+  } catch (e) {
+    console.error('Error saving session edits:', e);
+  } finally {
+    savingEdits.value = false;
+  }
+};
+
+const deleteAttendee = async (attendance: any) => {
+  if (!window.confirm(`Are you sure you want to remove ${attendance.name} from this session?`)) {
+    return;
+  }
+
+  try {
+    const docRef = doc(db, `sessions/${sessionId}/attendances`, attendance.id);
+    await deleteDoc(docRef);
+  } catch (e) {
+    console.error('Error deleting attendee:', e);
+  }
+};
 
 const toggleAttendanceAttr = async (attendanceId: string, field: string, value: boolean) => {
   try {
@@ -317,6 +369,15 @@ const getStatusColor = (status: string) => {
                     </div>
                   </div>
 
+                  <button
+                    type="button"
+                    class="inline-flex items-center justify-center rounded-full border border-brand-line bg-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-brand-ink transition-colors hover:border-brand-court hover:text-brand-court"
+                    @click="openEditModal"
+                  >
+                    <Edit2 :size="14" class="mr-2" />
+                    Edit Session
+                  </button>
+
                   <span
                     :class="getStatusColor(session.status)"
                     class="inline-flex items-center justify-center rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em]"
@@ -413,6 +474,13 @@ const getStatusColor = (status: string) => {
                   <span class="text-xs font-bold uppercase tracking-[0.18em] text-brand-slate">
                     {{ att.actualAttended ? 'Present' : 'Pending' }}
                   </span>
+                  <button
+                    type="button"
+                    class="flex h-8 w-8 items-center justify-center rounded-lg border border-red-100 bg-red-50 text-red-500 transition-colors hover:bg-red-100 hover:text-red-600"
+                    @click="deleteAttendee(att)"
+                  >
+                    <Trash2 :size="14" />
+                  </button>
                 </div>
 
                 <div class="mt-4 grid gap-3 sm:grid-cols-2">
@@ -462,6 +530,8 @@ const getStatusColor = (status: string) => {
                     </th>
                     <th class="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">
                       Payment
+                    </th>
+                    <th class="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">
                     </th>
                   </tr>
                 </thead>
@@ -529,6 +599,15 @@ const getStatusColor = (status: string) => {
                       >
                         <ReceiptText :size="16" />
                         {{ att.hasPaid ? 'Paid' : 'Unpaid' }}
+                      </button>
+                    </td>
+                    <td class="px-5 py-4 text-right">
+                      <button
+                        type="button"
+                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-red-100 bg-red-50 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700"
+                        @click="deleteAttendee(att)"
+                      >
+                        <Trash2 :size="16" />
                       </button>
                     </td>
                   </tr>
@@ -656,6 +735,51 @@ const getStatusColor = (status: string) => {
       </div>
     </section>
   </div>
+
+  <UIGlassModal v-model="showEditModal">
+    <template #header>
+      <div class="flex flex-col gap-2 text-center">
+        <p class="text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">Session Setup</p>
+        <div>
+          <h2 class="text-2xl font-black tracking-tight text-brand-ink">Edit Session Details</h2>
+          <p class="mt-1 text-sm font-medium text-brand-slate">
+            Update the date, time, and location of this session.
+          </p>
+        </div>
+      </div>
+    </template>
+
+    <form @submit.prevent="saveSessionEdits" class="flex flex-col gap-5">
+      <div class="flex w-full flex-col gap-2">
+        <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">
+          Date
+        </label>
+        <div class="relative">
+          <div class="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate">
+            <Calendar :size="18" />
+          </div>
+          <UIGlassInput
+            v-model="editForm.date"
+            type="date"
+            required
+            class="!pl-12"
+          />
+        </div>
+      </div>
+      <UIGlassInput v-model="editForm.time" type="time" label="Time" required>
+        <template #icon><Clock3 :size="18" /></template>
+      </UIGlassInput>
+      <UIGlassInput v-model="editForm.location" type="text" label="Location" required>
+        <template #icon><MapPin :size="18" /></template>
+      </UIGlassInput>
+
+      <div class="flex justify-end pt-4">
+        <UIGlassButton type="submit" :loading="savingEdits">
+          Save Changes
+        </UIGlassButton>
+      </div>
+    </form>
+  </UIGlassModal>
 </template>
 
 <style scoped>
