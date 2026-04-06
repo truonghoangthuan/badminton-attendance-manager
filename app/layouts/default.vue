@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { Home, LayoutDashboard, Loader2, PencilLine } from 'lucide-vue-next';
+import { useAdminAccess } from '../composables/useAdminAccess';
 
 const { profile, loading, setProfile } = useUserProfile();
+const { isAdmin, claimsLoading } = useAdminAccess();
 const toast = useToast();
 const welcomeInitial = computed(() => profile.value?.displayName?.trim()?.charAt(0)?.toUpperCase() || '?');
 const welcomeMessage = computed(() => {
@@ -164,7 +166,7 @@ const handleNameUpdate = async () => {
               <Home :size="18" />
               Home
             </NuxtLink>
-            <NuxtLink to="/admin" class="flex items-center">
+            <NuxtLink v-if="!claimsLoading && isAdmin" to="/admin" class="flex items-center">
               <UIGlassButton variant="secondary" class="!px-3 md:!px-4 !py-2 !text-sm">
                 <template #icon-left><LayoutDashboard :size="16" /></template>
                 <span class="hidden sm:inline">Dashboard</span>

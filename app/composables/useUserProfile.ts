@@ -27,15 +27,19 @@ export const useUserProfile = () => {
     onMounted(() => {
       const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
         if (!currentUser) {
+          // No user, sign in anonymously for the public flow
           try {
             await signInAnonymously(auth)
           } catch (e) {
             console.error('Error signing in anonymously:', e)
+            loading.value = false
           }
-        } else {
-          user.value = currentUser
-          await fetchProfile(currentUser.uid)
+          return
         }
+
+        // We have a user (anonymous or email/password)
+        user.value = currentUser
+        await fetchProfile(currentUser.uid)
         loading.value = false
       })
 

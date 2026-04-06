@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { CalendarDays, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck, Sparkles } from 'lucide-vue-next'
+import { useAdminAccess } from '../../composables/useAdminAccess'
 
 const { auth } = useFirebase()
+const { refreshAdminClaims } = useAdminAccess()
 const router = useRouter()
 
 const email = ref('')
@@ -16,6 +18,14 @@ const handleLogin = async () => {
   error.value = ''
   try {
     await signInWithEmailAndPassword(auth, email.value, password.value)
+    const allowed = await refreshAdminClaims(true)
+
+    if (!allowed) {
+      await auth.signOut()
+      error.value = 'This account does not have admin access.'
+      return
+    }
+
     router.push('/admin')
   } catch (e: any) {
     error.value = e.message || 'Failed to login'

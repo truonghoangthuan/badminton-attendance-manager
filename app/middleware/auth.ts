@@ -1,32 +1,19 @@
-import { onAuthStateChanged } from 'firebase/auth'
+import { useAdminAccess } from '../composables/useAdminAccess'
 
 export default defineNuxtRouteMiddleware(async (to) => {
   if (import.meta.server) return
-
-  const { auth } = useFirebase()
   
   // Skip if we're already on the login page to avoid infinite redirect
   if (to.path === '/admin/login') {
     return
   }
 
-  // Define a promise to wait for the auth state to satisfy
-  const getCurrentUser = () => {
-    return new Promise((resolve, reject) => {
-      const unsubscribe = onAuthStateChanged(
-        auth,
-        (user) => {
-          unsubscribe()
-          resolve(user)
-        },
-        reject
-      )
-    })
-  }
+  const { refreshAdminClaims, isAdmin } = useAdminAccess()
+  
+  // Force a refresh of the admin claims to ensure we have the most up-to-date status
+  const allowed = await refreshAdminClaims()
 
-  const user = await getCurrentUser()
-
-  if (!user) {
+  if (!allowed || !isAdmin.value) {
     return navigateTo('/admin/login')
   }
 })
