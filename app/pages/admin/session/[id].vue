@@ -747,6 +747,8 @@ const getStatusColor = (status: string) => {
               </div>
             </div>
           </UIGlassCard>
+
+          <AdminQRCodeManager />
         </div>
       </div>
     </section>

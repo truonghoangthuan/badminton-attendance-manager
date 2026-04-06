@@ -8,6 +8,7 @@ definePageMeta({
 });
 
 const { db } = useFirebase();
+const { isAdmin, adminUser } = useAdminAccess();
 const confirm = useUIConfirm();
 const sessionsRef = collection(db, 'sessions');
 const sessions = ref<any[]>([]);
@@ -90,6 +91,7 @@ const createSession = async () => {
           shuttlecockPrice: 0,
           calculatedFeePerPerson: 0,
         },
+        createdBy: adminUser.value?.uid,
         createdAt: new Date().toISOString(),
       });
     }

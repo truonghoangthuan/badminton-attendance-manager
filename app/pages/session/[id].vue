@@ -305,6 +305,8 @@ const formatCurrency = (value: number) => {
           <p class="section-kicker">RSVP</p>
           <h2 class="text-2xl font-black tracking-tight">This session is closed</h2>
         </UIGlassCard>
+
+        <SessionQRCodeDisplay v-if="session.createdBy" :created-by="session.createdBy" />
       </section>
 
       <section class="space-y-4">

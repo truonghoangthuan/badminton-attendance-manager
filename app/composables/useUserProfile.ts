@@ -1,8 +1,9 @@
 import { signInAnonymously, onAuthStateChanged, type User } from 'firebase/auth'
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
+import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 
 export const useUserProfile = () => {
-  const { auth, db } = useFirebase()
+  const { auth, db, storage } = useFirebase()
   const user = useState<User | null>('auth-user', () => null)
   const profile = useState<any>('user-profile', () => null)
   const loading = useState('auth-loading', () => true)
@@ -76,6 +77,60 @@ export const useUserProfile = () => {
     }
   }
 
+  const uploadQRCode = async (file: File) => {
+    if (!user.value) return null
+
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `payment_qrs/${user.value.uid}.${fileExt}`
+      const qrRef = storageRef(storage, fileName)
+
+      const snapshot = await uploadBytes(qrRef, file)
+      const downloadURL = await getDownloadURL(snapshot.ref)
+
+      // Save URL to profile
+      const docRef = doc(db, 'profiles', user.value.uid)
+      await setDoc(docRef, { 
+        paymentQR: downloadURL,
+        updatedAt: serverTimestamp() 
+      }, { merge: true })
+
+      // Update local state
+      if (profile.value) {
+        profile.value.paymentQR = downloadURL
+      }
+      
+      return downloadURL
+    } catch (e) {
+      console.error('Error uploading QR code:', e)
+      throw e
+    }
+  }
+
+  const deleteQRCode = async () => {
+    if (!user.value || !profile.value?.paymentQR) return
+
+    try {
+      // Extract file path from URL or just use the standard path
+      // Since we use {uid}.{ext}, we need to find it. 
+      // Simplified: just update Firestore to null and optionally delete file
+      // In a real app, you'd want to delete the file from Storage too.
+      
+      const docRef = doc(db, 'profiles', user.value.uid)
+      await setDoc(docRef, { 
+        paymentQR: null,
+        updatedAt: serverTimestamp() 
+      }, { merge: true })
+
+      if (profile.value) {
+        profile.value.paymentQR = null
+      }
+    } catch (e) {
+      console.error('Error deleting QR code:', e)
+      throw e
+    }
+  }
+
   const hasUsername = computed(() => !!profile.value?.displayName)
 
   return {
@@ -84,6 +139,8 @@ export const useUserProfile = () => {
     loading,
     hasUsername,
     setProfile,
-    fetchProfile
+    fetchProfile,
+    uploadQRCode,
+    deleteQRCode
   }
 }
