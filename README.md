@@ -173,13 +173,21 @@ firestore.rules           Firestore security rules
 - `npm run preview`: preview the production build locally
 - `npm run generate`: generate a static site build
 
-## Notes For Maintainers
+## Admin Authorization
 
-- Public session access depends on anonymous Firebase Auth being available in the browser.
-- Admin page protection is implemented in Nuxt middleware, so Firebase Auth must be configured correctly before testing admin flows.
-- The public landing page currently reads from both `sessions` and `roster`, so the frontend assumes that legacy roster data may still exist.
-- Firestore rules currently allow public reads for sessions, attendances, profiles, and roster, while write access is restricted by authenticated user identity for `profiles` and `attendances`.
+The admin dashboard and all session-management write operations (create, update, delete) require a Firebase Auth user with a custom claim:
 
-## Status
+- `admin: true`
 
-This README documents the frontend app in `badminton-attendance-manager-frontend` only. If the full project later gains a root-level backend or deployment workflow, document those separately at the repository root.
+### Provisioning an admin
+
+Signing in with email/password is not sufficient on its own. An operator must assign the custom claim using the Firebase Admin SDK (usually via a separate backend or a local script).
+
+**Operator Checklist:**
+1. Create or identify the Firebase Auth user in the Firebase Console.
+2. Assign the custom claim `admin: true` to the user's UID.
+3. Have the user sign out and sign back in to refresh their ID token.
+4. Confirm the user can now see the **Dashboard** button on the home page and access `/admin`.
+
+## Project Structure
+...
