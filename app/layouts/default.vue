@@ -85,7 +85,7 @@ const handleNameUpdate = async () => {
       severity: 'success',
       summary: 'Name updated',
       detail: 'Your display name was changed successfully.',
-      life: 3000
+      life: 3000,
     });
   } catch {
     editNameError.value = 'An unexpected error occurred.';

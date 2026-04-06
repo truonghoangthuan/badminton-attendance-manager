@@ -20,7 +20,10 @@
     @apply border-brand-line;
   }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     @apply text-brand-ink;
   }
 
@@ -45,10 +48,10 @@
     width: 100vw;
     height: 100vh;
     z-index: -1;
-    background-image: 
+    background-image:
       radial-gradient(circle at top left, rgba(47, 122, 83, 0.13) 0, transparent 34%),
       radial-gradient(circle at 85% 12%, rgba(244, 201, 93, 0.2) 0, transparent 24%),
-      linear-gradient(180deg, rgba(255,255,255,0.85), rgba(246,243,235,0.95));
+      linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(246, 243, 235, 0.95));
   }
 
   .mesh-glow {
@@ -99,6 +102,20 @@
   .section-kicker {
     @apply text-[11px] font-black uppercase tracking-[0.28em] text-brand-slate;
   }
+
+  .bg-shuttlecock {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: url('~/assets/badminton-seamless-shuttlecock-pattern-tennis-ball-tile-background-scarf-isolated-wallpaper-graphic-vector.png');
+    background-repeat: repeat;
+    background-size: 1920px 960px;
+    opacity: 0.4;
+  }
 }
 
 /* Transitions */
@@ -119,7 +136,6 @@
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 
 ::-webkit-scrollbar-thumb {
   @apply rounded-full bg-brand-line hover:bg-brand-slate/40 transition-colors;

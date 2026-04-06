@@ -54,6 +54,7 @@ const getStatusStyles = (status: string) => {
 
 <template>
   <div class="space-y-8 pb-16">
+    <div class="bg-shuttlecock" />
     <section>
       <UIGlassCard class="space-y-6">
         <div class="space-y-2">

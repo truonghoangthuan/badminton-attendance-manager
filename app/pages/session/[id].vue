@@ -1,86 +1,95 @@
 <script setup lang="ts">
-import { doc, getDoc, collection, setDoc, orderBy, onSnapshot, query } from 'firebase/firestore'
-import { BadgeDollarSign, Check, Clock3, Loader2, MapPin, ReceiptText, User, Users as UsersIcon } from 'lucide-vue-next'
+import { doc, getDoc, collection, setDoc, orderBy, onSnapshot, query } from 'firebase/firestore';
+import {
+  BadgeDollarSign,
+  Check,
+  Clock3,
+  Loader2,
+  MapPin,
+  ReceiptText,
+  User,
+  Users as UsersIcon,
+} from 'lucide-vue-next';
 
-const route = useRoute()
-const sessionId = route.params.id as string
-const { user, profile, loading: authLoading, setProfile } = useUserProfile()
-const { db } = useFirebase()
-const toast = useToast()
+const route = useRoute();
+const sessionId = route.params.id as string;
+const { user, profile, loading: authLoading, setProfile } = useUserProfile();
+const { db } = useFirebase();
+const toast = useToast();
 
-const session = ref<any>(null)
-const attendanceList = ref<any[]>([])
-const loading = ref(true)
-const submitting = ref(false)
-const message = ref({ text: '', type: '' })
-const newName = ref('')
+const session = ref<any>(null);
+const attendanceList = ref<any[]>([]);
+const loading = ref(true);
+const submitting = ref(false);
+const message = ref({ text: '', type: '' });
+const newName = ref('');
 const vote = ref({
   isJoining: true,
-  guestCount: 0
-})
+  guestCount: 0,
+});
 
 const totalActualPlayers = computed(() => {
   return attendanceList.value.reduce((acc, curr) => {
     if (curr.actualAttended) {
-      return acc + 1 + (curr.guestCount || 0)
+      return acc + 1 + (curr.guestCount || 0);
     }
 
-    return acc
-  }, 0)
-})
+    return acc;
+  }, 0);
+});
 
 const totalSessionCost = computed(() => {
   if (!session.value) {
-    return 0
+    return 0;
   }
 
-  const financials = session.value.financials || {}
-  return (financials.courtCost || 0) + (financials.shuttlecocksUsed || 0) * (financials.shuttlecockPrice || 0)
-})
+  const financials = session.value.financials || {};
+  return (financials.courtCost || 0) + (financials.shuttlecocksUsed || 0) * (financials.shuttlecockPrice || 0);
+});
 
 const calculatedFeePerPerson = computed(() => {
   if (!session.value || totalActualPlayers.value === 0) {
-    return 0
+    return 0;
   }
 
-  return Number((totalSessionCost.value / totalActualPlayers.value).toFixed(2))
-})
+  return Number((totalSessionCost.value / totalActualPlayers.value).toFixed(2));
+});
 
 onMounted(async () => {
   try {
-    const sessionDoc = await getDoc(doc(db, 'sessions', sessionId))
+    const sessionDoc = await getDoc(doc(db, 'sessions', sessionId));
     if (!sessionDoc.exists()) {
-      message.value = { text: 'Session not found.', type: 'error' }
-      loading.value = false
-      return
+      message.value = { text: 'Session not found.', type: 'error' };
+      loading.value = false;
+      return;
     }
 
-    session.value = { id: sessionDoc.id, ...sessionDoc.data() }
+    session.value = { id: sessionDoc.id, ...sessionDoc.data() };
 
-    const attendancesRef = collection(db, `sessions/${sessionId}/attendances`)
-    const qAttendance = query(attendancesRef, orderBy('updatedAt', 'desc'))
-    const unsubscribeSnapshot = onSnapshot(qAttendance, snapshot => {
-      attendanceList.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-    })
+    const attendancesRef = collection(db, `sessions/${sessionId}/attendances`);
+    const qAttendance = query(attendancesRef, orderBy('updatedAt', 'desc'));
+    const unsubscribeSnapshot = onSnapshot(qAttendance, (snapshot) => {
+      attendanceList.value = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    });
 
     watchEffect(() => {
       if (user.value && attendanceList.value.length) {
-        const myVote = attendanceList.value.find(a => a.id === user.value?.uid)
+        const myVote = attendanceList.value.find((a) => a.id === user.value?.uid);
         if (myVote) {
-          vote.value.isJoining = myVote.isJoining
-          vote.value.guestCount = myVote.guestCount || 0
+          vote.value.isJoining = myVote.isJoining;
+          vote.value.guestCount = myVote.guestCount || 0;
         }
       }
-    })
+    });
 
-    onUnmounted(unsubscribeSnapshot)
+    onUnmounted(unsubscribeSnapshot);
   } catch (e) {
-    console.error('Error loading session:', e)
-    message.value = { text: 'Error loading session data.', type: 'error' }
+    console.error('Error loading session:', e);
+    message.value = { text: 'Error loading session data.', type: 'error' };
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-})
+});
 
 const submitVote = async () => {
   if (!user.value) {
@@ -88,9 +97,9 @@ const submitVote = async () => {
       severity: 'error',
       summary: 'Unable to save RSVP',
       detail: 'Please wait a moment.',
-      life: 3000
-    })
-    return
+      life: 3000,
+    });
+    return;
   }
 
   if (!profile.value?.displayName) {
@@ -99,28 +108,28 @@ const submitVote = async () => {
         severity: 'error',
         summary: 'Missing name',
         detail: 'Please enter your name.',
-        life: 3000
-      })
-      return
+        life: 3000,
+      });
+      return;
     }
 
-    const success = await setProfile(newName.value.trim())
+    const success = await setProfile(newName.value.trim());
     if (!success) {
       toast.add({
         severity: 'error',
         summary: 'Profile update failed',
         detail: 'Could not save your name.',
-        life: 3000
-      })
-      return
+        life: 3000,
+      });
+      return;
     }
   }
 
-  submitting.value = true
+  submitting.value = true;
   try {
-    const uid = user.value.uid
-    const displayName = profile.value?.displayName || newName.value.trim()
-    const attendanceRef = doc(db, `sessions/${sessionId}/attendances`, uid)
+    const uid = user.value.uid;
+    const displayName = profile.value?.displayName || newName.value.trim();
+    const attendanceRef = doc(db, `sessions/${sessionId}/attendances`, uid);
 
     await setDoc(attendanceRef, {
       uid,
@@ -129,53 +138,54 @@ const submitVote = async () => {
       guestCount: vote.value.guestCount,
       actualAttended: vote.value.isJoining,
       hasPaid: false,
-      updatedAt: new Date().toISOString()
-    })
+      updatedAt: new Date().toISOString(),
+    });
 
     toast.add({
       severity: 'success',
       summary: vote.value.isJoining ? 'RSVP confirmed' : 'RSVP updated',
       detail: vote.value.isJoining ? 'You are in.' : 'You are marked unavailable.',
-      life: 3000
-    })
+      life: 3000,
+    });
   } catch (e) {
-    console.error('Error submitting vote:', e)
+    console.error('Error submitting vote:', e);
     toast.add({
       severity: 'error',
       summary: 'Save failed',
       detail: 'Failed to save your RSVP.',
-      life: 3000
-    })
+      life: 3000,
+    });
   } finally {
-    submitting.value = false
+    submitting.value = false;
   }
-}
+};
 
 const getStatusColor = (status: string) => {
   switch (status) {
     case 'open':
-      return 'bg-emerald-50 text-emerald-700 border-emerald-200'
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
     case 'locked':
-      return 'bg-amber-50 text-amber-700 border-amber-200'
+      return 'bg-amber-50 text-amber-700 border-amber-200';
     case 'completed':
-      return 'bg-slate-100 text-slate-700 border-slate-200'
+      return 'bg-slate-100 text-slate-700 border-slate-200';
     default:
-      return 'bg-white text-brand-slate border-brand-line'
+      return 'bg-white text-brand-slate border-brand-line';
   }
-}
+};
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'VND',
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(value || 0)
-}
+    maximumFractionDigits: 0,
+  }).format(value || 0);
+};
 </script>
 
 <template>
   <div class="space-y-8 pb-14">
+    <div class="bg-shuttlecock" />
     <Toast position="top-right" />
 
     <section v-if="loading" class="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
@@ -199,17 +209,24 @@ const formatCurrency = (value: number) => {
               <p class="section-kicker">Session</p>
               <h1 class="mt-2 text-3xl font-black tracking-tight">{{ session.date }}</h1>
             </div>
-            <span :class="getStatusColor(session.status)" class="rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]">
+            <span
+              :class="getStatusColor(session.status)"
+              class="rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]"
+            >
               {{ session.status }}
             </span>
           </div>
 
           <div class="space-y-3">
-            <div class="flex items-center gap-3 rounded-2xl border border-brand-line bg-brand-sand px-4 py-3 text-sm font-medium">
+            <div
+              class="flex items-center gap-3 rounded-2xl border border-brand-line bg-brand-sand px-4 py-3 text-sm font-medium"
+            >
               <Clock3 :size="16" class="text-brand-court" />
               {{ session.time }}
             </div>
-            <div class="flex items-center gap-3 rounded-2xl border border-brand-line bg-brand-sand px-4 py-3 text-sm font-medium">
+            <div
+              class="flex items-center gap-3 rounded-2xl border border-brand-line bg-brand-sand px-4 py-3 text-sm font-medium"
+            >
               <MapPin :size="16" class="text-brand-blue" />
               {{ session.location }}
             </div>
@@ -249,7 +266,10 @@ const formatCurrency = (value: number) => {
             </div>
 
             <form @submit.prevent="submitVote" class="space-y-4">
-              <div v-if="authLoading" class="flex items-center gap-3 rounded-2xl border border-brand-line bg-brand-sand px-4 py-4 text-sm font-medium text-brand-slate">
+              <div
+                v-if="authLoading"
+                class="flex items-center gap-3 rounded-2xl border border-brand-line bg-brand-sand px-4 py-4 text-sm font-medium text-brand-slate"
+              >
                 <Loader2 class="animate-spin text-brand-court" :size="18" />
                 Loading your profile...
               </div>
@@ -272,13 +292,17 @@ const formatCurrency = (value: number) => {
               <div class="grid gap-3 sm:grid-cols-2">
                 <label class="cursor-pointer">
                   <input type="radio" v-model="vote.isJoining" :value="true" class="peer hidden" />
-                  <div class="rounded-[22px] border border-brand-line bg-brand-sand px-4 py-4 text-center font-bold transition-all peer-checked:border-brand-court peer-checked:bg-emerald-50">
+                  <div
+                    class="rounded-[22px] border border-brand-line bg-brand-sand px-4 py-4 text-center font-bold transition-all peer-checked:border-brand-court peer-checked:bg-emerald-50"
+                  >
                     I’m joining
                   </div>
                 </label>
                 <label class="cursor-pointer">
                   <input type="radio" v-model="vote.isJoining" :value="false" class="peer hidden" />
-                  <div class="rounded-[22px] border border-brand-line bg-brand-sand px-4 py-4 text-center font-bold transition-all peer-checked:border-red-200 peer-checked:bg-red-50">
+                  <div
+                    class="rounded-[22px] border border-brand-line bg-brand-sand px-4 py-4 text-center font-bold transition-all peer-checked:border-red-200 peer-checked:bg-red-50"
+                  >
                     Can’t make it
                   </div>
                 </label>
@@ -297,7 +321,7 @@ const formatCurrency = (value: number) => {
 
               <UIGlassButton type="submit" :disabled="submitting" class="w-full">
                 <Loader2 v-if="submitting" class="animate-spin" :size="18" />
-                <span v-else>Save RSVP</span>
+                <span v-else>Submit</span>
               </UIGlassButton>
             </form>
           </UIGlassCard>
@@ -308,9 +332,14 @@ const formatCurrency = (value: number) => {
           </UIGlassCard>
 
           <SessionQRCodeDisplay v-if="session.createdBy" :created-by="session.createdBy" />
-          <div v-else-if="!loading" class="rounded-[32px] border border-dashed border-brand-line bg-brand-sand/50 p-6 text-center">
-             <p class="text-xs font-bold uppercase tracking-widest text-brand-slate">Session creator unknown</p>
-             <p class="mt-1 text-[11px] font-medium text-brand-slate/60">QR code payment unavailable for this session.</p>
+          <div
+            v-else-if="!loading"
+            class="rounded-[32px] border border-dashed border-brand-line bg-brand-sand/50 p-6 text-center"
+          >
+            <p class="text-xs font-bold uppercase tracking-widest text-brand-slate">Session creator unknown</p>
+            <p class="mt-1 text-[11px] font-medium text-brand-slate/60">
+              QR code payment unavailable for this session.
+            </p>
           </div>
         </div>
       </section>
@@ -324,7 +353,11 @@ const formatCurrency = (value: number) => {
               <div>
                 <p class="font-black text-brand-ink">{{ att.name }}</p>
                 <p class="text-sm font-medium text-brand-slate">
-                  {{ att.isJoining ? `Joining${att.guestCount ? ` with ${att.guestCount} guest${att.guestCount > 1 ? 's' : ''}` : ''}` : 'Unavailable' }}
+                  {{
+                    att.isJoining
+                      ? `Joining${att.guestCount ? ` with ${att.guestCount} guest${att.guestCount > 1 ? 's' : ''}` : ''}`
+                      : 'Unavailable'
+                  }}
                 </p>
               </div>
               <div
