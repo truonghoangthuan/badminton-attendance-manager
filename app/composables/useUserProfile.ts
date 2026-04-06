@@ -1,9 +1,9 @@
 import { signInAnonymously, onAuthStateChanged, type User } from 'firebase/auth'
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
-import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 
 export const useUserProfile = () => {
-  const { auth, db, storage } = useFirebase()
+  const { auth, db } = useFirebase()
+  const supabaseQR = useSupabaseQRCode()
   const user = useState<User | null>('auth-user', () => null)
   const profile = useState<any>('user-profile', () => null)
   const loading = useState('auth-loading', () => true)
@@ -81,21 +81,17 @@ export const useUserProfile = () => {
     if (!user.value) return null
 
     try {
-      const fileExt = file.name.split('.').pop()
-      const fileName = `payment_qrs/${user.value.uid}.${fileExt}`
-      const qrRef = storageRef(storage, fileName)
+      // 1. Upload to Supabase Storage
+      const downloadURL = await supabaseQR.upload(file, user.value.uid)
 
-      const snapshot = await uploadBytes(qrRef, file)
-      const downloadURL = await getDownloadURL(snapshot.ref)
-
-      // Save URL to profile
+      // 2. Save URL to Firestore profile
       const docRef = doc(db, 'profiles', user.value.uid)
       await setDoc(docRef, { 
         paymentQR: downloadURL,
         updatedAt: serverTimestamp() 
       }, { merge: true })
 
-      // Update local state
+      // 3. Update local state
       if (profile.value) {
         profile.value.paymentQR = downloadURL
       }
@@ -111,17 +107,17 @@ export const useUserProfile = () => {
     if (!user.value || !profile.value?.paymentQR) return
 
     try {
-      // Extract file path from URL or just use the standard path
-      // Since we use {uid}.{ext}, we need to find it. 
-      // Simplified: just update Firestore to null and optionally delete file
-      // In a real app, you'd want to delete the file from Storage too.
+      // 1. Remove from Supabase Storage
+      await supabaseQR.remove(user.value.uid, profile.value.paymentQR)
       
+      // 2. Clear from Firestore profile
       const docRef = doc(db, 'profiles', user.value.uid)
       await setDoc(docRef, { 
         paymentQR: null,
         updatedAt: serverTimestamp() 
       }, { merge: true })
 
+      // 3. Update local state
       if (profile.value) {
         profile.value.paymentQR = null
       }
