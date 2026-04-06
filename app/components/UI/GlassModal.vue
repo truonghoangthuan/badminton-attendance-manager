@@ -1,27 +1,36 @@
 <template>
   <Teleport to="body">
     <Transition name="modal-fade">
-      <div v-if="modelValue" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div 
+        v-if="modelValue" 
+        class="fixed inset-0 z-[100] flex items-center justify-center p-4"
+        @keydown.esc="handleEsc"
+        tabindex="-1"
+      >
         <div 
           class="absolute inset-0 bg-brand-ink/25 backdrop-blur-sm" 
-          @click="persistent ? null : $emit('update:modelValue', false)"
+          @click="persistent ? null : close()"
         />
         
         <Transition name="modal-scale" appear>
           <div 
             v-if="modelValue"
-            class="relative w-full max-w-lg overflow-hidden rounded-[2rem] border border-brand-line bg-white shadow-[0_30px_80px_rgba(29,42,34,0.16)]"
+            ref="modalContent"
+            class="relative w-full max-w-lg overflow-hidden rounded-[2rem] border border-brand-line bg-white shadow-[0_30px_80px_rgba(29,42,34,0.16)] focus:outline-none"
             role="dialog"
             aria-modal="true"
+            aria-labelledby="modal-title"
+            tabindex="0"
           >
-            <div v-if="$slots.header" class="px-8 pt-8 pb-4">
+            <div v-if="$slots.header" class="px-8 pt-8 pb-4" id="modal-title">
               <slot name="header" />
             </div>
 
             <button 
-              v-if="!persistent"
-              @click="$emit('update:modelValue', false)"
+              v-if="showClose && !persistent"
+              @click="close"
               class="absolute top-6 right-6 rounded-full border border-brand-line p-2 text-brand-slate transition-colors hover:bg-brand-sand hover:text-brand-ink"
+              aria-label="Close modal"
             >
               <X :size="20" />
             </button>
@@ -41,16 +50,78 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { X } from 'lucide-vue-next'
 
-defineProps<{
+const props = withDefaults(defineProps<{
   modelValue: boolean
   persistent?: boolean
-}>()
+  showClose?: boolean
+}>(), {
+  persistent: false,
+  showClose: true
+})
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
 }>()
+
+const modalContent = ref<HTMLElement | null>(null)
+
+const close = () => {
+  emit('update:modelValue', false)
+}
+
+const handleEsc = () => {
+  if (!props.persistent) {
+    close()
+  }
+}
+
+// Focus Trap Logic
+const focusableElementsSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') {
+    handleEsc()
+  }
+
+  if (e.key === 'Tab' && modalContent.value) {
+    const focusableElements = modalContent.value.querySelectorAll(focusableElementsSelector) as NodeListOf<HTMLElement>
+    const firstElement = focusableElements[0]
+    const lastElement = focusableElements[focusableElements.length - 1]
+
+    if (!firstElement || !lastElement) return
+
+    if (e.shiftKey) { // Shift + Tab
+      if (document.activeElement === firstElement) {
+        lastElement.focus()
+        e.preventDefault()
+      }
+    } else { // Tab
+      if (document.activeElement === lastElement) {
+        firstElement.focus()
+        e.preventDefault()
+      }
+    }
+  }
+}
+
+watch(() => props.modelValue, (newVal) => {
+  if (newVal) {
+    window.addEventListener('keydown', handleKeydown)
+    // Small delay to allow transition before focusing
+    setTimeout(() => {
+      modalContent.value?.focus()
+    }, 50)
+  } else {
+    window.removeEventListener('keydown', handleKeydown)
+  }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
 </script>
 
 <style scoped>

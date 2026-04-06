@@ -120,6 +120,52 @@
   background: transparent;
 }
 
+
 ::-webkit-scrollbar-thumb {
   @apply rounded-full bg-brand-line hover:bg-brand-slate/40 transition-colors;
+}
+
+/* PrimeVue ConfirmDialog Customization */
+.p-dialog.p-confirmdialog {
+  @apply rounded-[32px] border-brand-line bg-white shadow-[0_30px_80px_rgba(29,42,34,0.16)] overflow-hidden border;
+  max-width: 450px !important;
+}
+
+.p-dialog.p-confirmdialog .p-dialog-header {
+  @apply px-8 pt-8 pb-4 font-jakarta border-none bg-white;
+}
+
+.p-dialog.p-confirmdialog .p-dialog-title {
+  @apply text-2xl font-black tracking-tight text-brand-ink;
+}
+
+.p-dialog.p-confirmdialog .p-dialog-content {
+  @apply px-8 py-4 text-sm font-medium text-brand-slate bg-white;
+}
+
+.p-dialog.p-confirmdialog .p-dialog-footer {
+  @apply px-8 py-8 border-none flex justify-end gap-3 bg-white;
+}
+
+/* Button overrides for ConfirmDialog footer */
+.p-dialog.p-confirmdialog .p-button {
+  @apply rounded-2xl font-bold px-6 py-3 transition-all active:scale-95 border !important;
+}
+
+.p-dialog.p-confirmdialog .p-confirm-dialog-reject {
+  @apply border-brand-line bg-white text-brand-ink hover:border-brand-court hover:text-brand-court !important;
+}
+
+.p-dialog.p-confirmdialog .p-confirm-dialog-accept {
+  @apply border-brand-court bg-brand-court text-white shadow-[0_10px_20px_rgba(47,122,83,0.18)] hover:bg-brand-purple hover:border-brand-purple !important;
+  background-color: var(--brand-court) !important;
+}
+
+/* Handle severity variants correctly */
+.p-dialog.p-confirmdialog .p-confirm-dialog-accept.p-button-danger {
+  @apply border-red-500 bg-red-500 text-white hover:bg-red-600 hover:border-red-600 shadow-[0_10px_20px_rgba(239,68,68,0.18)] !important;
+}
+
+.p-dialog-mask {
+  @apply backdrop-blur-sm bg-brand-ink/25;
 }

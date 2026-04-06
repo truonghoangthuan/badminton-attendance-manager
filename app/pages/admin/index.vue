@@ -8,6 +8,7 @@ definePageMeta({
 });
 
 const { db } = useFirebase();
+const confirm = useUIConfirm();
 const sessionsRef = collection(db, 'sessions');
 const sessions = ref<any[]>([]);
 const loading = ref(true);
@@ -132,17 +133,28 @@ const toggleStatus = async (session: any) => {
   const statusOrder: ('open' | 'locked' | 'completed')[] = ['open', 'locked', 'completed'];
   const currentIndex = statusOrder.indexOf(session.status);
   const nextStatus = statusOrder[(currentIndex + 1) % statusOrder.length];
+  
+  const updateStatus = async () => {
+    try {
+      const docRef = doc(db, 'sessions', session.id);
+      await updateDoc(docRef, { status: nextStatus });
+    } catch (e) {
+      console.error('Error updating status:', e);
+    }
+  };
 
-  if (nextStatus === 'completed' && !window.confirm('Mark this session as completed?')) {
+  if (nextStatus === 'completed') {
+    confirm.require({
+      message: 'Mark this session as completed?',
+      header: 'Complete Session',
+      rejectLabel: 'Cancel',
+      acceptLabel: 'Complete',
+      accept: updateStatus,
+    });
     return;
   }
 
-  try {
-    const docRef = doc(db, 'sessions', session.id);
-    await updateDoc(docRef, { status: nextStatus });
-  } catch (e) {
-    console.error('Error updating status:', e);
-  }
+  await updateStatus();
 };
 
 const deleteSession = async (session: any) => {
@@ -150,24 +162,25 @@ const deleteSession = async (session: any) => {
     return;
   }
 
-  const confirmed = window.confirm(
-    `Delete the session on ${session.date} at ${session.time}? This removes it from the admin and public session lists.`,
-  );
+  confirm.require({
+    message: `Delete the session on ${session.date} at ${session.time}? This removes it from the admin and public session lists.`,
+    header: 'Delete Session',
+    severity: 'danger',
+    rejectLabel: 'Cancel',
+    acceptLabel: 'Delete',
+    accept: async () => {
+      deletingSessionId.value = session.id;
 
-  if (!confirmed) {
-    return;
-  }
-
-  deletingSessionId.value = session.id;
-
-  try {
-    await deleteDoc(doc(db, 'sessions', session.id));
-  } catch (e) {
-    console.error('Error deleting session:', e);
-    error.value = 'Failed to delete session.';
-  } finally {
-    deletingSessionId.value = null;
-  }
+      try {
+        await deleteDoc(doc(db, 'sessions', session.id));
+      } catch (e) {
+        console.error('Error deleting session:', e);
+        error.value = 'Failed to delete session.';
+      } finally {
+        deletingSessionId.value = null;
+      }
+    }
+  });
 };
 
 const copySessionLink = (id: string) => {

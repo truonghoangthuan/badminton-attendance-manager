@@ -26,6 +26,7 @@ definePageMeta({
 const route = useRoute();
 const sessionId = route.params.id as string;
 const { db } = useFirebase();
+const confirm = useUIConfirm();
 
 const session = ref<any>(null);
 const attendances = ref<any[]>([]);
@@ -163,19 +164,29 @@ const updateSessionStatus = async (nextStatus: 'open' | 'locked' | 'completed') 
     return;
   }
 
-  if (nextStatus === 'completed' && !window.confirm('Mark this session as completed?')) {
+  const performStatusUpdate = async () => {
+    statusUpdating.value = true;
+    try {
+      await updateDoc(doc(db, 'sessions', sessionId), { status: nextStatus });
+    } catch (e) {
+      console.error('Error updating status:', e);
+    } finally {
+      statusUpdating.value = false;
+    }
+  };
+
+  if (nextStatus === 'completed') {
+    confirm.require({
+      message: 'Mark this session as completed?',
+      header: 'Complete Session',
+      rejectLabel: 'Cancel',
+      acceptLabel: 'Complete',
+      accept: performStatusUpdate,
+    });
     return;
   }
 
-  statusUpdating.value = true;
-
-  try {
-    await updateDoc(doc(db, 'sessions', sessionId), { status: nextStatus });
-  } catch (e) {
-    console.error('Error updating status:', e);
-  } finally {
-    statusUpdating.value = false;
-  }
+  await performStatusUpdate();
 };
 
 const sessionActions = computed(() => {
@@ -249,16 +260,21 @@ const saveSessionEdits = async () => {
 };
 
 const deleteAttendee = async (attendance: any) => {
-  if (!window.confirm(`Are you sure you want to remove ${attendance.name} from this session?`)) {
-    return;
-  }
-
-  try {
-    const docRef = doc(db, `sessions/${sessionId}/attendances`, attendance.id);
-    await deleteDoc(docRef);
-  } catch (e) {
-    console.error('Error deleting attendee:', e);
-  }
+  confirm.require({
+    message: `Are you sure you want to remove ${attendance.name} from this session?`,
+    header: 'Remove Attendee',
+    severity: 'danger',
+    rejectLabel: 'Cancel',
+    acceptLabel: 'Remove',
+    accept: async () => {
+      try {
+        const docRef = doc(db, `sessions/${sessionId}/attendances`, attendance.id);
+        await deleteDoc(docRef);
+      } catch (e) {
+        console.error('Error deleting attendee:', e);
+      }
+    },
+  });
 };
 
 const toggleAttendanceAttr = async (attendanceId: string, field: string, value: boolean) => {

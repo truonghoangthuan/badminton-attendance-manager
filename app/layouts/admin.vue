@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { signOut } from 'firebase/auth'
-import { ArrowLeft, LayoutDashboard, LogOut, Menu, ShieldCheck, X } from 'lucide-vue-next'
+import { ArrowLeft, CircleAlert, Info, LayoutDashboard, LogOut, Menu, ShieldCheck, X } from 'lucide-vue-next'
 
 const { auth } = useFirebase()
 const router = useRouter()
@@ -108,6 +108,9 @@ const handleLogout = async () => {
       <slot />
     </main>
   </div>
+
+  <UIConfirmDialog />
+  <Toast />
 </template>
 
 <style scoped>
