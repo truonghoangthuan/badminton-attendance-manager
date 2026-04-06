@@ -9,6 +9,7 @@ const props = defineProps<{
 const { db } = useFirebase();
 const creatorProfile = ref<any>(null);
 const loading = ref(true);
+const fetchError = ref<string | null>(null);
 const showExpand = ref(false);
 const copied = ref(false);
 
@@ -23,9 +24,16 @@ onMounted(async () => {
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       creatorProfile.value = docSnap.data();
+    } else {
+      fetchError.value = 'Profile not found';
     }
-  } catch (e) {
+  } catch (e: any) {
     console.error('Error fetching creator profile:', e);
+    if (e.code === 'permission-denied') {
+      fetchError.value = 'Access restricted (Permission Denied)';
+    } else {
+      fetchError.value = 'Failed to load creator info';
+    }
   } finally {
     loading.value = false;
   }
@@ -58,10 +66,17 @@ const copyPaymentInfo = () => {
      <p class="text-xs font-bold uppercase tracking-widest text-brand-slate">Loading payment info...</p>
   </div>
 
-  <div v-else-if="!creatorProfile?.paymentQR" class="rounded-[32px] border border-dashed border-brand-line bg-brand-sand px-6 py-8 text-center">
-    <QrCode :size="32" class="mx-auto text-brand-slate/40" />
+  <div v-else-if="fetchError" class="rounded-[32px] border border-dashed border-red-200 bg-red-50 px-6 py-8 text-center text-red-600">
+    <QrCode :size="32" class="mx-auto opacity-40" />
+    <p class="mt-4 font-black">Unable to load payment info</p>
+    <p class="mt-1 text-sm font-medium opacity-80">{{ fetchError }}</p>
+    <p class="mt-3 text-[10px] font-bold uppercase tracking-wider">Contact admin for direct payment</p>
+  </div>
+
+  <div v-else-if="!creatorProfile?.paymentQR" class="rounded-[32px] border border-dashed border-brand-line bg-brand-sand px-6 py-8 text-center text-brand-slate">
+    <QrCode :size="32" class="mx-auto opacity-40" />
     <p class="mt-4 font-black text-brand-ink">No payment QR uploaded</p>
-    <p class="mt-1 text-sm font-medium text-brand-slate">Please pay directly at the court.</p>
+    <p class="mt-1 text-sm font-medium">Please pay directly at the court.</p>
   </div>
 
   <UIGlassCard v-else class="relative overflow-hidden !p-0">

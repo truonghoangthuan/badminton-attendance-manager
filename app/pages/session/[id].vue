@@ -241,72 +241,78 @@ const formatCurrency = (value: number) => {
           </div>
         </UIGlassCard>
 
-        <UIGlassCard v-if="session.status === 'open'" class="space-y-5">
-          <div>
+        <div class="space-y-6">
+          <UIGlassCard v-if="session.status === 'open'" class="space-y-5">
+            <div>
+              <p class="section-kicker">RSVP</p>
+              <h2 class="mt-2 text-2xl font-black tracking-tight">Let everyone know if you can make it</h2>
+            </div>
+
+            <form @submit.prevent="submitVote" class="space-y-4">
+              <div v-if="authLoading" class="flex items-center gap-3 rounded-2xl border border-brand-line bg-brand-sand px-4 py-4 text-sm font-medium text-brand-slate">
+                <Loader2 class="animate-spin text-brand-court" :size="18" />
+                Loading your profile...
+              </div>
+
+              <UIGlassInput
+                v-else-if="!profile?.displayName"
+                v-model="newName"
+                label="Your Name"
+                placeholder="Enter your name"
+                required
+              >
+                <template #icon><User :size="18" /></template>
+              </UIGlassInput>
+
+              <div v-else class="rounded-[22px] border border-brand-line bg-brand-sand px-4 py-4">
+                <p class="text-sm font-medium text-brand-slate">Playing as</p>
+                <p class="mt-1 text-lg font-black">{{ profile.displayName }}</p>
+              </div>
+
+              <div class="grid gap-3 sm:grid-cols-2">
+                <label class="cursor-pointer">
+                  <input type="radio" v-model="vote.isJoining" :value="true" class="peer hidden" />
+                  <div class="rounded-[22px] border border-brand-line bg-brand-sand px-4 py-4 text-center font-bold transition-all peer-checked:border-brand-court peer-checked:bg-emerald-50">
+                    I’m joining
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" v-model="vote.isJoining" :value="false" class="peer hidden" />
+                  <div class="rounded-[22px] border border-brand-line bg-brand-sand px-4 py-4 text-center font-bold transition-all peer-checked:border-red-200 peer-checked:bg-red-50">
+                    Can’t make it
+                  </div>
+                </label>
+              </div>
+
+              <UIGlassInput
+                v-if="vote.isJoining"
+                v-model.number="vote.guestCount"
+                label="Guests"
+                type="number"
+                min="0"
+                placeholder="0"
+              >
+                <template #icon><UsersIcon :size="18" /></template>
+              </UIGlassInput>
+
+              <UIGlassButton type="submit" :disabled="submitting" class="w-full">
+                <Loader2 v-if="submitting" class="animate-spin" :size="18" />
+                <span v-else>Save RSVP</span>
+              </UIGlassButton>
+            </form>
+          </UIGlassCard>
+
+          <UIGlassCard v-else class="space-y-3">
             <p class="section-kicker">RSVP</p>
-            <h2 class="mt-2 text-2xl font-black tracking-tight">Let everyone know if you can make it</h2>
+            <h2 class="text-2xl font-black tracking-tight">This session is closed</h2>
+          </UIGlassCard>
+
+          <SessionQRCodeDisplay v-if="session.createdBy" :created-by="session.createdBy" />
+          <div v-else-if="!loading" class="rounded-[32px] border border-dashed border-brand-line bg-brand-sand/50 p-6 text-center">
+             <p class="text-xs font-bold uppercase tracking-widest text-brand-slate">Session creator unknown</p>
+             <p class="mt-1 text-[11px] font-medium text-brand-slate/60">QR code payment unavailable for this session.</p>
           </div>
-
-          <form @submit.prevent="submitVote" class="space-y-4">
-            <div v-if="authLoading" class="flex items-center gap-3 rounded-2xl border border-brand-line bg-brand-sand px-4 py-4 text-sm font-medium text-brand-slate">
-              <Loader2 class="animate-spin text-brand-court" :size="18" />
-              Loading your profile...
-            </div>
-
-            <UIGlassInput
-              v-else-if="!profile?.displayName"
-              v-model="newName"
-              label="Your Name"
-              placeholder="Enter your name"
-              required
-            >
-              <template #icon><User :size="18" /></template>
-            </UIGlassInput>
-
-            <div v-else class="rounded-[22px] border border-brand-line bg-brand-sand px-4 py-4">
-              <p class="text-sm font-medium text-brand-slate">Playing as</p>
-              <p class="mt-1 text-lg font-black">{{ profile.displayName }}</p>
-            </div>
-
-            <div class="grid gap-3 sm:grid-cols-2">
-              <label class="cursor-pointer">
-                <input type="radio" v-model="vote.isJoining" :value="true" class="peer hidden" />
-                <div class="rounded-[22px] border border-brand-line bg-brand-sand px-4 py-4 text-center font-bold transition-all peer-checked:border-brand-court peer-checked:bg-emerald-50">
-                  I’m joining
-                </div>
-              </label>
-              <label class="cursor-pointer">
-                <input type="radio" v-model="vote.isJoining" :value="false" class="peer hidden" />
-                <div class="rounded-[22px] border border-brand-line bg-brand-sand px-4 py-4 text-center font-bold transition-all peer-checked:border-red-200 peer-checked:bg-red-50">
-                  Can’t make it
-                </div>
-              </label>
-            </div>
-
-            <UIGlassInput
-              v-if="vote.isJoining"
-              v-model.number="vote.guestCount"
-              label="Guests"
-              type="number"
-              min="0"
-              placeholder="0"
-            >
-              <template #icon><UsersIcon :size="18" /></template>
-            </UIGlassInput>
-
-            <UIGlassButton type="submit" :disabled="submitting" class="w-full">
-              <Loader2 v-if="submitting" class="animate-spin" :size="18" />
-              <span v-else>Save RSVP</span>
-            </UIGlassButton>
-          </form>
-        </UIGlassCard>
-
-        <UIGlassCard v-else class="space-y-3">
-          <p class="section-kicker">RSVP</p>
-          <h2 class="text-2xl font-black tracking-tight">This session is closed</h2>
-        </UIGlassCard>
-
-        <SessionQRCodeDisplay v-if="session.createdBy" :created-by="session.createdBy" />
+        </div>
       </section>
 
       <section class="space-y-4">
