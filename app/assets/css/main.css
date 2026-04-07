@@ -7,10 +7,16 @@
     color-scheme: light;
   }
 
+  html {
+    @apply min-h-screen;
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-brand-sand text-brand-ink font-jakarta min-h-screen selection:bg-brand-shuttle/50;
     margin: 0;
     overflow-x: hidden;
+    background-attachment: fixed;
     background-image:
       linear-gradient(135deg, rgba(47, 122, 83, 0.08), transparent 28%),
       linear-gradient(180deg, #fcfbf7 0%, #f6f3eb 52%, #f2eee3 100%);

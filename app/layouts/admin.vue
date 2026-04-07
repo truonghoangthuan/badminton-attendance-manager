@@ -24,7 +24,7 @@ const handleLogout = async () => {
 </script>
 
 <template>
-  <div class="relative flex min-h-screen flex-col overflow-x-hidden md:flex-row">
+  <div class="relative flex min-h-screen flex-col md:flex-row">
     <div class="bg-mesh" />
 
     <header class="sticky top-0 z-40 flex w-full items-center justify-between border-b border-brand-line bg-brand-sand/95 p-4 backdrop-blur md:hidden">
@@ -104,7 +104,7 @@ const handleLogout = async () => {
       </UIGlassCard>
     </aside>
 
-    <main class="relative z-10 w-full flex-1 overflow-x-hidden p-6 md:p-10">
+    <main class="relative z-10 w-full flex-1 p-6 md:p-10">
       <slot />
     </main>
   </div>

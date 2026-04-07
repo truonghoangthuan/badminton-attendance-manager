@@ -96,7 +96,7 @@ const handleNameUpdate = async () => {
 </script>
 
 <template>
-  <div class="relative min-h-screen overflow-x-hidden">
+  <div class="relative min-h-screen">
     <Toast position="top-right" />
 
     <div class="bg-mesh" />
