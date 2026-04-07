@@ -1,5 +1,5 @@
 {
-  "name": "badminton-attendance-manager-frontend",
+  "name": "badminton-attendance-manager",
   "type": "module",
   "private": true,
   "scripts": {
