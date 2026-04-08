@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { Calendar, Clock3, Copy, Loader2, MapPin, Plus, RefreshCcw, Users as UsersIcon, X } from 'lucide-vue-next';
+import { Calendar, ChevronDown, Clock3, Copy, Loader2, MapPin, Plus, RefreshCcw, Users as UsersIcon, X } from 'lucide-vue-next';
 
 definePageMeta({
   layout: 'admin',
@@ -23,6 +23,12 @@ const newSession = ref({
   date: new Date().toISOString().split('T')[0],
   time: '19:00',
   location: 'Sân cầu lông Quang Sport',
+});
+const timeOptions = Array.from({ length: 24 * 12 }, (_, index) => {
+  const hours = `${Math.floor(index / 12)}`.padStart(2, '0');
+  const minutes = `${(index % 12) * 5}`.padStart(2, '0');
+
+  return `${hours}:${minutes}`;
 });
 
 const formatSessionDate = (date: Date) => {
@@ -110,8 +116,8 @@ const resetForm = () => {
   editingSessionId.value = null;
   newSession.value = {
     date: new Date().toISOString().split('T')[0],
-    time: '18:00',
-    location: 'Badminton Court A',
+    time: '19:00',
+    location: 'Sân cầu lông Quang Sport',
   };
 };
 
@@ -135,7 +141,7 @@ const toggleStatus = async (session: any) => {
   const statusOrder: ('open' | 'locked' | 'completed')[] = ['open', 'locked', 'completed'];
   const currentIndex = statusOrder.indexOf(session.status);
   const nextStatus = statusOrder[(currentIndex + 1) % statusOrder.length];
-  
+
   const updateStatus = async () => {
     try {
       const docRef = doc(db, 'sessions', session.id);
@@ -181,7 +187,7 @@ const deleteSession = async (session: any) => {
       } finally {
         deletingSessionId.value = null;
       }
-    }
+    },
   });
 };
 
@@ -235,16 +241,23 @@ const getStatusColor = (status: string) => {
 
       <section v-else class="md:h-full md:overflow-y-auto md:pr-4">
         <div class="grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:grid-cols-3">
-          <UIGlassCard v-for="session in sessions" :key="session.id" hoverable class="group transition-all duration-300">
+          <UIGlassCard
+            v-for="session in sessions"
+            :key="session.id"
+            hoverable
+            class="group transition-all duration-300"
+          >
             <div class="flex flex-col gap-6">
               <!-- Card Header -->
               <div class="flex items-start justify-between">
                 <div class="flex items-center gap-4">
                   <!-- Date Icon Box -->
-                  <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-brand-sand text-brand-court ring-1 ring-brand-line shadow-sm">
+                  <div
+                    class="flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-brand-sand text-brand-court ring-1 ring-brand-line shadow-sm"
+                  >
                     <Calendar :size="24" />
                   </div>
-                  
+
                   <div class="space-y-1">
                     <div class="flex items-center gap-2">
                       <h3 class="text-2xl font-black tracking-tight text-brand-ink">{{ session.date }}</h3>
@@ -293,30 +306,30 @@ const getStatusColor = (status: string) => {
                     Open Details
                   </UIGlassButton>
                 </NuxtLink>
-                
+
                 <div class="flex items-center gap-2">
-                  <UIGlassButton 
-                    variant="secondary" 
+                  <UIGlassButton
+                    variant="secondary"
                     title="Copy Link"
-                    class="!h-10 !w-10 !p-0 !min-w-[40px]" 
+                    class="!h-10 !w-10 !p-0 !min-w-[40px]"
                     @click="copySessionLink(session.id)"
                   >
                     <Copy :size="14" />
                   </UIGlassButton>
 
-                  <UIGlassButton 
-                    variant="ghost" 
+                  <UIGlassButton
+                    variant="ghost"
                     title="Edit Session"
-                    class="!h-10 !w-10 !p-0 !min-w-[40px]" 
+                    class="!h-10 !w-10 !p-0 !min-w-[40px]"
                     @click="openEditModal(session)"
                   >
                     <Clock3 :size="14" />
                   </UIGlassButton>
 
-                  <UIGlassButton 
-                    variant="ghost" 
+                  <UIGlassButton
+                    variant="ghost"
                     title="Toggle Status"
-                    class="!h-10 !w-10 !p-0 !min-w-[40px]" 
+                    class="!h-10 !w-10 !p-0 !min-w-[40px]"
                     @click="toggleStatus(session)"
                   >
                     <RefreshCcw :size="14" />
@@ -335,38 +348,60 @@ const getStatusColor = (status: string) => {
       <div class="flex flex-col gap-2 text-center">
         <p class="text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">Session Setup</p>
         <div>
-        <h2 class="text-2xl font-black tracking-tight text-brand-ink">
-          {{ isEditing ? 'Edit Session' : 'Create a New Session' }}
-        </h2>
-        <p class="mt-1 text-sm font-medium text-brand-slate">
-          {{ isEditing ? 'Update the session details below.' : 'Add the date, time, and location to open attendance for players.' }}
-        </p>
+          <h2 class="text-2xl font-black tracking-tight text-brand-ink">
+            {{ isEditing ? 'Edit Session' : 'Create a New Session' }}
+          </h2>
+          <p class="mt-1 text-sm font-medium text-brand-slate">
+            {{
+              isEditing
+                ? 'Update the session details below.'
+                : 'Add the date, time, and location to open attendance for players.'
+            }}
+          </p>
         </div>
       </div>
     </template>
 
     <form @submit.prevent="createSession" class="flex flex-col gap-5">
       <div class="flex w-full flex-col gap-2">
-        <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">
-          Date
-        </label>
-        <div class="relative">
-          <div class="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate">
+        <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate"> Date </label>
+        <div class="group relative">
+          <div class="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate transition-colors group-focus-within:text-brand-court">
             <Calendar :size="18" />
+          </div>
+          <div class="pointer-events-none absolute right-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate/80 transition-colors group-focus-within:text-brand-court">
+            <ChevronDown :size="18" />
           </div>
           <DatePicker
             v-model="selectedSessionDate"
             dateFormat="yy-mm-dd"
             :manualInput="false"
             class="w-full"
-            inputClass="w-full rounded-2xl border border-brand-line bg-[#fcfcf9] py-4 pl-12 pr-4 text-brand-ink placeholder:text-brand-slate/70 focus:border-brand-court focus:ring-4 focus:ring-brand-court/10 transition-all outline-none"
+            inputClass="w-full rounded-2xl border border-brand-line bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,246,240,0.96))] py-4 pl-12 pr-12 text-base font-bold tracking-[0.02em] text-brand-ink placeholder:text-brand-slate/70 shadow-[0_18px_40px_-32px_rgba(35,55,34,0.34)] transition-all outline-none hover:border-brand-court/30 hover:shadow-[0_20px_42px_-30px_rgba(56,126,88,0.26)] focus:border-brand-court focus:ring-4 focus:ring-brand-court/10"
             required
           />
         </div>
       </div>
-      <UIGlassInput v-model="newSession.time" type="time" label="Time" required>
-        <template #icon><Clock3 :size="18" /></template>
-      </UIGlassInput>
+      <div class="flex w-full flex-col gap-2">
+        <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate"> Time </label>
+        <div class="group relative">
+          <div class="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate transition-colors group-focus-within:text-brand-court">
+            <Clock3 :size="18" />
+          </div>
+          <div class="pointer-events-none absolute right-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate/80 transition-colors group-focus-within:text-brand-court">
+            <ChevronDown :size="18" />
+          </div>
+          <select
+            v-model="newSession.time"
+            required
+            class="w-full appearance-none rounded-2xl border border-brand-line bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,246,240,0.96))] py-4 pl-12 pr-12 text-base font-bold tracking-[0.02em] text-brand-ink shadow-[0_18px_40px_-32px_rgba(35,55,34,0.34)] transition-all outline-none hover:border-brand-court/30 hover:shadow-[0_20px_42px_-30px_rgba(56,126,88,0.26)] focus:border-brand-court focus:ring-4 focus:ring-brand-court/10"
+          >
+            <option v-for="time in timeOptions" :key="time" :value="time">
+              {{ time }}
+            </option>
+          </select>
+        </div>
+      </div>
       <UIGlassInput v-model="newSession.location" type="text" label="Location" placeholder="Badminton Court A" required>
         <template #icon><MapPin :size="18" /></template>
       </UIGlassInput>
