@@ -237,21 +237,23 @@ const handleNameUpdate = async () => {
       </form>
     </UIGlassModal>
 
-    <main class="relative z-10 mx-auto max-w-7xl px-4 py-8 md:px-6 md:py-10">
+    <main class="relative z-10 mx-auto max-w-7xl px-4 py-8 pb-36 md:px-6 md:py-10 md:pb-40">
       <slot />
     </main>
 
-    <footer class="relative z-10 mx-auto max-w-7xl px-4 py-12 md:px-6">
-      <div class="glass-shell flex flex-col items-start justify-between gap-5 p-6 md:flex-row md:items-center">
-        <div>
-          <p class="section-kicker">Club Footer</p>
-          <p class="mt-2 text-sm font-bold uppercase tracking-[0.18em] text-brand-slate">
-            &copy; 2026 Badminton Attendance Manager
-          </p>
-        </div>
-        <div class="flex items-center gap-3">
-          <span class="score-chip">Court Ready</span>
-          <span class="score-chip">Player Friendly</span>
+    <footer class="fixed bottom-0 left-0 right-0 z-50 w-full px-4 py-4 md:px-6">
+      <div class="mx-auto max-w-7xl">
+        <div class="glass-shell flex flex-col items-start justify-between gap-5 p-6 md:flex-row md:items-center">
+          <div>
+            <p class="section-kicker">Club Footer</p>
+            <p class="mt-2 text-sm font-bold uppercase tracking-[0.18em] text-brand-slate">
+              &copy; 2026 Badminton Attendance Manager
+            </p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="score-chip">Court Ready</span>
+            <span class="score-chip">Player Friendly</span>
+          </div>
         </div>
       </div>
     </footer>
