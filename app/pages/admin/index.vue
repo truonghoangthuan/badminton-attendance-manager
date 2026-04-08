@@ -19,6 +19,7 @@ const adding = ref(false);
 const deletingSessionId = ref<string | null>(null);
 const isEditing = ref(false);
 const editingSessionId = ref<string | null>(null);
+const dateInputRef = ref<HTMLInputElement | null>(null);
 const newSession = ref({
   date: new Date().toISOString().split('T')[0],
   time: '19:00',
@@ -31,34 +32,19 @@ const timeOptions = Array.from({ length: 24 * 12 }, (_, index) => {
   return `${hours}:${minutes}`;
 });
 
-const formatSessionDate = (date: Date) => {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
+const openDatePicker = () => {
+  const input = dateInputRef.value;
 
-  return `${year}-${month}-${day}`;
-};
-
-const parseSessionDate = (value: string) => {
-  if (!value) {
-    return null;
+  if (!input) {
+    return;
   }
 
-  const [year, month, day] = value.split('-').map(Number);
+  input.focus();
 
-  if (!year || !month || !day) {
-    return null;
+  if (typeof input.showPicker === 'function') {
+    input.showPicker();
   }
-
-  return new Date(year, month - 1, day);
 };
-
-const selectedSessionDate = computed<Date | null>({
-  get: () => parseSessionDate(newSession.value.date),
-  set: (value) => {
-    newSession.value.date = value ? formatSessionDate(value) : '';
-  },
-});
 
 onMounted(() => {
   const q = query(sessionsRef, orderBy('date', 'desc'));
@@ -365,19 +351,18 @@ const getStatusColor = (status: string) => {
     <form @submit.prevent="createSession" class="flex flex-col gap-5">
       <div class="flex w-full flex-col gap-2">
         <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate"> Date </label>
-        <div class="group relative">
+        <div class="group relative" @click="openDatePicker">
           <div class="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate transition-colors group-focus-within:text-brand-court">
             <Calendar :size="18" />
           </div>
           <div class="pointer-events-none absolute right-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate/80 transition-colors group-focus-within:text-brand-court">
             <ChevronDown :size="18" />
           </div>
-          <DatePicker
-            v-model="selectedSessionDate"
-            dateFormat="yy-mm-dd"
-            :manualInput="false"
-            class="w-full"
-            inputClass="w-full rounded-2xl border border-brand-line bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,246,240,0.96))] py-4 pl-12 pr-12 text-base font-bold tracking-[0.02em] text-brand-ink placeholder:text-brand-slate/70 shadow-[0_18px_40px_-32px_rgba(35,55,34,0.34)] transition-all outline-none hover:border-brand-court/30 hover:shadow-[0_20px_42px_-30px_rgba(56,126,88,0.26)] focus:border-brand-court focus:ring-4 focus:ring-brand-court/10"
+          <input
+            ref="dateInputRef"
+            v-model="newSession.date"
+            type="date"
+            class="date-input w-full appearance-none rounded-2xl border border-brand-line bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,246,240,0.96))] py-4 pl-12 pr-12 text-base font-bold tracking-[0.02em] text-brand-ink shadow-[0_18px_40px_-32px_rgba(35,55,34,0.34)] transition-all outline-none hover:border-brand-court/30 hover:shadow-[0_20px_42px_-30px_rgba(56,126,88,0.26)] focus:border-brand-court focus:ring-4 focus:ring-brand-court/10"
             required
           />
         </div>
@@ -415,3 +400,18 @@ const getStatusColor = (status: string) => {
     </form>
   </UIGlassModal>
 </template>
+
+<style scoped>
+.date-input::-webkit-date-and-time-value {
+  text-align: left;
+}
+
+.date-input::-webkit-datetime-edit {
+  padding-left: 0.25rem;
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  cursor: pointer;
+}
+</style>
