@@ -331,16 +331,12 @@ const formatCurrency = (value: number) => {
             <h2 class="text-2xl font-black tracking-tight">This session is closed</h2>
           </UIGlassCard>
 
-          <SessionQRCodeDisplay v-if="session.createdBy" :created-by="session.createdBy" />
-          <div
-            v-else-if="!loading"
-            class="rounded-[32px] border border-dashed border-brand-line bg-brand-sand/50 p-6 text-center"
-          >
-            <p class="text-xs font-bold uppercase tracking-widest text-brand-slate">Session creator unknown</p>
-            <p class="mt-1 text-[11px] font-medium text-brand-slate/60">
-              QR code payment unavailable for this session.
-            </p>
-          </div>
+          <SessionQRCodeDisplay
+            v-if="session"
+            :amount="calculatedFeePerPerson"
+            :session-date="session.date"
+            :created-by="session.createdBy"
+          />
         </div>
       </section>
 

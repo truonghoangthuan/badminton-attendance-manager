@@ -748,7 +748,7 @@ const getStatusColor = (status: string) => {
             </div>
           </UIGlassCard>
 
-          <AdminQRCodeManager />
+          <AdminQRCodeManager :amount="calculatedFeePerPerson" :session-date="session.date" />
         </div>
       </div>
     </section>
