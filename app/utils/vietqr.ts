@@ -1,8 +1,8 @@
 const VIET_QR_BASE_URL = 'https://img.vietqr.io/image';
 
 export const VIET_QR_PAYMENT_CONFIG = {
-  bankId: 'momo',
-  accountNumber: '0974667060',
+  bankId: 'VPB',
+  accountNumber: '6986863979',
   accountName: 'Truong Hoang Thuan',
 } as const;
 
