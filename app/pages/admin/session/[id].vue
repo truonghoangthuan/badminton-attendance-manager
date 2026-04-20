@@ -547,8 +547,7 @@ const getStatusColor = (status: string) => {
                     <th class="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">
                       Payment
                     </th>
-                    <th class="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">
-                    </th>
+                    <th class="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate"></th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-brand-line bg-white">
@@ -746,9 +745,9 @@ const getStatusColor = (status: string) => {
                 </div>
               </div>
             </div>
-          </UIGlassCard>
 
-          <AdminQRCodeManager />
+            <AdminQRCodeManager />
+          </UIGlassCard>
         </div>
       </div>
     </section>
@@ -760,28 +759,19 @@ const getStatusColor = (status: string) => {
         <p class="text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">Session Setup</p>
         <div>
           <h2 class="text-2xl font-black tracking-tight text-brand-ink">Edit Session Details</h2>
-          <p class="mt-1 text-sm font-medium text-brand-slate">
-            Update the date, time, and location of this session.
-          </p>
+          <p class="mt-1 text-sm font-medium text-brand-slate">Update the date, time, and location of this session.</p>
         </div>
       </div>
     </template>
 
     <form @submit.prevent="saveSessionEdits" class="flex flex-col gap-5">
       <div class="flex w-full flex-col gap-2">
-        <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">
-          Date
-        </label>
+        <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate"> Date </label>
         <div class="relative">
           <div class="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate">
             <Calendar :size="18" />
           </div>
-          <UIGlassInput
-            v-model="editForm.date"
-            type="date"
-            required
-            class="!pl-12"
-          />
+          <UIGlassInput v-model="editForm.date" type="date" required class="!pl-12" />
         </div>
       </div>
       <UIGlassInput v-model="editForm.time" type="time" label="Time" required>
@@ -792,9 +782,7 @@ const getStatusColor = (status: string) => {
       </UIGlassInput>
 
       <div class="flex justify-end pt-4">
-        <UIGlassButton type="submit" :loading="savingEdits">
-          Save Changes
-        </UIGlassButton>
+        <UIGlassButton type="submit" :loading="savingEdits"> Save Changes </UIGlassButton>
       </div>
     </form>
   </UIGlassModal>
