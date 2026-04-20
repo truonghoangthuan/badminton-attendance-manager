@@ -113,7 +113,7 @@ const calculatedFeePerPerson = computed(() => {
     return 0;
   }
 
-  return Number((totalSessionCost.value / totalActualPlayers.value).toFixed(2));
+  return Math.ceil(totalSessionCost.value / totalActualPlayers.value / 1000) * 1000;
 });
 
 const sessionMeta = computed(() => {
