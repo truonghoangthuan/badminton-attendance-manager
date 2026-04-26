@@ -2,11 +2,9 @@
 import { doc, getDoc, collection, setDoc, orderBy, onSnapshot, query } from 'firebase/firestore';
 import {
   BadgeDollarSign,
-  Check,
   Clock3,
   Loader2,
   MapPin,
-  ReceiptText,
   User,
   Users as UsersIcon,
 } from 'lucide-vue-next';
@@ -26,6 +24,13 @@ const newName = ref('');
 const vote = ref({
   isJoining: true,
   guestCount: 0,
+});
+const hasExistingVote = computed(() => {
+  if (!user.value) {
+    return false;
+  }
+
+  return attendanceList.value.some((attendance) => attendance.id === user.value?.uid);
 });
 
 const totalActualPlayers = computed(() => {
@@ -181,6 +186,40 @@ const formatCurrency = (value: number) => {
     maximumFractionDigits: 0,
   }).format(value || 0);
 };
+
+const isSessionCompleted = computed(() => session.value?.status === 'completed');
+
+const getAttendanceStatusClass = (isJoining: boolean) => {
+  return isJoining
+    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+    : 'border-red-200 bg-red-50 text-red-600';
+};
+
+const getCompletionStatusClass = (value: boolean) => {
+  return value
+    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+    : 'border-slate-200 bg-slate-100 text-slate-600';
+};
+
+const getPresentLabel = (attendance: any) => {
+  if (!attendance.isJoining || !isSessionCompleted.value) {
+    return '-';
+  }
+
+  return attendance.actualAttended ? 'Present' : 'Absent';
+};
+
+const getPaidLabel = (attendance: any) => {
+  if (!attendance.isJoining || !isSessionCompleted.value) {
+    return '-';
+  }
+
+  return attendance.hasPaid ? 'Paid' : 'Unpaid';
+};
+
+const getGuestLabel = (guestCount: number) => {
+  return guestCount > 0 ? `+${guestCount}` : '-';
+};
 </script>
 
 <template>
@@ -319,9 +358,16 @@ const formatCurrency = (value: number) => {
                 <template #icon><UsersIcon :size="18" /></template>
               </UIGlassInput>
 
+              <p
+                v-if="hasExistingVote"
+                class="rounded-[20px] border border-brand-court/15 bg-emerald-50/70 px-4 py-3 text-sm font-medium text-brand-slate"
+              >
+                You have already responded. You can update your RSVP while the session is still open.
+              </p>
+
               <UIGlassButton type="submit" :disabled="submitting" class="w-full">
                 <Loader2 v-if="submitting" class="animate-spin" :size="18" />
-                <span v-else>Submit</span>
+                <span v-else>{{ hasExistingVote ? 'Update' : 'Submit' }}</span>
               </UIGlassButton>
             </form>
           </UIGlassCard>
@@ -348,31 +394,66 @@ const formatCurrency = (value: number) => {
         <div class="court-divider"><span>Players</span></div>
 
         <UIGlassCard v-if="attendanceList.length" class="!p-0 overflow-hidden">
-          <div class="divide-y divide-brand-line">
-            <div v-for="att in attendanceList" :key="att.id" class="flex items-center justify-between gap-4 px-5 py-4">
-              <div>
-                <p class="font-black text-brand-ink">{{ att.name }}</p>
-                <p class="text-sm font-medium text-brand-slate">
-                  {{
-                    att.isJoining
-                      ? `Joining${att.guestCount ? ` with ${att.guestCount} guest${att.guestCount > 1 ? 's' : ''}` : ''}`
-                      : 'Unavailable'
-                  }}
-                </p>
-              </div>
-              <div
-                class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em]"
-                :class="
-                  att.hasPaid
-                    ? 'border-brand-court/20 bg-emerald-50 text-brand-court'
-                    : 'border-brand-line bg-white text-brand-slate'
-                "
-              >
-                <Check v-if="att.hasPaid" :size="14" />
-                <ReceiptText v-else :size="14" />
-                {{ att.hasPaid ? 'Paid' : 'Unpaid' }}
-              </div>
-            </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-brand-line">
+              <thead class="bg-brand-sand/70">
+                <tr>
+                  <th class="px-5 py-4 text-left text-[11px] font-black uppercase tracking-[0.18em] text-brand-slate">
+                    Attendee name
+                  </th>
+                  <th class="px-5 py-4 text-left text-[11px] font-black uppercase tracking-[0.18em] text-brand-slate">
+                    Status
+                  </th>
+                  <th class="px-5 py-4 text-left text-[11px] font-black uppercase tracking-[0.18em] text-brand-slate">
+                    Present
+                  </th>
+                  <th class="px-5 py-4 text-left text-[11px] font-black uppercase tracking-[0.18em] text-brand-slate">
+                    Is paid
+                  </th>
+                  <th class="px-5 py-4 text-left text-[11px] font-black uppercase tracking-[0.18em] text-brand-slate">
+                    Guest
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-brand-line bg-white/40">
+                <tr v-for="att in attendanceList" :key="att.id" class="align-middle">
+                  <td class="px-5 py-4">
+                    <p class="font-black text-brand-ink">{{ att.name }}</p>
+                  </td>
+                  <td class="px-5 py-4">
+                    <span
+                      class="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em]"
+                      :class="getAttendanceStatusClass(att.isJoining)"
+                    >
+                      {{ att.isJoining ? 'Joining' : 'Unavailable' }}
+                    </span>
+                  </td>
+                  <td class="px-5 py-4">
+                    <span
+                      v-if="att.isJoining && isSessionCompleted"
+                      class="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em]"
+                      :class="getCompletionStatusClass(att.actualAttended)"
+                    >
+                      {{ getPresentLabel(att) }}
+                    </span>
+                    <span v-else class="text-sm font-medium text-brand-slate">-</span>
+                  </td>
+                  <td class="px-5 py-4">
+                    <span
+                      v-if="att.isJoining && isSessionCompleted"
+                      class="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em]"
+                      :class="getCompletionStatusClass(att.hasPaid)"
+                    >
+                      {{ getPaidLabel(att) }}
+                    </span>
+                    <span v-else class="text-sm font-medium text-brand-slate">-</span>
+                  </td>
+                  <td class="px-5 py-4 text-sm font-bold text-brand-ink">
+                    {{ getGuestLabel(att.guestCount || 0) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </UIGlassCard>
       </section>
