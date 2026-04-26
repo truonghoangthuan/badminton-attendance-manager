@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import { doc, getDoc, collection, setDoc, orderBy, onSnapshot, query } from 'firebase/firestore';
-import {
-  BadgeDollarSign,
-  Clock3,
-  Loader2,
-  MapPin,
-  User,
-  Users as UsersIcon,
-} from 'lucide-vue-next';
+import { BadgeDollarSign, Clock3, Loader2, MapPin, User, Users as UsersIcon } from 'lucide-vue-next';
+import { calculateFeePerPerson, getSessionFinancialBreakdown } from '~/utils/sessionFinancials';
 
 const route = useRoute();
 const sessionId = route.params.id as string;
@@ -43,21 +37,14 @@ const totalActualPlayers = computed(() => {
   }, 0);
 });
 
-const totalSessionCost = computed(() => {
-  if (!session.value) {
-    return 0;
-  }
+const financialBreakdown = computed(() =>
+  getSessionFinancialBreakdown(session.value?.financials, totalActualPlayers.value),
+);
 
-  const financials = session.value.financials || {};
-  return (financials.courtCost || 0) + (financials.shuttlecocksUsed || 0) * (financials.shuttlecockPrice || 0);
-});
+const totalSessionCost = computed(() => financialBreakdown.value.totalSessionCost);
 
 const calculatedFeePerPerson = computed(() => {
-  if (!session.value || totalActualPlayers.value === 0) {
-    return 0;
-  }
-
-  return Math.ceil(totalSessionCost.value / totalActualPlayers.value / 1000) * 1000;
+  return calculateFeePerPerson(totalSessionCost.value, totalActualPlayers.value);
 });
 
 onMounted(async () => {
@@ -187,18 +174,21 @@ const formatCurrency = (value: number) => {
   }).format(value || 0);
 };
 
+const formatPreciseCurrency = (value: number) => {
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(value || 0);
+};
+
 const isSessionCompleted = computed(() => session.value?.status === 'completed');
 
 const getAttendanceStatusClass = (isJoining: boolean) => {
-  return isJoining
-    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-    : 'border-red-200 bg-red-50 text-red-600';
+  return isJoining ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-600';
 };
 
 const getCompletionStatusClass = (value: boolean) => {
-  return value
-    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-    : 'border-slate-200 bg-slate-100 text-slate-600';
+  return value ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-100 text-slate-600';
 };
 
 const getPresentLabel = (attendance: any) => {
@@ -375,6 +365,43 @@ const getGuestLabel = (guestCount: number) => {
           <UIGlassCard v-else class="space-y-3">
             <p class="section-kicker">RSVP</p>
             <h2 class="text-2xl font-black tracking-tight">This session is closed</h2>
+          </UIGlassCard>
+
+          <UIGlassCard v-if="session.status === 'completed'">
+            <div>
+              <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">Fee formula</p>
+              <h2 class="mt-2 mb-2 text-xl font-black tracking-tight text-brand-ink">How this fee is calculated</h2>
+            </div>
+
+            <div class="space-y-2 text-sm font-medium text-brand-slate">
+              <p>
+                Shuttlecock price = {{ formatCurrency(financialBreakdown.shuttlecockPackPrice) }} / 12 =
+                {{ formatCurrency(financialBreakdown.shuttlecockPrice) }}
+              </p>
+              <p>
+                Shuttlecock cost = {{ financialBreakdown.shuttlecocksUsed }} ×
+                {{ formatCurrency(financialBreakdown.shuttlecockPrice) }} =
+                {{ formatCurrency(financialBreakdown.shuttlecockCost) }}
+              </p>
+              <p>
+                Total session cost = {{ formatCurrency(financialBreakdown.courtCost) }} +
+                {{ formatCurrency(financialBreakdown.shuttlecockCost) }} =
+                {{ formatCurrency(financialBreakdown.totalSessionCost) }}
+              </p>
+              <p>
+                <template v-if="financialBreakdown.totalActualPlayers > 0">
+                  Fee per person = {{ formatCurrency(financialBreakdown.totalSessionCost) }} /
+                  {{ financialBreakdown.totalActualPlayers }} player{{
+                    financialBreakdown.totalActualPlayers === 1 ? '' : 's'
+                  }}
+                  =
+                  {{ formatCurrency(calculatedFeePerPerson) }}
+                </template>
+                <template v-else>
+                  Fee per person = waiting for checked-in players before the split can be calculated.
+                </template>
+              </p>
+            </div>
           </UIGlassCard>
 
           <SessionQRCodeDisplay v-if="session.createdBy" :created-by="session.createdBy" />

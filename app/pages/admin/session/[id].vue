@@ -17,6 +17,7 @@ import {
   Users,
 } from 'lucide-vue-next';
 import { doc, onSnapshot, collection, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { calculateFeePerPerson, getSessionFinancialBreakdown } from '~/utils/sessionFinancials';
 
 definePageMeta({
   layout: 'admin',
@@ -99,21 +100,12 @@ const unpaidPlayers = computed(() => {
   return attendances.value.filter((attendance) => attendance.actualAttended && !attendance.hasPaid).length;
 });
 
-const totalSessionCost = computed(() => {
-  if (!session.value) {
-    return 0;
-  }
+const financialBreakdown = computed(() => getSessionFinancialBreakdown(session.value?.financials, totalActualPlayers.value));
 
-  const financials = session.value.financials || {};
-  return (financials.courtCost || 0) + (financials.shuttlecocksUsed || 0) * (financials.shuttlecockPrice || 0);
-});
+const totalSessionCost = computed(() => financialBreakdown.value.totalSessionCost);
 
 const calculatedFeePerPerson = computed(() => {
-  if (!session.value || totalActualPlayers.value === 0) {
-    return 0;
-  }
-
-  return Math.ceil(totalSessionCost.value / totalActualPlayers.value / 1000) * 1000;
+  return calculateFeePerPerson(totalSessionCost.value, totalActualPlayers.value);
 });
 
 const sessionMeta = computed(() => {
@@ -296,7 +288,8 @@ const updateFinancials = async () => {
     await updateDoc(docRef, {
       'financials.courtCost': session.value.financials.courtCost,
       'financials.shuttlecocksUsed': session.value.financials.shuttlecocksUsed,
-      'financials.shuttlecockPrice': session.value.financials.shuttlecockPrice,
+      'financials.shuttlecockPackPrice': session.value.financials.shuttlecockPackPrice || 0,
+      'financials.shuttlecockPrice': financialBreakdown.value.shuttlecockPrice,
       'financials.calculatedFeePerPerson': calculatedFeePerPerson.value,
     });
   } catch (e) {
@@ -316,6 +309,13 @@ const formatCurrency = (value: number) => {
     currency: 'VND',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
+  }).format(value || 0);
+};
+
+const formatPreciseCurrency = (value: number) => {
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(value || 0);
 };
 
@@ -685,10 +685,10 @@ const getStatusColor = (status: string) => {
 
                 <div class="space-y-2">
                   <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate"
-                    >Shuttle Price</label
+                    >Shuttle Pack Price</label
                   >
                   <InputNumber
-                    v-model="session.financials.shuttlecockPrice"
+                    v-model="session.financials.shuttlecockPackPrice"
                     :min="0"
                     locale="en-US"
                     :use-grouping="true"
@@ -699,6 +699,18 @@ const getStatusColor = (status: string) => {
                     @blur="updateFinancials"
                   />
                 </div>
+              </div>
+
+              <div class="rounded-[24px] border border-brand-line bg-white/70 px-4 py-4">
+                <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">Derived shuttle price</p>
+                <p class="mt-2 text-2xl font-black tracking-tight text-brand-ink">
+                  {{ formatCurrency(financialBreakdown.shuttlecockPrice) }}
+                </p>
+                <p class="mt-1 text-sm font-medium text-brand-slate">
+                  {{ formatCurrency(financialBreakdown.shuttlecockPackPrice) }} / 12 =
+                  {{ formatPreciseCurrency(financialBreakdown.rawShuttlecockPrice) }}, rounded to the nearest 1,000
+                  VND.
+                </p>
               </div>
             </div>
 
