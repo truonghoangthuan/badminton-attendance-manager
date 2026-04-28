@@ -108,7 +108,7 @@ export const useUserProfile = () => {
 
     try {
       // 1. Remove from Supabase Storage
-      await supabaseQR.remove(user.value.uid, profile.value.paymentQR)
+      await supabaseQR.remove(profile.value.paymentQR)
       
       // 2. Clear from Firestore profile
       const docRef = doc(db, 'profiles', user.value.uid)

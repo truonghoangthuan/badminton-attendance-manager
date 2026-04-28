@@ -1,17 +1,16 @@
 <script setup lang="ts">
-import { Download, Maximize2, QrCode, X, Copy, Check } from 'lucide-vue-next';
+import { Download, Maximize2, QrCode, X } from 'lucide-vue-next';
 import { doc, getDoc } from 'firebase/firestore';
 
 const props = defineProps<{
-  createdBy: string;
+  createdBy?: string;
+  qrUrl?: string | null;
 }>();
 
 const { db } = useFirebase();
 const creatorProfile = ref<any>(null);
 const loading = ref(true);
-const fetchError = ref<string | null>(null);
 const showExpand = ref(false);
-const copied = ref(false);
 
 onMounted(async () => {
   if (!props.createdBy) {
@@ -24,56 +23,33 @@ onMounted(async () => {
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       creatorProfile.value = docSnap.data();
-    } else {
-      fetchError.value = 'Profile not found';
     }
   } catch (e: any) {
     console.error('Error fetching creator profile:', e);
-    if (e.code === 'permission-denied') {
-      fetchError.value = 'Access restricted (Permission Denied)';
-    } else {
-      fetchError.value = 'Failed to load creator info';
-    }
   } finally {
     loading.value = false;
   }
 });
 
 const downloadQR = () => {
-  if (!creatorProfile.value?.paymentQR) return;
+  if (!props.qrUrl) return;
   const link = document.createElement('a');
-  link.href = creatorProfile.value.paymentQR;
+  link.href = props.qrUrl;
   link.download = `payment_qr_${props.createdBy}.png`;
   link.target = '_blank';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 };
-
-const copyPaymentInfo = () => {
-  if (!creatorProfile.value?.displayName) return;
-  navigator.clipboard.writeText(creatorProfile.value.displayName);
-  copied.value = true;
-  setTimeout(() => {
-    copied.value = false;
-  }, 2000);
-};
 </script>
 
 <template>
-  <div v-if="loading" class="flex flex-col items-center justify-center space-y-4 rounded-[32px] border border-brand-line bg-brand-sand/50 p-8">
+  <div v-if="loading && createdBy" class="flex flex-col items-center justify-center space-y-4 rounded-[32px] border border-brand-line bg-brand-sand/50 p-8">
      <div class="h-10 w-10 animate-spin rounded-full border-4 border-brand-court border-t-transparent" />
      <p class="text-xs font-bold uppercase tracking-widest text-brand-slate">Loading payment info...</p>
   </div>
 
-  <div v-else-if="fetchError" class="rounded-[32px] border border-dashed border-red-200 bg-red-50 px-6 py-8 text-center text-red-600">
-    <QrCode :size="32" class="mx-auto opacity-40" />
-    <p class="mt-4 font-black">Unable to load payment info</p>
-    <p class="mt-1 text-sm font-medium opacity-80">{{ fetchError }}</p>
-    <p class="mt-3 text-[10px] font-bold uppercase tracking-wider">Contact admin for direct payment</p>
-  </div>
-
-  <div v-else-if="!creatorProfile?.paymentQR" class="rounded-[32px] border border-dashed border-brand-line bg-brand-sand px-6 py-8 text-center text-brand-slate">
+  <div v-else-if="!qrUrl" class="rounded-[32px] border border-dashed border-brand-line bg-brand-sand px-6 py-8 text-center text-brand-slate">
     <QrCode :size="32" class="mx-auto opacity-40" />
     <p class="mt-4 font-black text-brand-ink">No payment QR uploaded</p>
     <p class="mt-1 text-sm font-medium">Please pay directly at the court.</p>
@@ -83,7 +59,7 @@ const copyPaymentInfo = () => {
     <div class="flex flex-col sm:flex-row sm:items-center">
       <!-- QR Image -->
       <div class="group relative aspect-square w-full shrink-0 border-b border-brand-line bg-white p-6 sm:w-48 sm:border-b-0 sm:border-r">
-        <img :src="creatorProfile.paymentQR" alt="Scan to pay" class="h-full w-full object-contain" />
+        <img :src="qrUrl || undefined" alt="Scan to pay" class="h-full w-full object-contain" />
         <button
           class="absolute inset-0 flex items-center justify-center bg-brand-ink/40 opacity-0 transition-opacity hover:opacity-100"
           @click="showExpand = true"
@@ -100,7 +76,7 @@ const copyPaymentInfo = () => {
           <p class="text-[10px] font-black uppercase tracking-[0.2em] text-brand-court">Settlement</p>
           <h3 class="mt-1 text-xl font-black tracking-tight text-brand-ink">Scan to Settle Fee</h3>
           <p class="mt-1 text-sm font-medium text-brand-slate">
-            Managed by <span class="text-brand-ink font-bold">{{ creatorProfile.displayName || 'Admin' }}</span>
+            Managed by <span class="text-brand-ink font-bold">{{ creatorProfile?.displayName || 'Admin' }}</span>
           </p>
         </div>
 
@@ -130,7 +106,7 @@ const copyPaymentInfo = () => {
           </div>
 
           <div class="my-8 aspect-square w-full rounded-[32px] border-8 border-brand-sand bg-white p-4 shadow-inner">
-            <img :src="creatorProfile.paymentQR" alt="Payment QR" class="h-full w-full object-contain" />
+            <img :src="qrUrl || undefined" alt="Payment QR" class="h-full w-full object-contain" />
           </div>
 
           <UIGlassButton class="w-full" @click="downloadQR">

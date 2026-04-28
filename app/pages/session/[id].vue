@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { doc, getDoc, collection, setDoc, orderBy, onSnapshot, query } from 'firebase/firestore';
+import { doc, collection, setDoc, orderBy, onSnapshot, query } from 'firebase/firestore';
 import { BadgeDollarSign, Clock3, Loader2, MapPin, User, Users as UsersIcon } from 'lucide-vue-next';
 import { calculateFeePerPerson, getSessionFinancialBreakdown } from '~/utils/sessionFinancials';
 
@@ -49,19 +49,21 @@ const calculatedFeePerPerson = computed(() => {
 
 onMounted(async () => {
   try {
-    const sessionDoc = await getDoc(doc(db, 'sessions', sessionId));
-    if (!sessionDoc.exists()) {
-      message.value = { text: 'Session not found.', type: 'error' };
-      loading.value = false;
-      return;
-    }
+    const unsubscribeSession = onSnapshot(doc(db, 'sessions', sessionId), (sessionDoc) => {
+      if (!sessionDoc.exists()) {
+        message.value = { text: 'Session not found.', type: 'error' };
+        loading.value = false;
+        return;
+      }
 
-    session.value = { id: sessionDoc.id, ...sessionDoc.data() };
+      session.value = { id: sessionDoc.id, ...sessionDoc.data() };
+    });
 
     const attendancesRef = collection(db, `sessions/${sessionId}/attendances`);
     const qAttendance = query(attendancesRef, orderBy('updatedAt', 'desc'));
     const unsubscribeSnapshot = onSnapshot(qAttendance, (snapshot) => {
       attendanceList.value = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      loading.value = false;
     });
 
     watchEffect(() => {
@@ -74,12 +76,17 @@ onMounted(async () => {
       }
     });
 
-    onUnmounted(unsubscribeSnapshot);
+    onUnmounted(() => {
+      unsubscribeSession();
+      unsubscribeSnapshot();
+    });
   } catch (e) {
     console.error('Error loading session:', e);
     message.value = { text: 'Error loading session data.', type: 'error' };
   } finally {
-    loading.value = false;
+    if (message.value.type === 'error') {
+      loading.value = false;
+    }
   }
 });
 
@@ -404,16 +411,7 @@ const getGuestLabel = (guestCount: number) => {
             </div>
           </UIGlassCard>
 
-          <SessionQRCodeDisplay v-if="session.createdBy" :created-by="session.createdBy" />
-          <div
-            v-else-if="!loading"
-            class="rounded-[32px] border border-dashed border-brand-line bg-brand-sand/50 p-6 text-center"
-          >
-            <p class="text-xs font-bold uppercase tracking-widest text-brand-slate">Session creator unknown</p>
-            <p class="mt-1 text-[11px] font-medium text-brand-slate/60">
-              QR code payment unavailable for this session.
-            </p>
-          </div>
+          <SessionQRCodeDisplay :created-by="session.createdBy" :qr-url="session.paymentQR || null" />
         </div>
       </section>
 

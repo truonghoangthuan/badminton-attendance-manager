@@ -758,7 +758,7 @@ const getStatusColor = (status: string) => {
               </div>
             </div>
 
-            <AdminQRCodeManager />
+            <AdminQRCodeManager :session-id="sessionId" :qr-url="session?.paymentQR || null" />
           </UIGlassCard>
         </div>
       </div>

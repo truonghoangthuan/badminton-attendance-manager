@@ -1,7 +1,14 @@
 <script setup lang="ts">
-import { QrCode, Upload, X, Loader2, Image as ImageIcon, Trash2 } from 'lucide-vue-next';
+import { doc, updateDoc } from 'firebase/firestore';
+import { QrCode, Upload, X, Image as ImageIcon, Trash2 } from 'lucide-vue-next';
 
-const { profile, uploadQRCode, deleteQRCode } = useUserProfile();
+const props = defineProps<{
+  sessionId: string;
+  qrUrl?: string | null;
+}>();
+
+const { db } = useFirebase();
+const supabaseQR = useSupabaseQRCode();
 const toast = useToast();
 const fileInput = ref<HTMLInputElement | null>(null);
 const selectedFile = ref<File | null>(null);
@@ -49,11 +56,15 @@ const upload = async () => {
 
   uploading.value = true;
   try {
-    await uploadQRCode(selectedFile.value);
+    const downloadURL = await supabaseQR.upload(selectedFile.value, `sessions/${props.sessionId}`);
+    await updateDoc(doc(db, 'sessions', props.sessionId), {
+      paymentQR: downloadURL,
+    });
+
     toast.add({
       severity: 'success',
       summary: 'Success',
-      detail: 'Payment QR code updated.',
+      detail: 'Session payment QR code updated.',
       life: 3000,
     });
     previewUrl.value = null;
@@ -71,13 +82,20 @@ const upload = async () => {
   }
 };
 
-const removeProfileQR = async () => {
+const removeSessionQR = async () => {
   try {
-    await deleteQRCode();
+    if (props.qrUrl) {
+      await supabaseQR.remove(props.qrUrl);
+    }
+
+    await updateDoc(doc(db, 'sessions', props.sessionId), {
+      paymentQR: null,
+    });
+
     toast.add({
       severity: 'success',
       summary: 'Deleted',
-      detail: 'Payment QR code removed.',
+      detail: 'Session payment QR code removed.',
       life: 3000,
     });
   } catch (e) {
@@ -117,7 +135,7 @@ const cancelPreview = () => {
         <p class="section-kicker">Payment Setup</p>
         <h2 class="mt-2 text-2xl font-black tracking-tight">Payment QR Code</h2>
         <p class="mt-1 text-sm font-medium text-brand-slate">
-          Upload your banking QR code so attendees can pay you directly.
+          Upload the QR code for this session so attendees pay the exact fee for this date.
         </p>
       </div>
       <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-sand text-brand-court">
@@ -125,7 +143,7 @@ const cancelPreview = () => {
       </div>
     </div>
 
-    <div v-if="!profile?.paymentQR && !previewUrl" class="group relative">
+    <div v-if="!qrUrl && !previewUrl" class="group relative">
       <div
         class="flex cursor-pointer flex-col items-center justify-center rounded-[32px] border-2 border-dashed border-brand-line bg-brand-sand/50 px-6 py-12 transition-all hover:border-brand-court hover:bg-brand-sand"
         @click="triggerFileInput"
@@ -161,7 +179,7 @@ const cancelPreview = () => {
 
     <div v-else class="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
       <div class="relative shrink-0 overflow-hidden rounded-3xl border-4 border-white bg-white shadow-lg sm:w-48">
-        <img :src="profile.paymentQR" alt="Payment QR" class="aspect-square w-full object-contain p-2" />
+        <img :src="qrUrl || undefined" alt="Payment QR" class="aspect-square w-full object-contain p-2" />
         <div class="absolute inset-0 flex items-center justify-center bg-brand-ink/40 opacity-0 transition-opacity hover:opacity-100">
            <UIGlassButton variant="primary" class="scale-90" @click="triggerFileInput">
              Replace
@@ -173,7 +191,7 @@ const cancelPreview = () => {
         <div class="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
           <p class="text-sm font-bold text-emerald-700">QR Code active</p>
           <p class="mt-1 text-xs font-medium text-emerald-600/80">
-            Attendees will see this on the checkout screen.
+            Attendees on this session will see this QR code on the payment section.
           </p>
         </div>
 
@@ -182,7 +200,7 @@ const cancelPreview = () => {
             <template #icon-left><ImageIcon :size="14" /></template>
             Update QR
           </UIGlassButton>
-          <UIGlassButton variant="ghost" class="!px-4 !py-2.5 !text-sm text-red-600 hover:bg-red-50" @click="removeProfileQR">
+          <UIGlassButton variant="ghost" class="!px-4 !py-2.5 !text-sm text-red-600 hover:bg-red-50" @click="removeSessionQR">
             <template #icon-left><Trash2 :size="14" /></template>
             Remove
           </UIGlassButton>
