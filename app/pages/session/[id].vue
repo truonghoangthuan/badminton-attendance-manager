@@ -374,44 +374,18 @@ const getGuestLabel = (guestCount: number) => {
             <h2 class="text-2xl font-black tracking-tight">This session is closed</h2>
           </UIGlassCard>
 
-          <UIGlassCard v-if="session.status === 'completed'">
-            <div>
-              <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">Fee formula</p>
-              <h2 class="mt-2 mb-2 text-xl font-black tracking-tight text-brand-ink">How this fee is calculated</h2>
-            </div>
-
-            <div class="space-y-2 text-sm font-medium text-brand-slate">
-              <p>
-                Shuttlecock price = {{ formatCurrency(financialBreakdown.shuttlecockPackPrice) }} / 12 =
-                {{ formatCurrency(financialBreakdown.shuttlecockPrice) }}
-              </p>
-              <p>
-                Shuttlecock cost = {{ financialBreakdown.shuttlecocksUsed }} ×
-                {{ formatCurrency(financialBreakdown.shuttlecockPrice) }} =
-                {{ formatCurrency(financialBreakdown.shuttlecockCost) }}
-              </p>
-              <p>
-                Total session cost = {{ formatCurrency(financialBreakdown.courtCost) }} +
-                {{ formatCurrency(financialBreakdown.shuttlecockCost) }} =
-                {{ formatCurrency(financialBreakdown.totalSessionCost) }}
-              </p>
-              <p>
-                <template v-if="financialBreakdown.totalActualPlayers > 0">
-                  Fee per person = {{ formatCurrency(financialBreakdown.totalSessionCost) }} /
-                  {{ financialBreakdown.totalActualPlayers }} player{{
-                    financialBreakdown.totalActualPlayers === 1 ? '' : 's'
-                  }}
-                  =
-                  {{ formatCurrency(calculatedFeePerPerson) }}
-                </template>
-                <template v-else>
-                  Fee per person = waiting for checked-in players before the split can be calculated.
-                </template>
-              </p>
-            </div>
-          </UIGlassCard>
-
-          <SessionQRCodeDisplay :created-by="session.createdBy" :qr-url="session.paymentQR || null" />
+          <SessionQRCodeDisplay
+            :qr-url="session.paymentQR || null"
+            :show-fee-breakdown="session.status === 'completed'"
+            :shuttlecock-pack-price="financialBreakdown.shuttlecockPackPrice"
+            :shuttlecock-price="financialBreakdown.shuttlecockPrice"
+            :shuttlecocks-used="financialBreakdown.shuttlecocksUsed"
+            :shuttlecock-cost="financialBreakdown.shuttlecockCost"
+            :court-cost="financialBreakdown.courtCost"
+            :total-session-cost="financialBreakdown.totalSessionCost"
+            :total-actual-players="financialBreakdown.totalActualPlayers"
+            :calculated-fee-per-person="calculatedFeePerPerson"
+          />
         </div>
       </section>
 
