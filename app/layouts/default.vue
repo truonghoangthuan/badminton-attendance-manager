@@ -108,9 +108,9 @@ const handleNameUpdate = async () => {
         <div class="glass-shell flex items-center justify-between gap-3 px-4 py-4 md:px-6">
           <NuxtLink to="/" class="group flex items-center gap-3">
             <div
-              class="flex h-11 w-11 items-center justify-center rounded-2xl border border-brand-line bg-brand-court text-xl text-white transition-transform group-hover:scale-105"
+              class="flex h-11 w-11 items-center justify-center rounded-2xl border border-brand-line bg-brand-court transition-transform group-hover:scale-105"
             >
-              🏸
+              <img src="/favicon.svg" alt="Gravity Badminton" class="h-7 w-7" />
             </div>
             <div>
               <p class="section-kicker">Gravity Team</p>
