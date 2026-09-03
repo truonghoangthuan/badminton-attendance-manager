@@ -17,7 +17,7 @@ import {
   UserPlus,
   Users,
 } from 'lucide-vue-next';
-import { doc, onSnapshot, collection, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { doc, onSnapshot, collection, updateDoc, deleteDoc, query, orderBy, setDoc } from 'firebase/firestore';
 import { calculateFeePerPerson, getSessionFinancialBreakdown } from '~/utils/sessionFinancials';
 
 definePageMeta({
@@ -37,6 +37,15 @@ const error = ref<string | null>(null);
 const statusUpdating = ref(false);
 const showEditModal = ref(false);
 const savingEdits = ref(false);
+
+const showManualAddModal = ref(false);
+const manualPlayer = ref({
+  name: '',
+  guestCount: 0,
+  actualAttended: true,
+  hasPaid: false,
+});
+const addingManualPlayer = ref(false);
 
 const editForm = ref({
   date: '',
@@ -263,6 +272,31 @@ const saveSessionEdits = async () => {
   }
 };
 
+const saveManualPlayer = async () => {
+  if (!manualPlayer.value.name.trim() || addingManualPlayer.value) return;
+  addingManualPlayer.value = true;
+  try {
+    const customId = `walkin_${Date.now()}`;
+    const docRef = doc(db, `sessions/${sessionId}/attendances`, customId);
+    await setDoc(docRef, {
+      uid: customId,
+      name: manualPlayer.value.name.trim(),
+      isJoining: true,
+      guestCount: Number(manualPlayer.value.guestCount) || 0,
+      actualAttended: manualPlayer.value.actualAttended,
+      hasPaid: manualPlayer.value.hasPaid,
+      isManual: true,
+      updatedAt: new Date().toISOString(),
+    });
+    showManualAddModal.value = false;
+    manualPlayer.value = { name: '', guestCount: 0, actualAttended: true, hasPaid: false };
+  } catch (e) {
+    console.error('Failed to add manual player:', e);
+  } finally {
+    addingManualPlayer.value = false;
+  }
+};
+
 const deleteAttendee = async (attendance: any) => {
   confirm.require({
     message: `Are you sure you want to remove ${attendance.name} from this session?`,
@@ -455,10 +489,17 @@ const getStatusColor = (status: string) => {
                 </p>
               </div>
 
-              <div class="flex flex-wrap gap-2">
+              <div class="flex flex-wrap items-center gap-2">
                 <span class="score-chip">{{ attendances.length }} responses</span>
                 <span class="score-chip">{{ totalExpectedPlayers }} expected</span>
                 <span class="score-chip">{{ unpaidPlayers }} unpaid</span>
+                <UIGlassButton
+                  class="!px-3.5 !py-1.5 !text-xs font-bold"
+                  @click="showManualAddModal = true"
+                >
+                  <template #icon-left><UserPlus :size="14" /></template>
+                  Add Walk-In
+                </UIGlassButton>
               </div>
             </div>
 
@@ -484,6 +525,15 @@ const getStatusColor = (status: string) => {
               <p class="mt-2 text-sm font-medium text-brand-slate">
                 Once players RSVP, this board will show attendance and payment progress.
               </p>
+              <div class="mt-4">
+                <UIGlassButton
+                  class="!px-4 !py-2 !text-xs font-bold"
+                  @click="showManualAddModal = true"
+                >
+                  <template #icon-left><UserPlus :size="14" /></template>
+                  Add Walk-In Player
+                </UIGlassButton>
+              </div>
             </div>
 
             <div v-else class="space-y-3 md:hidden">
@@ -495,7 +545,15 @@ const getStatusColor = (status: string) => {
               >
                 <div class="flex items-start justify-between gap-4">
                   <div>
-                    <p class="text-lg font-black tracking-tight">{{ att.name }}</p>
+                    <div class="flex items-center gap-2">
+                      <p class="text-lg font-black tracking-tight">{{ att.name }}</p>
+                      <span
+                        v-if="att.isManual"
+                        class="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-sky-700"
+                      >
+                        Walk-in
+                      </span>
+                    </div>
                     <div class="mt-2 flex flex-wrap gap-2">
                       <span
                         class="status-chip"
@@ -584,7 +642,15 @@ const getStatusColor = (status: string) => {
                   >
                     <td class="px-5 py-4">
                       <div class="flex flex-col">
-                        <span class="font-black text-brand-ink">{{ att.name }}</span>
+                        <div class="flex items-center gap-2">
+                          <span class="font-black text-brand-ink">{{ att.name }}</span>
+                          <span
+                            v-if="att.isManual"
+                            class="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-sky-700"
+                          >
+                            Walk-in
+                          </span>
+                        </div>
                         <span class="text-sm font-medium text-brand-slate">
                           {{ att.actualAttended ? 'Checked in on-site' : 'Awaiting check-in' }}
                         </span>
@@ -831,6 +897,76 @@ const getStatusColor = (status: string) => {
 
       <div class="flex justify-end pt-4">
         <UIGlassButton type="submit" :loading="savingEdits"> Save Changes </UIGlassButton>
+      </div>
+    </form>
+  </UIGlassModal>
+
+  <UIGlassModal v-model="showManualAddModal">
+    <template #header>
+      <div class="flex flex-col gap-2 text-center">
+        <p class="text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">Player Entry</p>
+        <div>
+          <h2 class="text-2xl font-black tracking-tight text-brand-ink">Add Walk-In Player</h2>
+          <p class="mt-1 text-sm font-medium text-brand-slate">
+            Manually add an attendee who arrived at the court or booked directly.
+          </p>
+        </div>
+      </div>
+    </template>
+
+    <form @submit.prevent="saveManualPlayer" class="flex flex-col gap-5">
+      <UIGlassInput
+        v-model="manualPlayer.name"
+        type="text"
+        label="Player Name"
+        placeholder="e.g. David Nguyen"
+        required
+      >
+        <template #icon><UserCheck :size="18" /></template>
+      </UIGlassInput>
+
+      <UIGlassInput
+        v-model.number="manualPlayer.guestCount"
+        type="number"
+        min="0"
+        max="10"
+        label="Guests Accompanying"
+        placeholder="0"
+      >
+        <template #icon><Users :size="18" /></template>
+      </UIGlassInput>
+
+      <div class="grid grid-cols-2 gap-3 pt-1">
+        <label class="flex cursor-pointer items-center gap-3 rounded-2xl border border-brand-line bg-brand-sand/60 p-4 transition-colors hover:bg-brand-sand">
+          <input
+            v-model="manualPlayer.actualAttended"
+            type="checkbox"
+            class="h-5 w-5 rounded border-brand-line text-brand-court focus:ring-brand-court/20"
+          />
+          <div class="text-xs">
+            <p class="font-bold text-brand-ink">Checked In</p>
+            <p class="text-brand-slate">Present on court</p>
+          </div>
+        </label>
+
+        <label class="flex cursor-pointer items-center gap-3 rounded-2xl border border-brand-line bg-brand-sand/60 p-4 transition-colors hover:bg-brand-sand">
+          <input
+            v-model="manualPlayer.hasPaid"
+            type="checkbox"
+            class="h-5 w-5 rounded border-brand-line text-brand-court focus:ring-brand-court/20"
+          />
+          <div class="text-xs">
+            <p class="font-bold text-brand-ink">Paid</p>
+            <p class="text-brand-slate">Fee settled</p>
+          </div>
+        </label>
+      </div>
+
+      <div class="flex justify-end pt-4">
+        <UIGlassButton type="submit" :loading="addingManualPlayer">
+          <template #icon-left><UserPlus :size="16" /></template>
+          Add Player
+        </UIGlassButton>
       </div>
     </form>
   </UIGlassModal>
