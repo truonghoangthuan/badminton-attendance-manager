@@ -12,8 +12,8 @@ Treat this as a live product UI backed by Firebase and Supabase. Prefer small, s
 - Framework: Nuxt 4 + Vue 3 + TypeScript
 - Styling: Tailwind CSS with shared glass-style UI primitives under `app/components/UI`
 - Data/auth: Firebase Auth + Firestore
-- QR generation: VietQR URL builder in `app/utils/vietqr.ts`
-- QR profile storage: Supabase Storage via `app/composables/useSupabaseQRCode.ts`
+- Session QR storage: Supabase Storage via `app/composables/useSupabaseQRCode.ts` (stored on session document as `paymentQR`)
+- Payment & banking: Smart 1-tap copy for `bankInfo` (`bankName`, `accountNumber`, `accountName`) and dynamic transfer notes (`BDM <date> <name>`) in `app/components/session/QRCodeDisplay.vue`
 - UI feedback: PrimeVue `Toast` / `useToast`
 
 If code and README disagree, follow the code and then update documentation if needed.
@@ -24,12 +24,12 @@ Read the page, composable, layout, and shared component files that govern the be
 
 Core routes and state:
 
-- `app/pages/index.vue`: public landing page, featured-session logic, and legacy greeting lookup from `localStorage` + `roster`
-- `app/pages/session/[id].vue`: public RSVP flow, live attendance list, and fee display
-- `app/pages/admin/index.vue`: session creation, editing, deletion, and status cycling
-- `app/pages/admin/session/[id].vue`: attendance control, financial calculations, and QR/payment admin tools
+- `app/pages/index.vue`: public landing page, nearest upcoming featured-session logic, and personal greeting via `useUserProfile`
+- `app/pages/session/[id].vue`: public RSVP flow, live attendance list, court capacity meter, personalized cost breakdown, and fee display
+- `app/pages/admin/index.vue`: session creation, editing, deletion, max capacity limits, and status cycling
+- `app/pages/admin/session/[id].vue`: attendance check-in, walk-in manual player entry, guest-aware debt tracking, financial calculations, and QR/banking admin tools
 - `app/pages/admin/login.vue`: admin email/password sign-in and admin-claim validation
-- `app/composables/useUserProfile.ts`: anonymous auth, profile persistence, and payment QR profile fields
+- `app/composables/useUserProfile.ts`: anonymous auth and profile persistence (`displayName`)
 - `app/composables/useAdminAccess.ts`: admin claim refresh and auth state
 - `app/middleware/auth.ts`: admin route protection and redirect behavior
 - `app/utils/firebase.ts`: centralized Firebase initialization
@@ -39,8 +39,8 @@ Read these too when relevant:
 - `app/layouts/default.vue`: shared public-shell behavior, profile editing modal, top-level public actions
 - `app/layouts/admin.vue`: shared admin shell and sign-out behavior
 - `app/components/UsernamePrompt.vue`: modal that blocks public flow until a display name exists
-- `app/components/session/QRCodeDisplay.vue`: public payment QR rendering
-- `app/components/admin/AdminQRCodeManager.vue`: admin-side payment QR rendering and expand behavior
+- `app/components/session/QRCodeDisplay.vue`: public payment QR and 1-tap copy mobile banking display
+- `app/components/admin/AdminQRCodeManager.vue`: admin-side payment QR uploading and mobile banking configuration
 - `app/components/UI/GlassCard.vue`
 - `app/components/UI/GlassButton.vue`
 - `app/components/UI/GlassInput.vue`
@@ -94,8 +94,9 @@ These rules should not change unless the user explicitly asks for product behavi
 
 - Session statuses are `open`, `locked`, and `completed`
 - Public RSVP submission is only available when a session is `open`
-- Admin pages may reopen sessions by moving `completed -> locked` or `locked -> open`
+- Admin pages may reopen sessions by moving `completed -> locked` or `locked -> open` (with confirmation when reopening completed sessions)
 - Deleting a session removes it from both admin and public listings
+- Sessions have a `maxPlayers` capacity limit (default 8) that enforces slot limits on RSVP
 
 ### Public user identity
 
@@ -103,7 +104,7 @@ These rules should not change unless the user explicitly asks for product behavi
 - A player name is stored in the `profiles` collection as `displayName`
 - RSVP submission must not proceed without a display name
 - Existing behavior supports saving a new display name during RSVP submission
-- `app/pages/index.vue` still contains a separate legacy greeting lookup from `localStorage` key `badminton_user_id` and the `roster` collection; do not casually remove or repurpose that flow without updating the landing page behavior intentionally
+- `app/pages/index.vue` supports personal greeting through `useUserProfile` while preserving fallback greeting compatibility
 
 ### Admin access
 
@@ -115,7 +116,7 @@ These rules should not change unless the user explicitly asks for product behavi
 ### Attendance model
 
 - Attendance records live at `sessions/{sessionId}/attendances`
-- Public RSVP submission currently writes:
+- Public RSVP submission writes:
   - `uid`
   - `name`
   - `isJoining`
@@ -123,8 +124,9 @@ These rules should not change unless the user explicitly asks for product behavi
   - `actualAttended`
   - `hasPaid`
   - `updatedAt`
-- Current public behavior sets `actualAttended` equal to `isJoining` on submission and initializes `hasPaid` to `false`
-- Admin tools later toggle attendance and payment-related fields directly on the attendance document
+- Public RSVP submission preserves existing `actualAttended` status (or initializes to `false`) and initializes `hasPaid` to `false`. Physical check-in is verified on court by organizers.
+- Admin walk-in entries write custom IDs (`walkin_<timestamp>`) with `isManual: true`.
+- Admin tools toggle attendance (`actualAttended`) and payment (`hasPaid`) fields directly on the attendance document.
 
 ### Cost calculation
 
@@ -134,16 +136,17 @@ These rules should not change unless the user explicitly asks for product behavi
   - `totalSessionCost / totalActualPlayers`
 - `totalActualPlayers` counts one player plus their guests only when `actualAttended` is true
 - Guests are included in the cost split
+- Individual debts are calculated as `calculatedFeePerPerson * (1 + guestCount)` for attendees who attended
 - The admin session page persists `financials.calculatedFeePerPerson` from the computed value
-- The public session page independently computes and displays the live fee from session financials plus current attendance data, so any formula change must be updated in both public and admin flows
+- The public session page independently computes and displays the live fee and personalized share from session financials plus current attendance data, so any formula change must be updated in both public and admin flows
 
 ## Data And Integration Constraints
 
 - Firebase initialization is centralized in `app/utils/firebase.ts`; do not create ad hoc app instances
 - User profile data lives in Firestore `profiles`
-- QR code uploads use Supabase Storage and the public URL is stored on the user profile as `paymentQR`
-- Admin and public payment QR displays derive from the VietQR utility; keep amount/date inputs aligned if changing payment behavior
-- Be careful when changing profile fields because they affect both identity and payment QR behavior
+- QR code uploads use Supabase Storage and the public URL is stored on the session document as `paymentQR`
+- Mobile banking transfer details are stored on the session document as `bankInfo` (`bankName`, `accountNumber`, `accountName`)
+- Be careful when changing profile fields because they affect identity across the app
 
 ## UI And UX Constraints
 
@@ -162,7 +165,7 @@ Double-check these areas before shipping:
 - Session status still correctly gates public actions
 - Attendance totals and guest counts still line up between public and admin views
 - Fee-per-person math still matches the persisted financial fields
-- Any QR code changes still keep Firestore profile state, VietQR generation, and Supabase storage behavior aligned
+- Any QR code or bank detail changes keep session state, Supabase storage, and public copy functions aligned
 - Shared `UIGlass*` component usage still matches the styles and props expected by the rest of the app
 
 ## Commands
