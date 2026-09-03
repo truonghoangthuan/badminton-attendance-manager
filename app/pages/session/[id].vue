@@ -507,6 +507,7 @@ const getGuestLabel = (guestCount: number) => {
             :total-session-cost="financialBreakdown.totalSessionCost"
             :total-actual-players="financialBreakdown.totalActualPlayers"
             :calculated-fee-per-person="calculatedFeePerPerson"
+            :personal-amount="calculatedFeePerPerson * (1 + (myAttendanceRecord?.guestCount || 0))"
             :bank-info="session.bankInfo || null"
             :session-date="session.date"
             :user-name="profile?.displayName || ''"

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Maximize2, QrCode, X, Copy, Check } from 'lucide-vue-next';
+import { Maximize2, QrCode, X, Copy, Check, Sparkles, Image as ImageIcon } from 'lucide-vue-next';
+import { generateVietQRUrl } from '~/utils/vietqr';
 
 const props = defineProps<{
   qrUrl?: string | null;
@@ -12,8 +13,10 @@ const props = defineProps<{
   totalSessionCost?: number;
   totalActualPlayers?: number;
   calculatedFeePerPerson?: number;
+  personalAmount?: number;
   bankInfo?: {
     bankName?: string;
+    bankCode?: string;
     accountNumber?: string;
     accountName?: string;
   } | null;
@@ -29,6 +32,39 @@ const transferMemo = computed(() => {
   const dateFormatted = props.sessionDate ? props.sessionDate.replace(/-/g, '') : '';
   const name = (props.userName || '').trim().replace(/\s+/g, ' ');
   return `BDM ${dateFormatted} ${name}`.trim();
+});
+
+const dynamicVietQRUrl = computed(() => {
+  if (!props.bankInfo?.accountNumber || (!props.bankInfo?.bankName && !props.bankInfo?.bankCode)) {
+    return '';
+  }
+  return generateVietQRUrl({
+    bankId: props.bankInfo.bankCode || props.bankInfo.bankName,
+    accountNumber: props.bankInfo.accountNumber,
+    accountName: props.bankInfo.accountName,
+    amount: props.personalAmount && props.personalAmount > 0 ? props.personalAmount : undefined,
+    memo: transferMemo.value,
+    template: 'compact2',
+  });
+});
+
+const hasCustomQR = computed(() => !!props.qrUrl);
+const hasDynamicQR = computed(() => !!dynamicVietQRUrl.value);
+const selectedQRType = ref<'dynamic' | 'custom'>('dynamic');
+
+watchEffect(() => {
+  if (!hasDynamicQR.value && hasCustomQR.value) {
+    selectedQRType.value = 'custom';
+  } else if (hasDynamicQR.value && !hasCustomQR.value) {
+    selectedQRType.value = 'dynamic';
+  }
+});
+
+const currentDisplayQR = computed(() => {
+  if (selectedQRType.value === 'custom' && hasCustomQR.value) {
+    return props.qrUrl!;
+  }
+  return dynamicVietQRUrl.value || props.qrUrl || '';
 });
 
 const copyText = async (text: string, fieldId: string, label: string) => {
@@ -62,7 +98,7 @@ const formatCurrency = (value: number | undefined) => {
 
 <template>
   <div
-    v-if="!qrUrl && !bankInfo?.accountNumber"
+    v-if="!currentDisplayQR && !bankInfo?.accountNumber"
     class="rounded-[32px] border border-dashed border-brand-line bg-brand-sand px-6 py-8 text-center text-brand-slate"
   >
     <QrCode :size="32" class="mx-auto opacity-40" />
@@ -71,13 +107,38 @@ const formatCurrency = (value: number | undefined) => {
   </div>
 
   <UIGlassCard v-else class="relative overflow-hidden space-y-4">
+    <!-- QR Mode Switcher if both dynamic VietQR and uploaded custom QR exist -->
+    <div v-if="hasDynamicQR && hasCustomQR" class="flex items-center justify-between pb-2 border-b border-brand-line/60">
+      <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">Payment QR Option</p>
+      <div class="flex items-center gap-1 rounded-xl bg-brand-sand/80 p-1 border border-brand-line">
+        <button
+          type="button"
+          class="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all"
+          :class="selectedQRType === 'dynamic' ? 'bg-white text-brand-court shadow-sm' : 'text-brand-slate hover:text-brand-ink'"
+          @click="selectedQRType = 'dynamic'"
+        >
+          <Sparkles :size="12" />
+          Dynamic VietQR
+        </button>
+        <button
+          type="button"
+          class="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all"
+          :class="selectedQRType === 'custom' ? 'bg-white text-brand-court shadow-sm' : 'text-brand-slate hover:text-brand-ink'"
+          @click="selectedQRType = 'custom'"
+        >
+          <ImageIcon :size="12" />
+          Custom QR
+        </button>
+      </div>
+    </div>
+
     <div class="flex flex-col sm:flex-row sm:items-center">
       <!-- QR Image if present -->
       <div
-        v-if="qrUrl"
-        class="group relative aspect-square w-full shrink-0 border-b border-brand-line bg-white p-6 sm:w-48 sm:border-b-0 sm:border-r"
+        v-if="currentDisplayQR"
+        class="group relative aspect-square w-full shrink-0 border-b border-brand-line bg-white p-6 sm:w-52 sm:border-b-0 sm:border-r flex flex-col items-center justify-center"
       >
-        <img :src="qrUrl || undefined" alt="Scan to pay" class="h-full w-full object-contain" />
+        <img :src="currentDisplayQR" alt="Scan to pay" class="h-full w-full object-contain" />
         <button
           class="absolute inset-0 flex items-center justify-center bg-brand-ink/40 opacity-0 transition-opacity hover:opacity-100"
           @click="showExpand = true"
@@ -88,6 +149,16 @@ const formatCurrency = (value: number | undefined) => {
             <Maximize2 :size="18" />
           </div>
         </button>
+
+        <!-- Dynamic indicator badge -->
+        <div
+          v-if="selectedQRType === 'dynamic'"
+          class="absolute bottom-2 left-2 right-2 flex items-center justify-center gap-1 rounded-md bg-emerald-600/90 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-sm"
+        >
+          <Sparkles :size="10" />
+          <span v-if="personalAmount && personalAmount > 0">Pre-filled: {{ formatCurrency(personalAmount) }}</span>
+          <span v-else>Smart VietQR</span>
+        </div>
       </div>
 
       <!-- Fee Breakdown -->
@@ -217,7 +288,7 @@ const formatCurrency = (value: number | undefined) => {
           </div>
 
           <div class="my-8 aspect-square w-full rounded-[32px] border-8 border-brand-sand bg-white p-4 shadow-inner">
-            <img :src="qrUrl || undefined" alt="Payment QR" class="h-full w-full object-contain" />
+            <img :src="currentDisplayQR || undefined" alt="Payment QR" class="h-full w-full object-contain" />
           </div>
         </div>
       </div>

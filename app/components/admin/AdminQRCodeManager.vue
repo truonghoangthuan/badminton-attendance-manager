@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { doc, updateDoc } from 'firebase/firestore';
-import { QrCode, Upload, X, Image as ImageIcon, Trash2, Building2, CreditCard, UserCheck, Save } from 'lucide-vue-next';
+import { QrCode, Upload, X, Image as ImageIcon, Trash2, Building2, CreditCard, UserCheck, Save, Sparkles, ChevronDown } from 'lucide-vue-next';
+import { COMMON_VIETNAMESE_BANKS, generateVietQRUrl, resolveBankCode } from '~/utils/vietqr';
 
 const props = defineProps<{
   sessionId: string;
   qrUrl?: string | null;
   bankInfo?: {
     bankName?: string;
+    bankCode?: string;
     accountNumber?: string;
     accountName?: string;
   } | null;
@@ -22,6 +24,7 @@ const previewUrl = ref<string | null>(null);
 
 const bankForm = ref({
   bankName: '',
+  bankCode: '',
   accountNumber: '',
   accountName: '',
 });
@@ -31,12 +34,39 @@ watch(
   (newVal) => {
     bankForm.value = {
       bankName: newVal?.bankName || '',
+      bankCode: newVal?.bankCode || resolveBankCode(newVal?.bankName) || '',
       accountNumber: newVal?.accountNumber || '',
       accountName: newVal?.accountName || '',
     };
   },
   { immediate: true, deep: true }
 );
+
+const onBankSelect = (event: Event) => {
+  const code = (event.target as HTMLSelectElement).value;
+  if (!code) {
+    bankForm.value.bankCode = '';
+    return;
+  }
+  const bank = COMMON_VIETNAMESE_BANKS.find((b) => b.code === code);
+  if (bank) {
+    bankForm.value.bankCode = bank.code;
+    bankForm.value.bankName = bank.name;
+  }
+};
+
+const liveVietQRPreviewUrl = computed(() => {
+  if (!bankForm.value.accountNumber || (!bankForm.value.bankCode && !bankForm.value.bankName)) {
+    return '';
+  }
+  return generateVietQRUrl({
+    bankId: bankForm.value.bankCode || bankForm.value.bankName,
+    accountNumber: bankForm.value.accountNumber,
+    accountName: bankForm.value.accountName,
+    memo: 'BDM TEST PAYMENT',
+    template: 'compact2',
+  });
+});
 
 const savingBank = ref(false);
 
@@ -46,6 +76,7 @@ const saveBankDetails = async () => {
     await updateDoc(doc(db, 'sessions', props.sessionId), {
       bankInfo: {
         bankName: bankForm.value.bankName.trim(),
+        bankCode: bankForm.value.bankCode || resolveBankCode(bankForm.value.bankName),
         accountNumber: bankForm.value.accountNumber.trim(),
         accountName: bankForm.value.accountName.trim(),
       },
@@ -274,12 +305,36 @@ const cancelPreview = () => {
       </div>
 
       <form @submit.prevent="saveBankDetails" class="space-y-4">
-        <div class="grid gap-3 sm:grid-cols-3">
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="flex w-full flex-col gap-2">
+            <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">
+              Select Bank
+            </label>
+            <div class="group relative">
+              <div class="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate transition-colors group-focus-within:text-brand-court">
+                <Building2 :size="16" />
+              </div>
+              <div class="pointer-events-none absolute right-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate/80 transition-colors group-focus-within:text-brand-court">
+                <ChevronDown :size="16" />
+              </div>
+              <select
+                :value="bankForm.bankCode"
+                @change="onBankSelect"
+                class="w-full appearance-none rounded-2xl border border-brand-line bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,246,240,0.96))] py-3.5 pl-11 pr-10 text-sm font-bold tracking-[0.02em] text-brand-ink shadow-[0_18px_40px_-32px_rgba(35,55,34,0.34)] transition-all outline-none hover:border-brand-court/30 focus:border-brand-court focus:ring-4 focus:ring-brand-court/10"
+              >
+                <option value="">-- Choose Standard Bank --</option>
+                <option v-for="bank in COMMON_VIETNAMESE_BANKS" :key="bank.code" :value="bank.code">
+                  {{ bank.code }} - {{ bank.name }}
+                </option>
+              </select>
+            </div>
+          </div>
+
           <UIGlassInput
             v-model="bankForm.bankName"
             type="text"
             label="Bank Name"
-            placeholder="e.g. MB Bank, Vietcombank"
+            placeholder="e.g. MBBank, Vietcombank"
           >
             <template #icon><Building2 :size="16" /></template>
           </UIGlassInput>
@@ -289,6 +344,7 @@ const cancelPreview = () => {
             type="text"
             label="Account Number"
             placeholder="e.g. 0987654321"
+            required
           >
             <template #icon><CreditCard :size="16" /></template>
           </UIGlassInput>
@@ -303,13 +359,36 @@ const cancelPreview = () => {
           </UIGlassInput>
         </div>
 
-        <div class="flex justify-end">
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-brand-slate">
+            Selecting a bank enables <strong>Dynamic VietQR</strong> for exact attendee fee pre-filling.
+          </p>
           <UIGlassButton type="submit" :loading="savingBank" class="!px-4 !py-2 !text-xs">
             <template #icon-left><Save :size="14" /></template>
             Save Bank Details
           </UIGlassButton>
         </div>
       </form>
+
+      <!-- Dynamic VietQR Live Preview -->
+      <div
+        v-if="liveVietQRPreviewUrl"
+        class="mt-4 flex flex-col items-center gap-4 rounded-3xl border border-brand-court/20 bg-emerald-50/60 p-4 sm:flex-row"
+      >
+        <div class="shrink-0 overflow-hidden rounded-2xl border-2 border-white bg-white p-2 shadow-md">
+          <img :src="liveVietQRPreviewUrl" alt="VietQR Dynamic Preview" class="h-32 w-32 object-contain" />
+        </div>
+        <div class="space-y-1">
+          <div class="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-100/70 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-800">
+            <Sparkles :size="12" />
+            Dynamic VietQR Generator Active
+          </div>
+          <p class="text-sm font-black text-brand-ink">Automated Exact-Fee VietQR Ready</p>
+          <p class="text-xs font-medium text-brand-slate leading-relaxed">
+            Attendees on the public session page will see a personalized VietQR code that automatically encodes their exact split amount (including guests) and customized memo when scanned.
+          </p>
+        </div>
+      </div>
     </div>
   </UIGlassCard>
 </template>
