@@ -133,7 +133,7 @@ const summaryStats = computed(() => [
     icon: UserPlus,
     label: 'RSVP yes',
     value: totalJoinedPlayers.value,
-    hint: `${totalGuestCount.value} guests`,
+    hint: `${totalGuestCount.value} ${totalGuestCount.value === 1 ? 'guest' : 'guests'}`,
     accent: 'from-brand-court/14 to-brand-court/5 text-brand-court',
   },
   {
@@ -497,7 +497,7 @@ const getStatusColor = (status: string) => {
                         {{ att.isJoining ? 'Joining' : 'Not joining' }}
                       </span>
                       <span class="status-chip">
-                        {{ att.guestCount ? `+${att.guestCount} guests` : 'No guests' }}
+                        {{ att.guestCount ? `+${att.guestCount} ${att.guestCount === 1 ? 'guest' : 'guests'}` : 'No guests' }}
                       </span>
                     </div>
                   </div>

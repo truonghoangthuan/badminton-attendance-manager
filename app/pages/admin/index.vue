@@ -137,6 +137,17 @@ const toggleStatus = async (session: any) => {
     }
   };
 
+  if (session.status === 'completed') {
+    confirm.require({
+      message: `Reopen this completed session to "${nextStatus}"? It will become active again in listings.`,
+      header: 'Reopen Session',
+      rejectLabel: 'Cancel',
+      acceptLabel: 'Reopen',
+      accept: updateStatus,
+    });
+    return;
+  }
+
   if (nextStatus === 'completed') {
     confirm.require({
       message: 'Mark this session as completed?',

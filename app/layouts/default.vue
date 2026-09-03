@@ -237,7 +237,7 @@ const handleNameUpdate = async () => {
       </form>
     </UIGlassModal>
 
-    <main class="relative z-10 mx-auto max-w-7xl px-4 py-8 pb-36 md:px-6 md:py-10 md:pb-40">
+    <main class="relative z-10 mx-auto max-w-7xl px-4 py-8 pb-16 md:px-6 md:py-10 md:pb-20">
       <slot />
     </main>
 

@@ -76,7 +76,7 @@ const formatCurrency = (value: number | undefined) => {
             Total session cost = {{ formatCurrency(courtCost) }} + {{ formatCurrency(shuttlecockCost) }} =
             {{ formatCurrency(totalSessionCost) }}
           </p>
-          <p class="text-pink-400 font-bold">
+          <p class="text-brand-court font-black">
             <template v-if="(totalActualPlayers || 0) > 0">
               Fee per person = {{ formatCurrency(totalSessionCost) }} / {{ totalActualPlayers }} player{{
                 totalActualPlayers === 1 ? '' : 's'
