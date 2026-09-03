@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { doc, collection, setDoc, orderBy, onSnapshot, query } from 'firebase/firestore';
-import { BadgeDollarSign, Clock3, Loader2, MapPin, User, Users as UsersIcon } from 'lucide-vue-next';
+import { BadgeDollarSign, Clock3, Feather, Grid2x2, Loader2, MapPin, Trophy, User, Users as UsersIcon } from 'lucide-vue-next';
 import { calculateFeePerPerson, getSessionFinancialBreakdown } from '~/utils/sessionFinancials';
 
 const route = useRoute();
@@ -307,6 +307,33 @@ const getGuestLabel = (guestCount: number) => {
             >
               <MapPin :size="16" class="text-brand-blue" />
               {{ session.location }}
+            </div>
+
+            <div
+              v-if="session.courtNumber || session.shuttlecockType || session.level"
+              class="flex flex-wrap items-center gap-2 pt-1"
+            >
+              <span
+                v-if="session.courtNumber"
+                class="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200/60 bg-emerald-50/80 px-3 py-1 text-xs font-bold text-emerald-800"
+              >
+                <Grid2x2 :size="13" class="text-brand-court" />
+                {{ session.courtNumber }}
+              </span>
+              <span
+                v-if="session.shuttlecockType"
+                class="inline-flex items-center gap-1.5 rounded-xl border border-amber-200/60 bg-amber-50/80 px-3 py-1 text-xs font-bold text-amber-800"
+              >
+                <Feather :size="13" class="text-amber-600" />
+                {{ session.shuttlecockType }}
+              </span>
+              <span
+                v-if="session.level"
+                class="inline-flex items-center gap-1.5 rounded-xl border border-sky-200/60 bg-sky-50/80 px-3 py-1 text-xs font-bold text-sky-800"
+              >
+                <Trophy :size="13" class="text-sky-600" />
+                {{ session.level }}
+              </span>
             </div>
           </div>
 

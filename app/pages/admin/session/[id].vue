@@ -4,21 +4,26 @@ import {
   BadgeDollarSign,
   Calendar,
   CheckCheck,
+  ChevronDown,
   CircleDollarSign,
   Clock3,
   Edit2,
+  Feather,
+  Grid2x2,
   Info,
   Lock,
   MapPin,
   ReceiptText,
   ShieldCheck,
   Trash2,
+  Trophy,
   UserCheck,
   UserPlus,
   Users,
 } from 'lucide-vue-next';
 import { doc, onSnapshot, collection, updateDoc, deleteDoc, query, orderBy, setDoc } from 'firebase/firestore';
 import { calculateFeePerPerson, getSessionFinancialBreakdown } from '~/utils/sessionFinancials';
+import { SKILL_LEVEL_OPTIONS } from '~/types/session';
 
 definePageMeta({
   layout: 'admin',
@@ -52,6 +57,9 @@ const editForm = ref({
   time: '',
   location: '',
   maxPlayers: 8,
+  courtNumber: '',
+  shuttlecockType: '',
+  level: '',
 });
 
 onMounted(() => {
@@ -69,6 +77,9 @@ onMounted(() => {
       time: session.value.time || '',
       location: session.value.location || '',
       maxPlayers: session.value.maxPlayers || 8,
+      courtNumber: session.value.courtNumber || '',
+      shuttlecockType: session.value.shuttlecockType || '',
+      level: session.value.level || '',
     };
   });
 
@@ -133,7 +144,7 @@ const sessionMeta = computed(() => {
     return [];
   }
 
-  return [
+  const items = [
     {
       icon: Clock3,
       label: 'Time',
@@ -150,6 +161,32 @@ const sessionMeta = computed(() => {
       value: `${session.value.maxPlayers || 8} players`,
     },
   ];
+
+  if (session.value.courtNumber) {
+    items.push({
+      icon: Grid2x2,
+      label: 'Court',
+      value: session.value.courtNumber,
+    });
+  }
+
+  if (session.value.shuttlecockType) {
+    items.push({
+      icon: Feather,
+      label: 'Shuttle',
+      value: session.value.shuttlecockType,
+    });
+  }
+
+  if (session.value.level) {
+    items.push({
+      icon: Trophy,
+      label: 'Level',
+      value: session.value.level,
+    });
+  }
+
+  return items;
 });
 
 const summaryStats = computed(() => [
@@ -261,6 +298,9 @@ const openEditModal = () => {
     time: session.value.time,
     location: session.value.location,
     maxPlayers: session.value.maxPlayers || 8,
+    courtNumber: session.value.courtNumber || '',
+    shuttlecockType: session.value.shuttlecockType || '',
+    level: session.value.level || '',
   };
   showEditModal.value = true;
 };
@@ -922,6 +962,49 @@ const getStatusColor = (status: string) => {
       >
         <template #icon><Users :size="18" /></template>
       </UIGlassInput>
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <UIGlassInput
+          v-model="editForm.courtNumber"
+          type="text"
+          label="Court Number (Optional)"
+          placeholder="e.g. Sân 3 & 4"
+        >
+          <template #icon><Grid2x2 :size="18" /></template>
+        </UIGlassInput>
+
+        <UIGlassInput
+          v-model="editForm.shuttlecockType"
+          type="text"
+          label="Shuttlecock (Optional)"
+          placeholder="e.g. Victor Lark 5"
+        >
+          <template #icon><Feather :size="18" /></template>
+        </UIGlassInput>
+      </div>
+
+      <div class="flex w-full flex-col gap-2">
+        <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">
+          Skill Level (Optional)
+        </label>
+        <div class="group relative">
+          <div class="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate transition-colors group-focus-within:text-brand-court">
+            <Trophy :size="18" />
+          </div>
+          <div class="pointer-events-none absolute right-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate/80 transition-colors group-focus-within:text-brand-court">
+            <ChevronDown :size="18" />
+          </div>
+          <select
+            v-model="editForm.level"
+            class="w-full appearance-none rounded-2xl border border-brand-line bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,246,240,0.96))] py-4 pl-12 pr-12 text-base font-bold tracking-[0.02em] text-brand-ink shadow-[0_18px_40px_-32px_rgba(35,55,34,0.34)] transition-all outline-none hover:border-brand-court/30 hover:shadow-[0_20px_42px_-30px_rgba(56,126,88,0.26)] focus:border-brand-court focus:ring-4 focus:ring-brand-court/10"
+          >
+            <option value="">Tất cả trình độ / Không chỉ định</option>
+            <option v-for="lvl in SKILL_LEVEL_OPTIONS" :key="lvl" :value="lvl">
+              {{ lvl }}
+            </option>
+          </select>
+        </div>
+      </div>
 
       <div class="flex justify-end pt-4">
         <UIGlassButton type="submit" :loading="savingEdits"> Save Changes </UIGlassButton>

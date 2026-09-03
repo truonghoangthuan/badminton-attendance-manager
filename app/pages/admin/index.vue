@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { Calendar, ChevronDown, Clock3, Copy, Loader2, MapPin, Plus, RefreshCcw, Users as UsersIcon, X } from 'lucide-vue-next';
+import { Calendar, ChevronDown, Clock3, Copy, Feather, Grid2x2, Loader2, MapPin, Plus, RefreshCcw, Trophy, Users as UsersIcon, X } from 'lucide-vue-next';
+import { SKILL_LEVEL_OPTIONS } from '~/types/session';
 
 definePageMeta({
   layout: 'admin',
@@ -25,6 +26,9 @@ const newSession = ref({
   time: '19:00',
   location: 'Sân cầu lông Quang Sport',
   maxPlayers: 8,
+  courtNumber: '',
+  shuttlecockType: '',
+  level: '',
 });
 const timeOptions = Array.from({ length: 24 * 12 }, (_, index) => {
   const hours = `${Math.floor(index / 12)}`.padStart(2, '0');
@@ -111,6 +115,9 @@ const resetForm = () => {
     time: '19:00',
     location: 'Sân cầu lông Quang Sport',
     maxPlayers: 8,
+    courtNumber: '',
+    shuttlecockType: '',
+    level: '',
   };
 };
 
@@ -127,6 +134,9 @@ const openEditModal = (session: any) => {
     time: session.time,
     location: session.location,
     maxPlayers: session.maxPlayers || 8,
+    courtNumber: session.courtNumber || '',
+    shuttlecockType: session.shuttlecockType || '',
+    level: session.level || '',
   };
   showCreateForm.value = true;
 };
@@ -290,6 +300,32 @@ const getStatusColor = (status: string) => {
                         <span>{{ session.maxPlayers || 8 }} max</span>
                       </div>
                     </div>
+                    <div
+                      v-if="session.courtNumber || session.shuttlecockType || session.level"
+                      class="flex flex-wrap items-center gap-2 pt-1"
+                    >
+                      <span
+                        v-if="session.courtNumber"
+                        class="inline-flex items-center gap-1 rounded-lg border border-emerald-200/60 bg-emerald-50/70 px-2 py-0.5 text-[11px] font-bold text-emerald-800"
+                      >
+                        <Grid2x2 :size="11" class="text-brand-court" />
+                        {{ session.courtNumber }}
+                      </span>
+                      <span
+                        v-if="session.shuttlecockType"
+                        class="inline-flex items-center gap-1 rounded-lg border border-amber-200/60 bg-amber-50/70 px-2 py-0.5 text-[11px] font-bold text-amber-800"
+                      >
+                        <Feather :size="11" class="text-amber-600" />
+                        {{ session.shuttlecockType }}
+                      </span>
+                      <span
+                        v-if="session.level"
+                        class="inline-flex items-center gap-1 rounded-lg border border-sky-200/60 bg-sky-50/70 px-2 py-0.5 text-[11px] font-bold text-sky-800"
+                      >
+                        <Trophy :size="11" class="text-sky-600" />
+                        {{ session.level }}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -426,6 +462,49 @@ const getStatusColor = (status: string) => {
       >
         <template #icon><UsersIcon :size="18" /></template>
       </UIGlassInput>
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <UIGlassInput
+          v-model="newSession.courtNumber"
+          type="text"
+          label="Court Number (Optional)"
+          placeholder="e.g. Sân 3 & 4"
+        >
+          <template #icon><Grid2x2 :size="18" /></template>
+        </UIGlassInput>
+
+        <UIGlassInput
+          v-model="newSession.shuttlecockType"
+          type="text"
+          label="Shuttlecock (Optional)"
+          placeholder="e.g. Victor Lark 5"
+        >
+          <template #icon><Feather :size="18" /></template>
+        </UIGlassInput>
+      </div>
+
+      <div class="flex w-full flex-col gap-2">
+        <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">
+          Skill Level (Optional)
+        </label>
+        <div class="group relative">
+          <div class="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate transition-colors group-focus-within:text-brand-court">
+            <Trophy :size="18" />
+          </div>
+          <div class="pointer-events-none absolute right-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate/80 transition-colors group-focus-within:text-brand-court">
+            <ChevronDown :size="18" />
+          </div>
+          <select
+            v-model="newSession.level"
+            class="w-full appearance-none rounded-2xl border border-brand-line bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,246,240,0.96))] py-4 pl-12 pr-12 text-base font-bold tracking-[0.02em] text-brand-ink shadow-[0_18px_40px_-32px_rgba(35,55,34,0.34)] transition-all outline-none hover:border-brand-court/30 hover:shadow-[0_20px_42px_-30px_rgba(56,126,88,0.26)] focus:border-brand-court focus:ring-4 focus:ring-brand-court/10"
+          >
+            <option value="">Tất cả trình độ / Không chỉ định</option>
+            <option v-for="lvl in SKILL_LEVEL_OPTIONS" :key="lvl" :value="lvl">
+              {{ lvl }}
+            </option>
+          </select>
+        </div>
+      </div>
 
       <div class="flex justify-end md:col-span-3">
         <UIGlassButton type="submit" :disabled="adding">
