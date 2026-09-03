@@ -24,23 +24,29 @@ Read the page, composable, layout, and shared component files that govern the be
 
 Core routes and state:
 
-- `app/pages/index.vue`: public landing page, nearest upcoming featured-session logic, and personal greeting via `useUserProfile`
-- `app/pages/session/[id].vue`: public RSVP flow, live attendance list, court capacity meter, personalized cost breakdown, and fee display
-- `app/pages/admin/index.vue`: session creation, editing, deletion, max capacity limits, and status cycling
-- `app/pages/admin/session/[id].vue`: attendance check-in, walk-in manual player entry, guest-aware debt tracking, financial calculations, and QR/banking admin tools
+- `app/pages/index.vue`: public landing page, nearest upcoming featured-session logic, community leaderboard teaser, and personal greeting via `useUserProfile`
+- `app/pages/session/[id].vue`: public RSVP flow, live attendance list, court capacity meter, personalized cost breakdown, dynamic VietQR, match metadata chips, and social announcement generator
+- `app/pages/leaderboard.vue`: community member directory, lifetime game analytics, and top attendance podium
+- `app/pages/admin/index.vue`: session creation, editing, deletion, max capacity limits, court metadata (court number, shuttle brand, skill level), and status cycling
+- `app/pages/admin/session/[id].vue`: attendance check-in, walk-in manual player entry, guest-aware debt tracking, financial calculations, dynamic VietQR preview, CSV export, and social announcement sharing
 - `app/pages/admin/login.vue`: admin email/password sign-in and admin-claim validation
 - `app/composables/useUserProfile.ts`: anonymous auth and profile persistence (`displayName`)
 - `app/composables/useAdminAccess.ts`: admin claim refresh and auth state
 - `app/middleware/auth.ts`: admin route protection and redirect behavior
 - `app/utils/firebase.ts`: centralized Firebase initialization
+- `app/utils/vietqr.ts`: dynamic VietQR open standard URL builder with bank BIN codes and exact fee encoding
+- `app/utils/sessionSocialShare.ts`: 1-click Zalo/Messenger formatted announcement and settlement generators
+- `app/utils/sessionExport.ts`: CSV report exporter with UTF-8 BOM for Microsoft Excel Vietnamese compatibility
+- `app/types/session.ts`: shared TypeScript definitions for Session, SessionMetadata, BankInfo, and SKILL_LEVEL_OPTIONS
 
 Read these too when relevant:
 
-- `app/layouts/default.vue`: shared public-shell behavior, profile editing modal, top-level public actions
+- `app/layouts/default.vue`: shared public-shell behavior, profile editing modal, leaderboard link, top-level public actions
 - `app/layouts/admin.vue`: shared admin shell and sign-out behavior
 - `app/components/UsernamePrompt.vue`: modal that blocks public flow until a display name exists
-- `app/components/session/QRCodeDisplay.vue`: public payment QR and 1-tap copy mobile banking display
-- `app/components/admin/AdminQRCodeManager.vue`: admin-side payment QR uploading and mobile banking configuration
+- `app/components/session/QRCodeDisplay.vue`: dynamic VietQR switcher with exact fee pre-filling and 1-tap copy mobile banking display
+- `app/components/session/SocialShareModal.vue`: modal for 1-tap copy of invite & settlement announcements
+- `app/components/admin/AdminQRCodeManager.vue`: admin-side payment QR uploading, bank selector, and dynamic VietQR live preview
 - `app/components/UI/GlassCard.vue`
 - `app/components/UI/GlassButton.vue`
 - `app/components/UI/GlassInput.vue`
