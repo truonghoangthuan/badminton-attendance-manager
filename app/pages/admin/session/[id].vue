@@ -7,6 +7,7 @@ import {
   ChevronDown,
   CircleDollarSign,
   Clock3,
+  Download,
   Edit2,
   Feather,
   Grid2x2,
@@ -26,6 +27,7 @@ import {
 import { doc, onSnapshot, collection, updateDoc, deleteDoc, query, orderBy, setDoc } from 'firebase/firestore';
 import { calculateFeePerPerson, getSessionFinancialBreakdown } from '~/utils/sessionFinancials';
 import { SKILL_LEVEL_OPTIONS } from '~/types/session';
+import { exportSessionToCSV } from '~/utils/sessionExport';
 
 definePageMeta({
   layout: 'admin',
@@ -36,6 +38,7 @@ const route = useRoute();
 const sessionId = route.params.id as string;
 const { db } = useFirebase();
 const confirm = useUIConfirm();
+const toast = useToast();
 
 const session = ref<any>(null);
 const attendances = ref<any[]>([]);
@@ -50,6 +53,17 @@ const socialShareTab = ref<'invite' | 'settlement'>('invite');
 const openSocialShare = (tab: 'invite' | 'settlement' = 'invite') => {
   socialShareTab.value = tab;
   showSocialModal.value = true;
+};
+
+const handleExportCSV = () => {
+  if (!session.value) return;
+  exportSessionToCSV(session.value, attendances.value, financialBreakdown.value);
+  toast.add({
+    severity: 'success',
+    summary: 'Đã xuất file CSV',
+    detail: 'Báo cáo phiên đấu đã được tải xuống máy.',
+    life: 3000,
+  });
 };
 
 const showManualAddModal = ref(false);
@@ -581,6 +595,15 @@ const getStatusColor = (status: string) => {
                 >
                   <ReceiptText :size="13" />
                   <span>Copy Settlement</span>
+                </button>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1.5 rounded-full border border-brand-line bg-white/80 px-3 py-1.5 text-xs font-bold text-brand-ink shadow-sm transition-all hover:border-brand-court hover:bg-white hover:text-brand-court active:scale-95"
+                  title="Tải bảng chấm công và thu chi dạng Excel CSV"
+                  @click="handleExportCSV"
+                >
+                  <Download :size="13" />
+                  <span>Export CSV</span>
                 </button>
                 <UIGlassButton
                   class="!px-3.5 !py-1.5 !text-xs font-bold"
