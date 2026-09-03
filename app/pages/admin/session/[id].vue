@@ -13,7 +13,9 @@ import {
   Info,
   Lock,
   MapPin,
+  MessageSquareShare,
   ReceiptText,
+  Share2,
   ShieldCheck,
   Trash2,
   Trophy,
@@ -42,6 +44,13 @@ const error = ref<string | null>(null);
 const statusUpdating = ref(false);
 const showEditModal = ref(false);
 const savingEdits = ref(false);
+const showSocialModal = ref(false);
+const socialShareTab = ref<'invite' | 'settlement'>('invite');
+
+const openSocialShare = (tab: 'invite' | 'settlement' = 'invite') => {
+  socialShareTab.value = tab;
+  showSocialModal.value = true;
+};
 
 const showManualAddModal = ref(false);
 const manualPlayer = ref({
@@ -481,21 +490,33 @@ const getStatusColor = (status: string) => {
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    class="inline-flex items-center justify-center rounded-full border border-brand-line bg-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-brand-ink transition-colors hover:border-brand-court hover:text-brand-court"
-                    @click="openEditModal"
-                  >
-                    <Edit2 :size="14" class="mr-2" />
-                    Edit Session
-                  </button>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      class="inline-flex items-center justify-center rounded-full border border-brand-line bg-white px-3.5 py-2 text-[11px] font-black uppercase tracking-wider text-brand-ink transition-all hover:border-brand-court hover:text-brand-court active:scale-95"
+                      title="Chia sẻ Zalo/Messenger"
+                      @click="openSocialShare('invite')"
+                    >
+                      <MessageSquareShare :size="14" class="mr-1.5 text-brand-court" />
+                      Share
+                    </button>
 
-                  <span
-                    :class="getStatusColor(session.status)"
-                    class="inline-flex items-center justify-center rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em]"
-                  >
-                    {{ session.status }}
-                  </span>
+                    <button
+                      type="button"
+                      class="inline-flex items-center justify-center rounded-full border border-brand-line bg-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-brand-ink transition-colors hover:border-brand-court hover:text-brand-court"
+                      @click="openEditModal"
+                    >
+                      <Edit2 :size="14" class="mr-2" />
+                      Edit Session
+                    </button>
+
+                    <span
+                      :class="getStatusColor(session.status)"
+                      class="inline-flex items-center justify-center rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em]"
+                    >
+                      {{ session.status }}
+                    </span>
+                  </div>
                 </div>
 
                 <div class="grid gap-3 md:grid-cols-3">
@@ -543,6 +564,24 @@ const getStatusColor = (status: string) => {
                 <span class="score-chip">{{ attendances.length }} responses</span>
                 <span class="score-chip">{{ totalExpectedPlayers }} expected</span>
                 <span class="score-chip">{{ unpaidPlayers }} unpaid ({{ unpaidSlots }} slots)</span>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1.5 rounded-full border border-brand-line bg-white/80 px-3 py-1.5 text-xs font-bold text-brand-ink shadow-sm transition-all hover:border-brand-court hover:bg-white hover:text-brand-court active:scale-95"
+                  title="Sao chép tin nhắn mời tham gia"
+                  @click="openSocialShare('invite')"
+                >
+                  <Share2 :size="13" />
+                  <span>Copy Invite</span>
+                </button>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1.5 rounded-full border border-brand-line bg-white/80 px-3 py-1.5 text-xs font-bold text-brand-ink shadow-sm transition-all hover:border-brand-court hover:bg-white hover:text-brand-court active:scale-95"
+                  title="Sao chép bảng kết toán tiền sân"
+                  @click="openSocialShare('settlement')"
+                >
+                  <ReceiptText :size="13" />
+                  <span>Copy Settlement</span>
+                </button>
                 <UIGlassButton
                   class="!px-3.5 !py-1.5 !text-xs font-bold"
                   @click="showManualAddModal = true"
@@ -1081,6 +1120,15 @@ const getStatusColor = (status: string) => {
       </div>
     </form>
   </UIGlassModal>
+
+  <SessionSocialShareModal
+    v-if="session"
+    v-model="showSocialModal"
+    :session="session"
+    :attendances="attendances"
+    :financials="financialBreakdown"
+    :initial-tab="socialShareTab"
+  />
 </template>
 
 <style scoped>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { doc, collection, setDoc, orderBy, onSnapshot, query } from 'firebase/firestore';
-import { BadgeDollarSign, Clock3, Feather, Grid2x2, Loader2, MapPin, Trophy, User, Users as UsersIcon } from 'lucide-vue-next';
+import { BadgeDollarSign, Clock3, Feather, Grid2x2, Loader2, MapPin, Share2, Trophy, User, Users as UsersIcon } from 'lucide-vue-next';
 import { calculateFeePerPerson, getSessionFinancialBreakdown } from '~/utils/sessionFinancials';
 
 const route = useRoute();
@@ -15,6 +15,7 @@ const loading = ref(true);
 const submitting = ref(false);
 const message = ref({ text: '', type: '' });
 const newName = ref('');
+const showShareModal = ref(false);
 const vote = ref({
   isJoining: true,
   guestCount: 0,
@@ -287,12 +288,23 @@ const getGuestLabel = (guestCount: number) => {
               <p class="section-kicker">Session</p>
               <h1 class="mt-2 text-3xl font-black tracking-tight">{{ session.date }}</h1>
             </div>
-            <span
-              :class="getStatusColor(session.status)"
-              class="rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]"
-            >
-              {{ session.status }}
-            </span>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class="flex h-8 items-center gap-1.5 rounded-full border border-brand-line bg-white/80 px-3 text-xs font-bold text-brand-ink shadow-sm transition-all hover:border-brand-court hover:bg-white hover:text-brand-court active:scale-95"
+                title="Chia sẻ thông báo Zalo / Messenger"
+                @click="showShareModal = true"
+              >
+                <Share2 :size="13" />
+                <span class="hidden sm:inline">Chia sẻ</span>
+              </button>
+              <span
+                :class="getStatusColor(session.status)"
+                class="rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]"
+              >
+                {{ session.status }}
+              </span>
+            </div>
           </div>
 
           <div class="space-y-3">
@@ -582,6 +594,21 @@ const getGuestLabel = (guestCount: number) => {
           </div>
         </UIGlassCard>
       </section>
+
+      <SessionSocialShareModal
+        v-if="session"
+        v-model="showShareModal"
+        :session="session"
+        :attendances="attendanceList"
+        :financials="{
+          courtCost: financialBreakdown.courtCost,
+          shuttlecocksUsed: financialBreakdown.shuttlecocksUsed,
+          shuttlecockPrice: financialBreakdown.shuttlecockPrice,
+          totalSessionCost: financialBreakdown.totalSessionCost,
+          calculatedFeePerPerson: calculatedFeePerPerson,
+        }"
+        :initial-tab="session.status === 'completed' ? 'settlement' : 'invite'"
+      />
     </template>
   </div>
 </template>
