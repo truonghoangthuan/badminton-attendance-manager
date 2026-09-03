@@ -191,6 +191,9 @@ const formatPreciseCurrency = (value: number) => {
 };
 
 const isSessionCompleted = computed(() => session.value?.status === 'completed');
+const isMatchOrSettling = computed(
+  () => session.value?.status === 'locked' || session.value?.status === 'completed',
+);
 
 const getAttendanceStatusClass = (isJoining: boolean) => {
   return isJoining ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-600';
@@ -201,7 +204,7 @@ const getCompletionStatusClass = (value: boolean) => {
 };
 
 const getPresentLabel = (attendance: any) => {
-  if (!attendance.isJoining || !isSessionCompleted.value) {
+  if (!attendance.isJoining || !isMatchOrSettling.value) {
     return '-';
   }
 
@@ -209,7 +212,7 @@ const getPresentLabel = (attendance: any) => {
 };
 
 const getPaidLabel = (attendance: any) => {
-  if (!attendance.isJoining || !isSessionCompleted.value) {
+  if (!attendance.isJoining || !isMatchOrSettling.value) {
     return '-';
   }
 
@@ -431,7 +434,7 @@ const getGuestLabel = (guestCount: number) => {
                   </td>
                   <td class="px-5 py-4">
                     <span
-                      v-if="att.isJoining && isSessionCompleted"
+                      v-if="att.isJoining && isMatchOrSettling"
                       class="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em]"
                       :class="getCompletionStatusClass(att.actualAttended)"
                     >
@@ -441,7 +444,7 @@ const getGuestLabel = (guestCount: number) => {
                   </td>
                   <td class="px-5 py-4">
                     <span
-                      v-if="att.isJoining && isSessionCompleted"
+                      v-if="att.isJoining && isMatchOrSettling"
                       class="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em]"
                       :class="getCompletionStatusClass(att.hasPaid)"
                     >
