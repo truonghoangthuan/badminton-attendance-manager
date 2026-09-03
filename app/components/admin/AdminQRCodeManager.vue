@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { doc, updateDoc } from 'firebase/firestore';
-import { QrCode, Upload, X, Image as ImageIcon, Trash2 } from 'lucide-vue-next';
+import { QrCode, Upload, X, Image as ImageIcon, Trash2, Building2, CreditCard, UserCheck, Save } from 'lucide-vue-next';
 
 const props = defineProps<{
   sessionId: string;
   qrUrl?: string | null;
+  bankInfo?: {
+    bankName?: string;
+    accountNumber?: string;
+    accountName?: string;
+  } | null;
 }>();
 
 const { db } = useFirebase();
@@ -14,6 +19,54 @@ const fileInput = ref<HTMLInputElement | null>(null);
 const selectedFile = ref<File | null>(null);
 const uploading = ref(false);
 const previewUrl = ref<string | null>(null);
+
+const bankForm = ref({
+  bankName: '',
+  accountNumber: '',
+  accountName: '',
+});
+
+watch(
+  () => props.bankInfo,
+  (newVal) => {
+    bankForm.value = {
+      bankName: newVal?.bankName || '',
+      accountNumber: newVal?.accountNumber || '',
+      accountName: newVal?.accountName || '',
+    };
+  },
+  { immediate: true, deep: true }
+);
+
+const savingBank = ref(false);
+
+const saveBankDetails = async () => {
+  savingBank.value = true;
+  try {
+    await updateDoc(doc(db, 'sessions', props.sessionId), {
+      bankInfo: {
+        bankName: bankForm.value.bankName.trim(),
+        accountNumber: bankForm.value.accountNumber.trim(),
+        accountName: bankForm.value.accountName.trim(),
+      },
+    });
+    toast.add({
+      severity: 'success',
+      summary: 'Saved',
+      detail: 'Banking details updated for this session.',
+      life: 3000,
+    });
+  } catch (e) {
+    toast.add({
+      severity: 'error',
+      summary: 'Failed to save',
+      detail: 'Could not update banking details.',
+      life: 3000,
+    });
+  } finally {
+    savingBank.value = false;
+  }
+};
 
 const handleFileSelect = (event: Event) => {
   const target = event.target as HTMLInputElement;
@@ -206,6 +259,57 @@ const cancelPreview = () => {
           </UIGlassButton>
         </div>
       </div>
+    </div>
+
+    <!-- Direct Banking Details Form -->
+    <div class="border-t border-brand-line pt-6 space-y-4">
+      <div>
+        <p class="section-kicker">Mobile Banking</p>
+        <h3 class="mt-1 text-lg font-black tracking-tight text-brand-ink">
+          Bank Transfer Info (1-Tap Copy)
+        </h3>
+        <p class="mt-0.5 text-xs font-medium text-brand-slate">
+          Attendees can 1-tap copy these details on mobile when paying via banking apps.
+        </p>
+      </div>
+
+      <form @submit.prevent="saveBankDetails" class="space-y-4">
+        <div class="grid gap-3 sm:grid-cols-3">
+          <UIGlassInput
+            v-model="bankForm.bankName"
+            type="text"
+            label="Bank Name"
+            placeholder="e.g. MB Bank, Vietcombank"
+          >
+            <template #icon><Building2 :size="16" /></template>
+          </UIGlassInput>
+
+          <UIGlassInput
+            v-model="bankForm.accountNumber"
+            type="text"
+            label="Account Number"
+            placeholder="e.g. 0987654321"
+          >
+            <template #icon><CreditCard :size="16" /></template>
+          </UIGlassInput>
+
+          <UIGlassInput
+            v-model="bankForm.accountName"
+            type="text"
+            label="Account Holder Name"
+            placeholder="e.g. NGUYEN VAN A"
+          >
+            <template #icon><UserCheck :size="16" /></template>
+          </UIGlassInput>
+        </div>
+
+        <div class="flex justify-end">
+          <UIGlassButton type="submit" :loading="savingBank" class="!px-4 !py-2 !text-xs">
+            <template #icon-left><Save :size="14" /></template>
+            Save Bank Details
+          </UIGlassButton>
+        </div>
+      </form>
     </div>
   </UIGlassCard>
 </template>
