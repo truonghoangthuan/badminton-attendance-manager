@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Home, LayoutDashboard, Loader2, PencilLine } from 'lucide-vue-next';
+import { Home, LayoutDashboard, Loader2, PencilLine, Trophy } from 'lucide-vue-next';
 import { useAdminAccess } from '../composables/useAdminAccess';
 
 const { profile, loading, setProfile } = useUserProfile();
@@ -165,6 +165,14 @@ const handleNameUpdate = async () => {
             >
               <Home :size="18" />
               Home
+            </NuxtLink>
+            <NuxtLink
+              to="/leaderboard"
+              class="flex items-center gap-2 rounded-2xl px-3.5 py-2 text-sm font-bold text-brand-slate transition-colors hover:bg-brand-sand hover:text-brand-ink"
+              active-class="!bg-brand-sand !text-brand-ink"
+            >
+              <Trophy :size="18" class="text-amber-500" />
+              <span class="hidden sm:inline">Leaderboard</span>
             </NuxtLink>
             <NuxtLink v-if="!claimsLoading && isAdmin" to="/admin" class="flex items-center">
               <UIGlassButton variant="secondary" class="!px-3 md:!px-4 !py-2 !text-sm">

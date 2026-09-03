@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { collection, query, orderBy, getDocs, doc, getDoc } from 'firebase/firestore';
-import { ArrowRight, Calendar, Clock3, MapPin, Trophy } from 'lucide-vue-next';
+import { ArrowRight, Calendar, Clock3, Feather, Grid2x2, MapPin, Trophy } from 'lucide-vue-next';
 
 const { db } = useFirebase();
 const sessions = ref<any[]>([]);
@@ -117,6 +117,33 @@ const getStatusStyles = (status: string) => {
               </div>
             </div>
 
+            <div
+              v-if="featuredSession.courtNumber || featuredSession.shuttlecockType || featuredSession.level"
+              class="mt-3 flex flex-wrap items-center gap-2"
+            >
+              <span
+                v-if="featuredSession.courtNumber"
+                class="inline-flex items-center gap-1 rounded-xl border border-emerald-200/60 bg-emerald-50/80 px-2.5 py-1 text-xs font-bold text-emerald-800"
+              >
+                <Grid2x2 :size="12" class="text-brand-court" />
+                {{ featuredSession.courtNumber }}
+              </span>
+              <span
+                v-if="featuredSession.shuttlecockType"
+                class="inline-flex items-center gap-1 rounded-xl border border-amber-200/60 bg-amber-50/80 px-2.5 py-1 text-xs font-bold text-amber-800"
+              >
+                <Feather :size="12" class="text-amber-600" />
+                {{ featuredSession.shuttlecockType }}
+              </span>
+              <span
+                v-if="featuredSession.level"
+                class="inline-flex items-center gap-1 rounded-xl border border-sky-200/60 bg-sky-50/80 px-2.5 py-1 text-xs font-bold text-sky-800"
+              >
+                <Trophy :size="12" class="text-sky-600" />
+                {{ featuredSession.level }}
+              </span>
+            </div>
+
             <NuxtLink :to="`/session/${featuredSession.id}`" class="mt-5 block">
               <UIGlassButton class="w-full !justify-between">
                 Join this session
@@ -133,6 +160,32 @@ const getStatusStyles = (status: string) => {
           </div>
         </template>
       </UIGlassCard>
+    </section>
+
+    <!-- Leaderboard Teaser Card -->
+    <section>
+      <NuxtLink to="/leaderboard" class="block group">
+        <UIGlassCard hoverable interactive class="relative overflow-hidden !p-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-4">
+              <div class="flex h-13 w-13 shrink-0 items-center justify-center rounded-2xl bg-amber-400/20 text-amber-600 ring-1 ring-amber-400/30 shadow-sm transition-transform group-hover:scale-105">
+                <Trophy :size="26" />
+              </div>
+              <div>
+                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-brand-court">Club Analytics & Hall of Fame</p>
+                <h3 class="text-xl font-black text-brand-ink">Bảng Xếp Hạng Câu Lạc Bộ</h3>
+                <p class="mt-0.5 text-xs font-medium text-brand-slate">
+                  Vinh danh những tay vợt chăm chỉ và có tỉ lệ tham gia cao nhất
+                </p>
+              </div>
+            </div>
+            <div class="inline-flex items-center gap-2 rounded-full border border-brand-line bg-white/80 px-4 py-2 text-xs font-bold text-brand-ink transition-colors group-hover:border-brand-court group-hover:text-brand-court shrink-0 self-start sm:self-auto">
+              <span>Xem bảng xếp hạng</span>
+              <ArrowRight :size="14" />
+            </div>
+          </div>
+        </UIGlassCard>
+      </NuxtLink>
     </section>
 
     <section v-if="otherSessions.length" class="space-y-4">
@@ -163,6 +216,33 @@ const getStatusStyles = (status: string) => {
             >
               <MapPin :size="16" class="text-brand-blue" />
               {{ session.location }}
+            </div>
+
+            <div
+              v-if="session.courtNumber || session.shuttlecockType || session.level"
+              class="flex flex-wrap items-center gap-2 pt-1"
+            >
+              <span
+                v-if="session.courtNumber"
+                class="inline-flex items-center gap-1 rounded-lg border border-emerald-200/60 bg-emerald-50/70 px-2 py-0.5 text-[11px] font-bold text-emerald-800"
+              >
+                <Grid2x2 :size="11" class="text-brand-court" />
+                {{ session.courtNumber }}
+              </span>
+              <span
+                v-if="session.shuttlecockType"
+                class="inline-flex items-center gap-1 rounded-lg border border-amber-200/60 bg-amber-50/70 px-2 py-0.5 text-[11px] font-bold text-amber-800"
+              >
+                <Feather :size="11" class="text-amber-600" />
+                {{ session.shuttlecockType }}
+              </span>
+              <span
+                v-if="session.level"
+                class="inline-flex items-center gap-1 rounded-lg border border-sky-200/60 bg-sky-50/70 px-2 py-0.5 text-[11px] font-bold text-sky-800"
+              >
+                <Trophy :size="11" class="text-sky-600" />
+                {{ session.level }}
+              </span>
             </div>
           </UIGlassCard>
         </NuxtLink>
