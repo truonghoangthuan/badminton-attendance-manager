@@ -27,6 +27,21 @@ const hasExistingVote = computed(() => {
   return attendanceList.value.some((attendance) => attendance.id === user.value?.uid);
 });
 
+const maxCapacity = computed(() => session.value?.maxPlayers || 8);
+const totalJoinedSlots = computed(() =>
+  attendanceList.value.reduce((acc, curr) => {
+    if (curr.isJoining) return acc + 1 + (curr.guestCount || 0);
+    return acc;
+  }, 0)
+);
+const isSessionFull = computed(() => totalJoinedSlots.value >= maxCapacity.value);
+
+const myAttendanceRecord = computed(() => {
+  if (!user.value) return null;
+  return attendanceList.value.find((a: any) => a.id === user.value?.uid) || null;
+});
+const isUserAlreadyJoining = computed(() => myAttendanceRecord.value?.isJoining === true);
+
 const totalActualPlayers = computed(() => {
   return attendanceList.value.reduce((acc, curr) => {
     if (curr.actualAttended) {
@@ -72,7 +87,11 @@ onMounted(async () => {
         if (myVote) {
           vote.value.isJoining = myVote.isJoining;
           vote.value.guestCount = myVote.guestCount || 0;
+        } else if (isSessionFull.value) {
+          vote.value.isJoining = false;
         }
+      } else if (isSessionFull.value && !isUserAlreadyJoining.value) {
+        vote.value.isJoining = false;
       }
     });
 
@@ -119,6 +138,24 @@ const submitVote = async () => {
         summary: 'Profile update failed',
         detail: 'Could not save your name.',
         life: 3000,
+      });
+      return;
+    }
+  }
+
+  if (vote.value.isJoining) {
+    const previousSlots = isUserAlreadyJoining.value ? 1 + (myAttendanceRecord.value?.guestCount || 0) : 0;
+    const requestedSlots = 1 + (vote.value.guestCount || 0);
+    const availableSlots = Math.max(0, maxCapacity.value - (totalJoinedSlots.value - previousSlots));
+
+    if (requestedSlots > availableSlots) {
+      toast.add({
+        severity: 'warn',
+        summary: availableSlots === 0 ? 'Session Full' : 'Capacity Exceeded',
+        detail: availableSlots === 0
+          ? 'This session is full and cannot accept new players.'
+          : `Only ${availableSlots} slot(s) remaining.`,
+        life: 3500,
       });
       return;
     }
@@ -297,6 +334,22 @@ const getGuestLabel = (guestCount: number) => {
               <p class="mt-1 text-sm font-medium text-brand-slate">Guests are included in the split.</p>
             </div>
           </div>
+
+          <div class="rounded-[24px] border border-brand-line bg-brand-sand px-4 py-4 space-y-2">
+            <div class="flex justify-between items-center text-xs font-black uppercase tracking-wider">
+              <span class="text-brand-slate">Court Capacity</span>
+              <span :class="isSessionFull ? 'text-amber-700 font-bold' : 'text-brand-court'">
+                {{ totalJoinedSlots }} / {{ maxCapacity }} slots
+              </span>
+            </div>
+            <div class="h-2.5 w-full rounded-full bg-brand-line/60 overflow-hidden">
+              <div
+                class="h-full transition-all duration-500 rounded-full"
+                :class="isSessionFull ? 'bg-amber-500' : 'bg-brand-court'"
+                :style="{ width: `${Math.min(100, (totalJoinedSlots / maxCapacity) * 100)}%` }"
+              />
+            </div>
+          </div>
         </UIGlassCard>
 
         <div class="space-y-6">
@@ -330,13 +383,29 @@ const getGuestLabel = (guestCount: number) => {
                 <p class="mt-1 text-lg font-black">{{ profile.displayName }}</p>
               </div>
 
+              <div
+                v-if="isSessionFull && !isUserAlreadyJoining"
+                class="rounded-[20px] border border-amber-200 bg-amber-50/80 p-3.5 text-xs font-bold text-amber-900"
+              >
+                This session has reached full capacity ({{ maxCapacity }} slots). You can only RSVP as unavailable.
+              </div>
+
               <div class="grid gap-3 sm:grid-cols-2">
-                <label class="cursor-pointer">
-                  <input type="radio" v-model="vote.isJoining" :value="true" class="peer hidden" />
+                <label
+                  class="cursor-pointer"
+                  :class="{ 'opacity-50 cursor-not-allowed': isSessionFull && !isUserAlreadyJoining }"
+                >
+                  <input
+                    type="radio"
+                    v-model="vote.isJoining"
+                    :value="true"
+                    :disabled="isSessionFull && !isUserAlreadyJoining"
+                    class="peer hidden"
+                  />
                   <div
                     class="rounded-[22px] border border-brand-line bg-brand-sand px-4 py-4 text-center font-bold transition-all peer-checked:border-brand-court peer-checked:bg-emerald-50"
                   >
-                    I’m joining
+                    {{ isSessionFull && !isUserAlreadyJoining ? 'Session Full' : 'I’m joining' }}
                   </div>
                 </label>
                 <label class="cursor-pointer">

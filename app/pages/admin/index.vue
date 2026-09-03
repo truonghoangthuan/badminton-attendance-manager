@@ -24,6 +24,7 @@ const newSession = ref({
   date: new Date().toISOString().split('T')[0],
   time: '19:00',
   location: 'Sân cầu lông Quang Sport',
+  maxPlayers: 8,
 });
 const timeOptions = Array.from({ length: 24 * 12 }, (_, index) => {
   const hours = `${Math.floor(index / 12)}`.padStart(2, '0');
@@ -70,12 +71,17 @@ onMounted(() => {
 const createSession = async () => {
   adding.value = true;
   try {
+    const sessionPayload = {
+      ...newSession.value,
+      maxPlayers: Number(newSession.value.maxPlayers) || 8,
+    };
+
     if (isEditing.value && editingSessionId.value) {
       const docRef = doc(db, 'sessions', editingSessionId.value);
-      await updateDoc(docRef, { ...newSession.value });
+      await updateDoc(docRef, sessionPayload);
     } else {
       await addDoc(sessionsRef, {
-        ...newSession.value,
+        ...sessionPayload,
         status: 'open',
         financials: {
           courtCost: 0,
@@ -104,6 +110,7 @@ const resetForm = () => {
     date: new Date().toISOString().split('T')[0],
     time: '19:00',
     location: 'Sân cầu lông Quang Sport',
+    maxPlayers: 8,
   };
 };
 
@@ -119,6 +126,7 @@ const openEditModal = (session: any) => {
     date: session.date,
     time: session.time,
     location: session.location,
+    maxPlayers: session.maxPlayers || 8,
   };
   showCreateForm.value = true;
 };
@@ -276,6 +284,11 @@ const getStatusColor = (status: string) => {
                         <MapPin :size="14" class="opacity-70" />
                         <span class="line-clamp-1 truncate max-w-[150px]">{{ session.location }}</span>
                       </div>
+                      <div class="hidden h-1 w-1 rounded-full bg-brand-line md:block" />
+                      <div class="flex items-center gap-1.5">
+                        <UsersIcon :size="14" class="opacity-70" />
+                        <span>{{ session.maxPlayers || 8 }} max</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -400,6 +413,18 @@ const getStatusColor = (status: string) => {
       </div>
       <UIGlassInput v-model="newSession.location" type="text" label="Location" placeholder="Badminton Court A" required>
         <template #icon><MapPin :size="18" /></template>
+      </UIGlassInput>
+
+      <UIGlassInput
+        v-model.number="newSession.maxPlayers"
+        type="number"
+        min="2"
+        max="50"
+        label="Max Players (Capacity)"
+        placeholder="8"
+        required
+      >
+        <template #icon><UsersIcon :size="18" /></template>
       </UIGlassInput>
 
       <div class="flex justify-end md:col-span-3">

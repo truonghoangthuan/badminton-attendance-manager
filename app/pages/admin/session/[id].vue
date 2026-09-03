@@ -42,6 +42,7 @@ const editForm = ref({
   date: '',
   time: '',
   location: '',
+  maxPlayers: 8,
 });
 
 onMounted(() => {
@@ -58,6 +59,7 @@ onMounted(() => {
       date: session.value.date || '',
       time: session.value.time || '',
       location: session.value.location || '',
+      maxPlayers: session.value.maxPlayers || 8,
     };
   });
 
@@ -124,6 +126,11 @@ const sessionMeta = computed(() => {
       icon: MapPin,
       label: 'Location',
       value: session.value.location || 'TBD',
+    },
+    {
+      icon: Users,
+      label: 'Capacity',
+      value: `${session.value.maxPlayers || 8} players`,
     },
   ];
 });
@@ -234,6 +241,7 @@ const openEditModal = () => {
     date: session.value.date,
     time: session.value.time,
     location: session.value.location,
+    maxPlayers: session.value.maxPlayers || 8,
   };
   showEditModal.value = true;
 };
@@ -243,7 +251,10 @@ const saveSessionEdits = async () => {
   savingEdits.value = true;
   try {
     const docRef = doc(db, 'sessions', sessionId);
-    await updateDoc(docRef, { ...editForm.value });
+    await updateDoc(docRef, {
+      ...editForm.value,
+      maxPlayers: Number(editForm.value.maxPlayers) || 8,
+    });
     showEditModal.value = false;
   } catch (e) {
     console.error('Error saving session edits:', e);
@@ -805,6 +816,17 @@ const getStatusColor = (status: string) => {
       </UIGlassInput>
       <UIGlassInput v-model="editForm.location" type="text" label="Location" required>
         <template #icon><MapPin :size="18" /></template>
+      </UIGlassInput>
+      <UIGlassInput
+        v-model.number="editForm.maxPlayers"
+        type="number"
+        min="2"
+        max="50"
+        label="Max Players (Capacity)"
+        placeholder="8"
+        required
+      >
+        <template #icon><Users :size="18" /></template>
       </UIGlassInput>
 
       <div class="flex justify-end pt-4">
