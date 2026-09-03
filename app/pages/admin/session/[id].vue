@@ -112,6 +112,12 @@ const unpaidPlayers = computed(() => {
   return attendances.value.filter((attendance) => attendance.actualAttended && !attendance.hasPaid).length;
 });
 
+const unpaidSlots = computed(() =>
+  attendances.value
+    .filter((a) => a.actualAttended && !a.hasPaid)
+    .reduce((acc, a) => acc + 1 + (a.guestCount || 0), 0)
+);
+
 const financialBreakdown = computed(() => getSessionFinancialBreakdown(session.value?.financials, totalActualPlayers.value));
 
 const totalSessionCost = computed(() => financialBreakdown.value.totalSessionCost);
@@ -119,6 +125,8 @@ const totalSessionCost = computed(() => financialBreakdown.value.totalSessionCos
 const calculatedFeePerPerson = computed(() => {
   return calculateFeePerPerson(totalSessionCost.value, totalActualPlayers.value);
 });
+
+const unpaidTotalRevenue = computed(() => unpaidSlots.value * calculatedFeePerPerson.value);
 
 const sessionMeta = computed(() => {
   if (!session.value) {
@@ -163,8 +171,10 @@ const summaryStats = computed(() => [
     icon: CircleDollarSign,
     label: 'Pending payment',
     value: unpaidPlayers.value,
-    hint: `${formatCurrency(totalSessionCost.value)} total cost`,
-    accent: 'from-brand-shuttle/22 to-brand-shuttle/8 text-amber-700',
+    hint: unpaidSlots.value > 0
+      ? `${unpaidSlots.value} slot${unpaidSlots.value === 1 ? '' : 's'} (${formatCurrency(unpaidTotalRevenue.value)})`
+      : 'All paid up',
+    accent: unpaidPlayers.value > 0 ? 'from-brand-shuttle/22 to-brand-shuttle/8 text-amber-700' : 'from-emerald-500/14 to-emerald-500/5 text-emerald-600',
   },
 ]);
 
@@ -492,7 +502,7 @@ const getStatusColor = (status: string) => {
               <div class="flex flex-wrap items-center gap-2">
                 <span class="score-chip">{{ attendances.length }} responses</span>
                 <span class="score-chip">{{ totalExpectedPlayers }} expected</span>
-                <span class="score-chip">{{ unpaidPlayers }} unpaid</span>
+                <span class="score-chip">{{ unpaidPlayers }} unpaid ({{ unpaidSlots }} slots)</span>
                 <UIGlassButton
                   class="!px-3.5 !py-1.5 !text-xs font-bold"
                   @click="showManualAddModal = true"
@@ -582,6 +592,14 @@ const getStatusColor = (status: string) => {
                   </button>
                 </div>
 
+                <div v-if="att.actualAttended" class="mt-3 flex items-center justify-between rounded-xl border border-brand-line/60 bg-brand-sand/50 px-3 py-2 text-xs">
+                  <span class="font-medium text-brand-slate">Calculated Share:</span>
+                  <div class="text-right">
+                    <span class="font-black text-brand-ink">{{ formatCurrency(calculatedFeePerPerson * (1 + (att.guestCount || 0))) }}</span>
+                    <span v-if="att.guestCount" class="text-[10px] font-medium text-brand-slate"> ({{ 1 + att.guestCount }} slots)</span>
+                  </div>
+                </div>
+
                 <div class="mt-4 grid gap-3 sm:grid-cols-2">
                   <button
                     type="button"
@@ -615,7 +633,7 @@ const getStatusColor = (status: string) => {
             </div>
 
             <div
-              v-if="attendances.length > 0"
+              v-if="attendances.length"
               class="hidden overflow-hidden rounded-[24px] border border-brand-line md:block"
             >
               <table class="w-full">
@@ -693,19 +711,25 @@ const getStatusColor = (status: string) => {
                       </button>
                     </td>
                     <td class="px-5 py-4">
-                      <button
-                        type="button"
-                        class="action-pill !px-4 !py-2 text-sm"
-                        :class="
-                          att.hasPaid
-                            ? 'border-brand-court bg-brand-court text-white'
-                            : 'border-brand-line bg-white text-brand-slate'
-                        "
-                        @click="toggleAttendanceAttr(att.id, 'hasPaid', !att.hasPaid)"
-                      >
-                        <ReceiptText :size="16" />
-                        {{ att.hasPaid ? 'Paid' : 'Unpaid' }}
-                      </button>
+                      <div class="flex flex-col gap-1.5">
+                        <button
+                          type="button"
+                          class="action-pill !px-4 !py-2 text-sm"
+                          :class="
+                            att.hasPaid
+                              ? 'border-brand-court bg-brand-court text-white'
+                              : 'border-brand-line bg-white text-brand-slate'
+                          "
+                          @click="toggleAttendanceAttr(att.id, 'hasPaid', !att.hasPaid)"
+                        >
+                          <ReceiptText :size="16" />
+                          {{ att.hasPaid ? 'Paid' : 'Unpaid' }}
+                        </button>
+                        <div v-if="att.actualAttended" class="px-1 text-xs font-semibold text-brand-slate">
+                          Owes: <span class="font-black text-brand-ink">{{ formatCurrency(calculatedFeePerPerson * (1 + (att.guestCount || 0))) }}</span>
+                          <span v-if="att.guestCount" class="text-[10px] text-brand-slate/70"> ({{ 1 + att.guestCount }} slots)</span>
+                        </div>
+                      </div>
                     </td>
                     <td class="px-5 py-4 text-right">
                       <button

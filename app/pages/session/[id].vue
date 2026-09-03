@@ -350,6 +350,27 @@ const getGuestLabel = (guestCount: number) => {
               />
             </div>
           </div>
+
+          <div
+            v-if="myAttendanceRecord?.isJoining"
+            class="rounded-[24px] border border-brand-court/30 bg-emerald-50/80 p-4"
+          >
+            <div class="flex items-center justify-between">
+              <p class="text-[11px] font-black uppercase tracking-wider text-brand-court">Your Calculated Share</p>
+              <span
+                v-if="myAttendanceRecord.actualAttended"
+                class="rounded-full border border-emerald-200 bg-emerald-100/70 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-800"
+              >
+                Checked in
+              </span>
+            </div>
+            <p class="mt-1 text-2xl font-black text-brand-ink">
+              {{ formatCurrency(calculatedFeePerPerson * (1 + (myAttendanceRecord.guestCount || 0))) }}
+            </p>
+            <p v-if="myAttendanceRecord.guestCount" class="mt-0.5 text-xs font-medium text-brand-slate">
+              Includes you + {{ myAttendanceRecord.guestCount }} {{ myAttendanceRecord.guestCount === 1 ? 'guest' : 'guests' }} ({{ 1 + myAttendanceRecord.guestCount }} slots)
+            </p>
+          </div>
         </UIGlassCard>
 
         <div class="space-y-6">
