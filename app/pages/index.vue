@@ -5,7 +5,9 @@ import { ArrowRight, Calendar, Clock3, MapPin, Trophy } from 'lucide-vue-next';
 const { db } = useFirebase();
 const sessions = ref<any[]>([]);
 const loading = ref(true);
+const { profile } = useUserProfile();
 const userName = ref<string | null>(null);
+const greetingName = computed(() => profile.value?.displayName || userName.value || null);
 const STORAGE_KEY = 'badminton_user_id';
 
 onMounted(async () => {
@@ -31,11 +33,24 @@ onMounted(async () => {
   }
 });
 
-const featuredSession = computed(
-  () => sessions.value.find((session) => session.status !== 'completed') || sessions.value[0] || null,
+const todayStr = new Date().toISOString().split('T')[0];
+
+const activeSessions = computed(() =>
+  sessions.value
+    .filter((s) => s.status !== 'completed')
+    .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
 );
+
+const featuredSession = computed(() => {
+  if (activeSessions.value.length > 0) {
+    const upcoming = activeSessions.value.find((s) => (s.date || '') >= todayStr);
+    return upcoming || activeSessions.value[0];
+  }
+  return sessions.value[0] || null;
+});
+
 const otherSessions = computed(() =>
-  sessions.value.filter((session) => session.id !== featuredSession.value?.id).slice(0, 4),
+  sessions.value.filter((session) => session.id !== featuredSession.value?.id).slice(0, 6)
 );
 
 const getStatusStyles = (status: string) => {
@@ -60,7 +75,7 @@ const getStatusStyles = (status: string) => {
         <div class="space-y-2">
           <p class="section-kicker">Community Dashboard</p>
           <h1 class="text-3xl font-black tracking-tight md:text-4xl">
-            {{ userName ? `Hi ${userName}, ready to play?` : 'Ready for the next badminton session?' }}
+            {{ greetingName ? `Hi ${greetingName}, ready to play?` : 'Ready for the next badminton session?' }}
           </h1>
         </div>
 
