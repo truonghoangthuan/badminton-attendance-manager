@@ -7,6 +7,7 @@ import {
   CircleDollarSign,
   Clock3,
   Edit2,
+  Info,
   Lock,
   MapPin,
   ReceiptText,
@@ -447,6 +448,19 @@ const getStatusColor = (status: string) => {
                 <span class="score-chip">{{ attendances.length }} responses</span>
                 <span class="score-chip">{{ totalExpectedPlayers }} expected</span>
                 <span class="score-chip">{{ unpaidPlayers }} unpaid</span>
+              </div>
+            </div>
+
+            <div
+              v-if="totalJoinedPlayers > 0 && totalActualPlayers === 0"
+              class="flex items-start gap-3 rounded-[20px] border border-amber-200 bg-amber-50/80 p-4 text-amber-900"
+            >
+              <Info :size="20" class="mt-0.5 shrink-0 text-amber-600" />
+              <div class="text-sm">
+                <p class="font-bold">Check-in Required</p>
+                <p class="mt-0.5 text-xs font-medium text-amber-800">
+                  Players have RSVP'd. Mark attendees as present upon arrival at the court to compute the final fee split.
+                </p>
               </div>
             </div>
 

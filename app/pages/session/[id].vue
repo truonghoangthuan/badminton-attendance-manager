@@ -129,16 +129,18 @@ const submitVote = async () => {
     const uid = user.value.uid;
     const displayName = profile.value?.displayName || newName.value.trim();
     const attendanceRef = doc(db, `sessions/${sessionId}/attendances`, uid);
+    const existingRecord = attendanceList.value.find((a: any) => a.id === uid);
+    const actualAttended = vote.value.isJoining ? (existingRecord?.actualAttended ?? false) : false;
 
     await setDoc(attendanceRef, {
       uid,
       name: displayName,
       isJoining: vote.value.isJoining,
-      guestCount: vote.value.guestCount,
-      actualAttended: vote.value.isJoining,
-      hasPaid: false,
+      guestCount: vote.value.guestCount || 0,
+      actualAttended,
+      hasPaid: existingRecord?.hasPaid ?? false,
       updatedAt: new Date().toISOString(),
-    });
+    }, { merge: true });
 
     toast.add({
       severity: 'success',
