@@ -3,11 +3,18 @@ import { collection, query, orderBy, getDocs, doc, getDoc } from 'firebase/fires
 import { ArrowRight, Calendar, Clock3, Feather, Grid2x2, MapPin, Trophy } from 'lucide-vue-next';
 
 const { db } = useFirebase();
+const { t } = useI18n();
 const sessions = ref<any[]>([]);
 const loading = ref(true);
 const { profile } = useUserProfile();
 const userName = ref<string | null>(null);
 const greetingName = computed(() => profile.value?.displayName || userName.value || null);
+const greetingText = computed(() => {
+  if (greetingName.value) {
+    return t('home.readyToPlayGreeting', { name: greetingName.value });
+  }
+  return t('home.readyToPlayGeneric');
+});
 const STORAGE_KEY = 'badminton_user_id';
 
 onMounted(async () => {
@@ -53,6 +60,13 @@ const otherSessions = computed(() =>
   sessions.value.filter((session) => session.id !== featuredSession.value?.id).slice(0, 6)
 );
 
+const getStatusLabel = (status: string) => {
+  const s = status?.toLowerCase();
+  if (s === 'open') return t('sessionStatus.open');
+  if (s === 'locked') return t('sessionStatus.locked');
+  return t('sessionStatus.completed');
+};
+
 const getStatusStyles = (status: string) => {
   switch (status?.toLowerCase()) {
     case 'open':
@@ -73,9 +87,9 @@ const getStatusStyles = (status: string) => {
     <section>
       <UIGlassCard class="space-y-6">
         <div class="space-y-2">
-          <p class="section-kicker">Community Dashboard</p>
+          <p class="section-kicker">{{ t('home.heroKicker') }}</p>
           <h1 class="text-3xl font-black tracking-tight md:text-4xl">
-            {{ greetingName ? `Hi ${greetingName}, ready to play?` : 'Ready for the next badminton session?' }}
+            {{ greetingText }}
           </h1>
         </div>
 
@@ -92,13 +106,13 @@ const getStatusStyles = (status: string) => {
             <div class="flex items-start justify-between gap-3">
               <div>
                 <p class="text-3xl font-black tracking-tight">{{ featuredSession.date }}</p>
-                <p class="mt-1 text-sm font-medium text-brand-slate">Next session</p>
+                <p class="mt-1 text-sm font-medium text-brand-slate">{{ t('home.nextSession') }}</p>
               </div>
               <span
                 :class="getStatusStyles(featuredSession.status)"
                 class="rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]"
               >
-                {{ featuredSession.status }}
+                {{ getStatusLabel(featuredSession.status) }}
               </span>
             </div>
 
@@ -146,7 +160,7 @@ const getStatusStyles = (status: string) => {
 
             <NuxtLink :to="`/session/${featuredSession.id}`" class="mt-5 block">
               <UIGlassButton class="w-full !justify-between">
-                Join this session
+                {{ t('home.joinNow') }}
                 <template #icon-right><ArrowRight :size="18" /></template>
               </UIGlassButton>
             </NuxtLink>
@@ -156,7 +170,8 @@ const getStatusStyles = (status: string) => {
         <template v-else>
           <div class="rounded-[28px] border border-dashed border-brand-line bg-brand-sand px-6 py-14 text-center">
             <Trophy :size="28" class="mx-auto text-brand-slate" />
-            <h2 class="mt-4 text-2xl font-black">No sessions yet</h2>
+            <h2 class="mt-4 text-2xl font-black">{{ t('home.noUpcomingTitle') }}</h2>
+            <p class="mt-2 text-sm text-brand-slate">{{ t('home.noUpcomingDesc') }}</p>
           </div>
         </template>
       </UIGlassCard>
@@ -172,15 +187,15 @@ const getStatusStyles = (status: string) => {
                 <Trophy :size="26" />
               </div>
               <div>
-                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-brand-court">Club Analytics & Hall of Fame</p>
-                <h3 class="text-xl font-black text-brand-ink">Bảng Xếp Hạng Câu Lạc Bộ</h3>
+                <p class="text-[10px] font-black uppercase tracking-[0.2em] text-brand-court">{{ t('home.leaderboardTeaserKicker') }}</p>
+                <h3 class="text-xl font-black text-brand-ink">{{ t('home.leaderboardTeaserTitle') }}</h3>
                 <p class="mt-0.5 text-xs font-medium text-brand-slate">
-                  Vinh danh những tay vợt chăm chỉ và có tỉ lệ tham gia cao nhất
+                  {{ t('home.leaderboardTeaserDesc') }}
                 </p>
               </div>
             </div>
             <div class="inline-flex items-center gap-2 rounded-full border border-brand-line bg-white/80 px-4 py-2 text-xs font-bold text-brand-ink transition-colors group-hover:border-brand-court group-hover:text-brand-court shrink-0 self-start sm:self-auto">
-              <span>Xem bảng xếp hạng</span>
+              <span>{{ t('home.viewLeaderboard') }}</span>
               <ArrowRight :size="14" />
             </div>
           </div>
@@ -189,7 +204,7 @@ const getStatusStyles = (status: string) => {
     </section>
 
     <section v-if="otherSessions.length" class="space-y-4">
-      <div class="court-divider"><span>More Sessions</span></div>
+      <div class="court-divider"><span>{{ t('home.moreSessions') }}</span></div>
       <div class="grid gap-4 md:grid-cols-2">
         <NuxtLink v-for="session in otherSessions" :key="session.id" :to="`/session/${session.id}`" class="block">
           <UIGlassCard hoverable interactive class="space-y-4">
@@ -207,7 +222,7 @@ const getStatusStyles = (status: string) => {
                 :class="getStatusStyles(session.status)"
                 class="rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]"
               >
-                {{ session.status }}
+                {{ getStatusLabel(session.status) }}
               </span>
             </div>
 

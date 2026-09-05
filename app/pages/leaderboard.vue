@@ -21,6 +21,7 @@ interface PlayerStats {
 }
 
 const { db } = useFirebase();
+const { t } = useI18n();
 const loading = ref(true);
 const searchQuery = ref('');
 
@@ -113,11 +114,11 @@ const filteredPlayers = computed(() => {
 const topThree = computed(() => allPlayers.value.slice(0, 3));
 
 const getPlayerBadge = (index: number) => {
-  if (index === 0) return { label: 'Club Legend', color: 'bg-amber-100 text-amber-800 border-amber-300' };
-  if (index === 1) return { label: 'Top Contender', color: 'bg-slate-100 text-slate-800 border-slate-300' };
-  if (index === 2) return { label: 'Star Player', color: 'bg-orange-100 text-orange-800 border-orange-300' };
-  if (index < 10) return { label: 'Regular', color: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
-  return { label: 'Member', color: 'bg-brand-sand text-brand-slate border-brand-line' };
+  if (index === 0) return { label: t('leaderboard.legendBadge'), color: 'bg-amber-100 text-amber-800 border-amber-300' };
+  if (index === 1) return { label: t('leaderboard.contenderBadge'), color: 'bg-slate-100 text-slate-800 border-slate-300' };
+  if (index === 2) return { label: t('leaderboard.starBadge'), color: 'bg-orange-100 text-orange-800 border-orange-300' };
+  if (index < 10) return { label: t('leaderboard.regularBadge'), color: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
+  return { label: t('leaderboard.memberBadge'), color: 'bg-brand-sand text-brand-slate border-brand-line' };
 };
 </script>
 
@@ -133,14 +134,14 @@ const getPlayerBadge = (index: number) => {
           class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-brand-slate transition-colors hover:text-brand-court mb-2"
         >
           <ArrowLeft :size="14" />
-          <span>Về trang chủ</span>
+          <span>{{ t('leaderboard.backToHome') }}</span>
         </NuxtLink>
-        <p class="section-kicker">Hall of Fame</p>
+        <p class="section-kicker">{{ t('leaderboard.badge') }}</p>
         <h1 class="mt-1 text-3xl font-black tracking-tight text-brand-ink sm:text-4xl">
-          Bảng Xếp Hạng & Hoạt Động
+          {{ t('leaderboard.title') }}
         </h1>
         <p class="mt-1 text-sm font-medium text-brand-slate">
-          Tuyên dương các thành viên tích cực và chăm chỉ tham gia các buổi cầu lông Gravity.
+          {{ t('leaderboard.subtitle') }}
         </p>
       </div>
     </div>
@@ -149,7 +150,7 @@ const getPlayerBadge = (index: number) => {
     <section class="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <UIGlassCard class="!p-5">
         <div class="flex items-center justify-between">
-          <p class="text-[11px] font-black uppercase tracking-wider text-brand-slate">Tổng phiên đấu</p>
+          <p class="text-[11px] font-black uppercase tracking-wider text-brand-slate">{{ t('leaderboard.statsSessions') }}</p>
           <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-court/10 text-brand-court">
             <Calendar :size="18" />
           </div>
@@ -157,12 +158,12 @@ const getPlayerBadge = (index: number) => {
         <p class="mt-3 text-3xl font-black text-brand-ink">
           {{ loading ? '...' : totalSessionsCount }}
         </p>
-        <p class="mt-0.5 text-xs text-brand-slate">Đã tổ chức</p>
+        <p class="mt-0.5 text-xs text-brand-slate">{{ t('leaderboard.statsSessionsDesc') }}</p>
       </UIGlassCard>
 
       <UIGlassCard class="!p-5">
         <div class="flex items-center justify-between">
-          <p class="text-[11px] font-black uppercase tracking-wider text-brand-slate">Thành viên</p>
+          <p class="text-[11px] font-black uppercase tracking-wider text-brand-slate">{{ t('leaderboard.statsMembers') }}</p>
           <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600">
             <Users :size="18" />
           </div>
@@ -170,12 +171,12 @@ const getPlayerBadge = (index: number) => {
         <p class="mt-3 text-3xl font-black text-brand-ink">
           {{ loading ? '...' : allPlayers.length }}
         </p>
-        <p class="mt-0.5 text-xs text-brand-slate">Đã tham gia sân</p>
+        <p class="mt-0.5 text-xs text-brand-slate">{{ t('leaderboard.statsMembersDesc') }}</p>
       </UIGlassCard>
 
       <UIGlassCard class="!p-5">
         <div class="flex items-center justify-between">
-          <p class="text-[11px] font-black uppercase tracking-wider text-brand-slate">Lượt điểm danh</p>
+          <p class="text-[11px] font-black uppercase tracking-wider text-brand-slate">{{ t('leaderboard.statsCheckins') }}</p>
           <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-purple/10 text-brand-purple">
             <Award :size="18" />
           </div>
@@ -183,12 +184,12 @@ const getPlayerBadge = (index: number) => {
         <p class="mt-3 text-3xl font-black text-brand-ink">
           {{ loading ? '...' : totalPlayerCheckIns }}
         </p>
-        <p class="mt-0.5 text-xs text-brand-slate">Lượt người có mặt</p>
+        <p class="mt-0.5 text-xs text-brand-slate">{{ t('leaderboard.statsCheckinsDesc') }}</p>
       </UIGlassCard>
 
       <UIGlassCard class="!p-5">
         <div class="flex items-center justify-between">
-          <p class="text-[11px] font-black uppercase tracking-wider text-brand-slate">Cầu lông đã dùng</p>
+          <p class="text-[11px] font-black uppercase tracking-wider text-brand-slate">{{ t('leaderboard.statsShuttles') }}</p>
           <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600">
             <Flame :size="18" />
           </div>
@@ -196,13 +197,13 @@ const getPlayerBadge = (index: number) => {
         <p class="mt-3 text-3xl font-black text-brand-ink">
           {{ loading ? '...' : totalShuttlecocksUsed }}
         </p>
-        <p class="mt-0.5 text-xs text-brand-slate">Quả cầu</p>
+        <p class="mt-0.5 text-xs text-brand-slate">{{ t('leaderboard.statsShuttlesDesc') }}</p>
       </UIGlassCard>
     </section>
 
     <!-- Top 3 Podium (when available) -->
     <section v-if="!loading && topThree.length > 0" class="space-y-4">
-      <div class="court-divider"><span>🏆 Top 3 Gương Mặt Tiêu Biểu</span></div>
+      <div class="court-divider"><span>🏆 {{ t('leaderboard.topPodiumTitle') }}</span></div>
 
       <div class="grid gap-4 md:grid-cols-3 items-end">
         <!-- 2nd Place -->
@@ -215,15 +216,15 @@ const getPlayerBadge = (index: number) => {
           </div>
           <p class="mt-3 text-lg font-black text-brand-ink">{{ topThree[1].name }}</p>
           <span class="inline-block mt-1 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-slate-700">
-            Hạng 2 - Á Quân
+            {{ t('leaderboard.silverTitle') }}
           </span>
           <div class="mt-4 pt-3 border-t border-brand-line/60 flex justify-around text-xs">
             <div>
-              <p class="text-brand-slate font-bold">Số buổi</p>
+              <p class="text-brand-slate font-bold">{{ t('leaderboard.matches') }}</p>
               <p class="text-lg font-black text-brand-ink">{{ topThree[1].matchesPlayed }}</p>
             </div>
             <div>
-              <p class="text-brand-slate font-bold">Uy tín</p>
+              <p class="text-brand-slate font-bold">{{ t('leaderboard.reliability') }}</p>
               <p class="text-lg font-black text-emerald-600">{{ topThree[1].reliabilityRate }}%</p>
             </div>
           </div>
@@ -241,15 +242,15 @@ const getPlayerBadge = (index: number) => {
           </div>
           <p class="mt-3 text-2xl font-black text-brand-ink">{{ topThree[0].name }}</p>
           <span class="inline-block mt-1 rounded-full border border-amber-300 bg-amber-100 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-amber-900 shadow-sm">
-            Quán Quân - Club Legend
+            {{ t('leaderboard.goldTitle') }}
           </span>
           <div class="mt-5 pt-4 border-t border-brand-line/60 flex justify-around text-sm">
             <div>
-              <p class="text-brand-slate font-bold text-xs">Số buổi tham gia</p>
+              <p class="text-brand-slate font-bold text-xs">{{ t('leaderboard.sessionsAttended') }}</p>
               <p class="text-2xl font-black text-brand-court">{{ topThree[0].matchesPlayed }}</p>
             </div>
             <div>
-              <p class="text-brand-slate font-bold text-xs">Độ uy tín</p>
+              <p class="text-brand-slate font-bold text-xs">{{ t('leaderboard.reliability') }}</p>
               <p class="text-2xl font-black text-emerald-600">{{ topThree[0].reliabilityRate }}%</p>
             </div>
           </div>
@@ -265,15 +266,15 @@ const getPlayerBadge = (index: number) => {
           </div>
           <p class="mt-3 text-lg font-black text-brand-ink">{{ topThree[2].name }}</p>
           <span class="inline-block mt-1 rounded-full border border-orange-200 bg-orange-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-orange-800">
-            Hạng 3 - Đồng Hạng
+            {{ t('leaderboard.bronzeTitle') }}
           </span>
           <div class="mt-4 pt-3 border-t border-brand-line/60 flex justify-around text-xs">
             <div>
-              <p class="text-brand-slate font-bold">Số buổi</p>
+              <p class="text-brand-slate font-bold">{{ t('leaderboard.matches') }}</p>
               <p class="text-lg font-black text-brand-ink">{{ topThree[2].matchesPlayed }}</p>
             </div>
             <div>
-              <p class="text-brand-slate font-bold">Uy tín</p>
+              <p class="text-brand-slate font-bold">{{ t('leaderboard.reliability') }}</p>
               <p class="text-lg font-black text-emerald-600">{{ topThree[2].reliabilityRate }}%</p>
             </div>
           </div>
@@ -287,7 +288,7 @@ const getPlayerBadge = (index: number) => {
         <div>
           <p class="section-kicker">Member Directory</p>
           <h2 class="mt-1 text-2xl font-black tracking-tight text-brand-ink">
-            Danh Sách Thành Viên & Tỉ Lệ Có Mặt
+            {{ t('leaderboard.memberDirectory') }}
           </h2>
         </div>
 
@@ -295,7 +296,7 @@ const getPlayerBadge = (index: number) => {
           <UIGlassInput
             v-model="searchQuery"
             type="text"
-            placeholder="Tìm theo tên người chơi..."
+            :placeholder="t('leaderboard.searchPlaceholder')"
           >
             <template #icon><Search :size="16" /></template>
           </UIGlassInput>
@@ -310,8 +311,8 @@ const getPlayerBadge = (index: number) => {
 
       <UIGlassCard v-else-if="filteredPlayers.length === 0" class="text-center py-12">
         <Users :size="28" class="mx-auto text-brand-slate" />
-        <p class="mt-3 font-black text-brand-ink">Không tìm thấy người chơi</p>
-        <p class="mt-1 text-sm text-brand-slate">Thử tìm kiếm với từ khóa khác.</p>
+        <p class="mt-3 font-black text-brand-ink">{{ t('leaderboard.noPlayersFound') }}</p>
+        <p class="mt-1 text-sm text-brand-slate">{{ t('leaderboard.tryDifferentSearch') }}</p>
       </UIGlassCard>
 
       <UIGlassCard v-else class="!p-0 overflow-hidden">
@@ -320,22 +321,22 @@ const getPlayerBadge = (index: number) => {
             <thead class="bg-brand-sand/70">
               <tr>
                 <th class="px-5 py-3.5 text-left text-[11px] font-black uppercase tracking-wider text-brand-slate w-16">
-                  Hạng
+                  {{ t('leaderboard.rank') }}
                 </th>
                 <th class="px-5 py-3.5 text-left text-[11px] font-black uppercase tracking-wider text-brand-slate">
-                  Tên người chơi
+                  {{ t('leaderboard.player') }}
                 </th>
                 <th class="px-5 py-3.5 text-center text-[11px] font-black uppercase tracking-wider text-brand-slate">
-                  Số buổi đã chơi
+                  {{ t('leaderboard.sessionsAttended') }}
                 </th>
                 <th class="px-5 py-3.5 text-center text-[11px] font-black uppercase tracking-wider text-brand-slate">
-                  Số lần RSVP
+                  {{ t('leaderboard.rsvps') }}
                 </th>
                 <th class="px-5 py-3.5 text-center text-[11px] font-black uppercase tracking-wider text-brand-slate">
-                  Tỉ lệ tham gia
+                  {{ t('leaderboard.attendanceRate') }}
                 </th>
                 <th class="px-5 py-3.5 text-right text-[11px] font-black uppercase tracking-wider text-brand-slate">
-                  Danh hiệu
+                  {{ t('leaderboard.titleBadge') }}
                 </th>
               </tr>
             </thead>
@@ -382,7 +383,7 @@ const getPlayerBadge = (index: number) => {
                     <div>
                       <p class="font-black text-brand-ink text-sm sm:text-base">{{ player.name }}</p>
                       <p v-if="player.lastPlayedDate" class="text-[11px] text-brand-slate">
-                        Gần nhất: {{ player.lastPlayedDate }}
+                        {{ t('leaderboard.latestPlayed', { date: player.lastPlayedDate }) }}
                       </p>
                     </div>
                   </div>
@@ -391,7 +392,7 @@ const getPlayerBadge = (index: number) => {
                 <!-- Matches -->
                 <td class="px-5 py-4 text-center">
                   <span class="font-black text-brand-ink text-base">{{ player.matchesPlayed }}</span>
-                  <span class="text-xs text-brand-slate ml-1">buổi</span>
+                  <span class="text-xs text-brand-slate ml-1">{{ t('leaderboard.matchesCount', { count: '' }).trim() }}</span>
                 </td>
 
                 <!-- RSVPs -->
