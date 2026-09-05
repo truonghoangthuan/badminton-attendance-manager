@@ -4,20 +4,21 @@ import { useAdminAccess } from '../composables/useAdminAccess';
 
 const { profile, loading, setProfile } = useUserProfile();
 const { isAdmin, claimsLoading } = useAdminAccess();
+const { t } = useI18n();
 const toast = useToast();
 const welcomeInitial = computed(() => profile.value?.displayName?.trim()?.charAt(0)?.toUpperCase() || '?');
 const welcomeMessage = computed(() => {
   const hour = new Date().getHours();
 
   if (hour < 12) {
-    return 'Good morning!';
+    return t('nav.goodMorning');
   }
 
   if (hour < 18) {
-    return 'Good afternoon!';
+    return t('nav.goodAfternoon');
   }
 
-  return 'Good evening!';
+  return t('nav.goodEvening');
 });
 
 const isEditNameOpen = ref(false);
@@ -54,12 +55,12 @@ const handleNameUpdate = async () => {
   const trimmedName = editedName.value.trim();
 
   if (!trimmedName) {
-    editNameError.value = 'Please enter a name';
+    editNameError.value = t('profileModal.errorRequired');
     return;
   }
 
   if (trimmedName.length < 2) {
-    editNameError.value = 'Name is too short';
+    editNameError.value = t('profileModal.errorTooShort');
     return;
   }
 
@@ -75,7 +76,7 @@ const handleNameUpdate = async () => {
     const success = await setProfile(trimmedName);
 
     if (!success) {
-      editNameError.value = 'Failed to save name. Please try again.';
+      editNameError.value = t('profileModal.errorSaveFailed');
       return;
     }
 
@@ -83,12 +84,12 @@ const handleNameUpdate = async () => {
     editNameError.value = '';
     toast.add({
       severity: 'success',
-      summary: 'Name updated',
-      detail: 'Your display name was changed successfully.',
+      summary: t('profileModal.toastSuccessTitle'),
+      detail: t('profileModal.toastSuccessDetail'),
       life: 3000,
     });
   } catch {
-    editNameError.value = 'An unexpected error occurred.';
+    editNameError.value = t('profileModal.errorSaveFailed');
   } finally {
     savingName.value = false;
   }
@@ -113,9 +114,9 @@ const handleNameUpdate = async () => {
               <img src="/favicon.svg" alt="Gravity Badminton" class="h-7 w-7" />
             </div>
             <div>
-              <p class="section-kicker">Gravity Team</p>
+              <p class="section-kicker">{{ t('nav.brandSubtitle') }}</p>
               <span class="text-xl font-black tracking-tight text-brand-ink"
-                >Gravity <span class="text-brand-court">Badminton</span></span
+                >{{ t('nav.brandTitle') }} <span class="text-brand-court">{{ t('nav.brandHighlight') }}</span></span
               >
             </div>
           </NuxtLink>
@@ -129,7 +130,7 @@ const handleNameUpdate = async () => {
                 {{ welcomeInitial }}
               </div>
               <div class="min-w-0">
-                <p class="text-[8px] font-black uppercase tracking-[0.24em] text-brand-slate/70">Welcome back</p>
+                <p class="text-[8px] font-black uppercase tracking-[0.24em] text-brand-slate/70">{{ t('nav.welcomeBack') }}</p>
                 <div class="flex min-w-0 items-baseline gap-2">
                   <p class="truncate text-sm font-black tracking-tight text-brand-ink">
                     {{ profile.displayName }}
@@ -145,16 +146,17 @@ const handleNameUpdate = async () => {
                 @click="openEditNameModal"
               >
                 <PencilLine :size="14" />
-                Edit
+                {{ t('common.edit') }}
               </button>
             </div>
           </div>
           <div class="flex items-center gap-2 md:gap-3">
+            <UILanguageSwitcher />
             <button
               v-if="!loading && profile?.displayName"
               type="button"
               class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-brand-line bg-white/80 text-brand-slate transition-colors hover:border-brand-court hover:text-brand-court lg:hidden"
-              aria-label="Change display name"
+              :aria-label="t('nav.editNameAria')"
               @click="openEditNameModal"
             >
               <PencilLine :size="18" />
@@ -164,7 +166,7 @@ const handleNameUpdate = async () => {
               class="hidden items-center gap-2 rounded-2xl px-4 py-2 text-sm font-bold text-brand-slate transition-colors hover:bg-brand-sand hover:text-brand-ink md:flex"
             >
               <Home :size="18" />
-              Home
+              {{ t('nav.home') }}
             </NuxtLink>
             <NuxtLink
               to="/leaderboard"
@@ -172,12 +174,12 @@ const handleNameUpdate = async () => {
               active-class="!bg-brand-sand !text-brand-ink"
             >
               <Trophy :size="18" class="text-amber-500" />
-              <span class="hidden sm:inline">Leaderboard</span>
+              <span class="hidden sm:inline">{{ t('nav.leaderboard') }}</span>
             </NuxtLink>
             <NuxtLink v-if="!claimsLoading && isAdmin" to="/admin" class="flex items-center">
               <UIGlassButton variant="secondary" class="!px-3 md:!px-4 !py-2 !text-sm">
                 <template #icon-left><LayoutDashboard :size="16" /></template>
-                <span class="hidden sm:inline">Dashboard</span>
+                <span class="hidden sm:inline">{{ t('nav.dashboard') }}</span>
               </UIGlassButton>
             </NuxtLink>
           </div>
@@ -196,9 +198,9 @@ const handleNameUpdate = async () => {
             {{ welcomeInitial }}
           </div>
           <div>
-            <h2 class="text-2xl font-black tracking-tight text-brand-ink">Update your display name</h2>
+            <h2 class="text-2xl font-black tracking-tight text-brand-ink">{{ t('profileModal.title') }}</h2>
             <p class="mt-1 text-sm font-medium text-brand-slate">
-              This changes how your name appears the next time you join a session.
+              {{ t('profileModal.description') }}
             </p>
           </div>
         </div>
@@ -208,8 +210,8 @@ const handleNameUpdate = async () => {
         <div class="space-y-2">
           <UIGlassInput
             v-model="editedName"
-            label="Display Name"
-            placeholder="e.g. John Doe"
+            :label="t('profileModal.nameLabel')"
+            :placeholder="t('profileModal.namePlaceholder')"
             :disabled="savingName"
             required
             autofocus
@@ -227,7 +229,7 @@ const handleNameUpdate = async () => {
             :disabled="savingName"
             @click="closeEditNameModal"
           >
-            Cancel
+            {{ t('common.cancel') }}
           </button>
           <UIGlassButton
             type="submit"
@@ -239,7 +241,7 @@ const handleNameUpdate = async () => {
               <Loader2 v-if="savingName" :size="16" class="animate-spin" />
               <PencilLine v-else :size="16" />
             </template>
-            Save Name
+            {{ t('profileModal.saveButton') }}
           </UIGlassButton>
         </div>
       </form>
