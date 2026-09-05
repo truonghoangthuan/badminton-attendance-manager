@@ -17,6 +17,7 @@ const props = defineProps<{
 const { db } = useFirebase();
 const supabaseQR = useSupabaseQRCode();
 const toast = useToast();
+const { t } = useI18n();
 const fileInput = ref<HTMLInputElement | null>(null);
 const selectedFile = ref<File | null>(null);
 const uploading = ref(false);
@@ -83,15 +84,15 @@ const saveBankDetails = async () => {
     });
     toast.add({
       severity: 'success',
-      summary: 'Saved',
-      detail: 'Banking details updated for this session.',
+      summary: t('admin.qr.savedSuccess'),
+      detail: t('admin.qr.savedDetail'),
       life: 3000,
     });
   } catch (e) {
     toast.add({
       severity: 'error',
-      summary: 'Failed to save',
-      detail: 'Could not update banking details.',
+      summary: t('admin.qr.failedSave'),
+      detail: t('admin.qr.failedSaveDetail'),
       life: 3000,
     });
   } finally {
@@ -110,8 +111,8 @@ const handleFileSelect = (event: Event) => {
   if (!file.type.startsWith('image/')) {
     toast.add({
       severity: 'error',
-      summary: 'Invalid file',
-      detail: 'Please select an image file (PNG, JPG).',
+      summary: t('admin.qr.invalidFile'),
+      detail: t('admin.qr.invalidFileDetail'),
       life: 3000,
     });
     return;
@@ -120,8 +121,8 @@ const handleFileSelect = (event: Event) => {
   if (file.size > 2 * 1024 * 1024) {
     toast.add({
       severity: 'error',
-      summary: 'File too large',
-      detail: 'Image size should be less than 2MB.',
+      summary: t('admin.qr.fileTooLarge'),
+      detail: t('admin.qr.fileTooLargeDetail'),
       life: 3000,
     });
     return;
@@ -147,8 +148,8 @@ const upload = async () => {
 
     toast.add({
       severity: 'success',
-      summary: 'Success',
-      detail: 'Session payment QR code updated.',
+      summary: t('admin.qr.uploadSuccess'),
+      detail: t('admin.qr.uploadSuccessDetail'),
       life: 3000,
     });
     previewUrl.value = null;
@@ -157,8 +158,8 @@ const upload = async () => {
   } catch (e) {
     toast.add({
       severity: 'error',
-      summary: 'Upload failed',
-      detail: 'Could not upload QR code. Please try again.',
+      summary: t('admin.qr.uploadFailed'),
+      detail: t('admin.qr.uploadFailedDetail'),
       life: 3000,
     });
   } finally {
@@ -178,15 +179,15 @@ const removeSessionQR = async () => {
 
     toast.add({
       severity: 'success',
-      summary: 'Deleted',
-      detail: 'Session payment QR code removed.',
+      summary: t('admin.qr.deletedSuccess'),
+      detail: t('admin.qr.deletedSuccessDetail'),
       life: 3000,
     });
   } catch (e) {
     toast.add({
       severity: 'error',
-      summary: 'Delete failed',
-      detail: 'Could not remove QR code.',
+      summary: t('admin.qr.deleteFailed'),
+      detail: t('admin.qr.deleteFailedDetail'),
       life: 3000,
     });
   }
@@ -216,10 +217,10 @@ const cancelPreview = () => {
 
     <div class="flex items-start justify-between gap-4">
       <div>
-        <p class="section-kicker">Payment Setup</p>
-        <h2 class="mt-2 text-2xl font-black tracking-tight">Payment QR Code</h2>
+        <p class="section-kicker">{{ t('admin.qr.kicker') }}</p>
+        <h2 class="mt-2 text-2xl font-black tracking-tight">{{ t('admin.qr.title') }}</h2>
         <p class="mt-1 text-sm font-medium text-brand-slate">
-          Upload the QR code for this session so attendees pay the exact fee for this date.
+          {{ t('admin.qr.subtitle') }}
         </p>
       </div>
       <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-sand text-brand-court">
@@ -235,8 +236,8 @@ const cancelPreview = () => {
         <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white text-brand-slate shadow-sm transition-transform group-hover:scale-110">
           <Upload :size="28" />
         </div>
-        <p class="text-center font-black text-brand-ink">Click to upload QR code</p>
-        <p class="mt-1 text-center text-sm font-medium text-brand-slate">PNG, JPG up to 2MB</p>
+        <p class="text-center font-black text-brand-ink">{{ t('admin.qr.clickToUpload') }}</p>
+        <p class="mt-1 text-center text-sm font-medium text-brand-slate">{{ t('admin.qr.fileFormatHint') }}</p>
       </div>
     </div>
 
@@ -253,10 +254,10 @@ const cancelPreview = () => {
       
       <div class="flex gap-3">
         <UIGlassButton class="flex-1" :loading="uploading" @click="upload">
-          Confirm & Upload
+          {{ t('admin.qr.confirmUpload') }}
         </UIGlassButton>
         <UIGlassButton variant="secondary" @click="cancelPreview">
-          Cancel
+          {{ t('admin.qr.cancel') }}
         </UIGlassButton>
       </div>
     </div>
@@ -266,27 +267,27 @@ const cancelPreview = () => {
         <img :src="qrUrl || undefined" alt="Payment QR" class="aspect-square w-full object-contain p-2" />
         <div class="absolute inset-0 flex items-center justify-center bg-brand-ink/40 opacity-0 transition-opacity hover:opacity-100">
            <UIGlassButton variant="primary" class="scale-90" @click="triggerFileInput">
-             Replace
+             {{ t('admin.qr.replace') }}
            </UIGlassButton>
         </div>
       </div>
 
       <div class="flex flex-1 flex-col gap-4">
         <div class="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
-          <p class="text-sm font-bold text-emerald-700">QR Code active</p>
+          <p class="text-sm font-bold text-emerald-700">{{ t('admin.qr.qrActiveTitle') }}</p>
           <p class="mt-1 text-xs font-medium text-emerald-600/80">
-            Attendees on this session will see this QR code on the payment section.
+            {{ t('admin.qr.qrActiveDesc') }}
           </p>
         </div>
 
         <div class="flex flex-wrap gap-3">
           <UIGlassButton variant="secondary" class="!px-4 !py-2.5 !text-sm" @click="triggerFileInput">
             <template #icon-left><ImageIcon :size="14" /></template>
-            Update QR
+            {{ t('admin.qr.updateQr') }}
           </UIGlassButton>
           <UIGlassButton variant="ghost" class="!px-4 !py-2.5 !text-sm text-red-600 hover:bg-red-50" @click="removeSessionQR">
             <template #icon-left><Trash2 :size="14" /></template>
-            Remove
+            {{ t('admin.qr.remove') }}
           </UIGlassButton>
         </div>
       </div>
@@ -295,12 +296,12 @@ const cancelPreview = () => {
     <!-- Direct Banking Details Form -->
     <div class="border-t border-brand-line pt-6 space-y-4">
       <div>
-        <p class="section-kicker">Mobile Banking</p>
+        <p class="section-kicker">{{ t('admin.qr.mobileBankingKicker') }}</p>
         <h3 class="mt-1 text-lg font-black tracking-tight text-brand-ink">
-          Bank Transfer Info (1-Tap Copy)
+          {{ t('admin.qr.bankInfoTitle') }}
         </h3>
         <p class="mt-0.5 text-xs font-medium text-brand-slate">
-          Attendees can 1-tap copy these details on mobile when paying via banking apps.
+          {{ t('admin.qr.bankInfoDesc') }}
         </p>
       </div>
 
@@ -308,7 +309,7 @@ const cancelPreview = () => {
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div class="flex w-full flex-col gap-2">
             <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">
-              Select Bank
+              {{ t('admin.qr.selectBankLabel') }}
             </label>
             <div class="group relative">
               <div class="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate transition-colors group-focus-within:text-brand-court">
@@ -322,7 +323,7 @@ const cancelPreview = () => {
                 @change="onBankSelect"
                 class="w-full appearance-none rounded-2xl border border-brand-line bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,246,240,0.96))] py-3.5 pl-11 pr-10 text-sm font-bold tracking-[0.02em] text-brand-ink shadow-[0_18px_40px_-32px_rgba(35,55,34,0.34)] transition-all outline-none hover:border-brand-court/30 focus:border-brand-court focus:ring-4 focus:ring-brand-court/10"
               >
-                <option value="">-- Choose Standard Bank --</option>
+                <option value="">{{ t('admin.qr.chooseStandardBank') }}</option>
                 <option v-for="bank in COMMON_VIETNAMESE_BANKS" :key="bank.code" :value="bank.code">
                   {{ bank.code }} - {{ bank.name }}
                 </option>
@@ -333,8 +334,8 @@ const cancelPreview = () => {
           <UIGlassInput
             v-model="bankForm.bankName"
             type="text"
-            label="Bank Name"
-            placeholder="e.g. MBBank, Vietcombank"
+            :label="t('admin.qr.bankNameLabel')"
+            :placeholder="t('admin.qr.bankNamePlaceholder')"
           >
             <template #icon><Building2 :size="16" /></template>
           </UIGlassInput>
@@ -342,8 +343,8 @@ const cancelPreview = () => {
           <UIGlassInput
             v-model="bankForm.accountNumber"
             type="text"
-            label="Account Number"
-            placeholder="e.g. 0987654321"
+            :label="t('admin.qr.accountNumberLabel')"
+            :placeholder="t('admin.qr.accountNumberPlaceholder')"
             required
           >
             <template #icon><CreditCard :size="16" /></template>
@@ -352,8 +353,8 @@ const cancelPreview = () => {
           <UIGlassInput
             v-model="bankForm.accountName"
             type="text"
-            label="Account Holder Name"
-            placeholder="e.g. NGUYEN VAN A"
+            :label="t('admin.qr.accountNameLabel')"
+            :placeholder="t('admin.qr.accountNamePlaceholder')"
           >
             <template #icon><UserCheck :size="16" /></template>
           </UIGlassInput>
@@ -361,11 +362,11 @@ const cancelPreview = () => {
 
         <div class="flex items-center justify-between">
           <p class="text-xs text-brand-slate">
-            Selecting a bank enables <strong>Dynamic VietQR</strong> for exact attendee fee pre-filling.
+            {{ t('admin.qr.vietQrHint') }}
           </p>
           <UIGlassButton type="submit" :loading="savingBank" class="!px-4 !py-2 !text-xs">
             <template #icon-left><Save :size="14" /></template>
-            Save Bank Details
+            {{ t('admin.qr.saveBankBtn') }}
           </UIGlassButton>
         </div>
       </form>
@@ -381,11 +382,11 @@ const cancelPreview = () => {
         <div class="space-y-1">
           <div class="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-100/70 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-800">
             <Sparkles :size="12" />
-            Dynamic VietQR Generator Active
+            {{ t('admin.qr.dynamicVietQrActive') }}
           </div>
-          <p class="text-sm font-black text-brand-ink">Automated Exact-Fee VietQR Ready</p>
+          <p class="text-sm font-black text-brand-ink">{{ t('admin.qr.dynamicVietQrReady') }}</p>
           <p class="text-xs font-medium text-brand-slate leading-relaxed">
-            Attendees on the public session page will see a personalized VietQR code that automatically encodes their exact split amount (including guests) and customized memo when scanned.
+            {{ t('admin.qr.dynamicVietQrDesc') }}
           </p>
         </div>
       </div>
