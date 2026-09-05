@@ -30,12 +30,15 @@ const bankForm = ref({
   accountName: '',
 });
 
+const previewError = ref(false);
+
 watch(
   () => props.bankInfo,
   (newVal) => {
+    const resolved = newVal?.bankCode || resolveBankCode(newVal?.bankName) || '';
     bankForm.value = {
       bankName: newVal?.bankName || '',
-      bankCode: newVal?.bankCode || resolveBankCode(newVal?.bankName) || '',
+      bankCode: resolved,
       accountNumber: newVal?.accountNumber || '',
       accountName: newVal?.accountName || '',
     };
@@ -65,8 +68,12 @@ const liveVietQRPreviewUrl = computed(() => {
     accountNumber: bankForm.value.accountNumber,
     accountName: bankForm.value.accountName,
     memo: 'BDM TEST PAYMENT',
-    template: 'compact2',
+    template: 'qr_only',
   });
+});
+
+watch(liveVietQRPreviewUrl, () => {
+  previewError.value = false;
 });
 
 const savingBank = ref(false);
@@ -74,14 +81,16 @@ const savingBank = ref(false);
 const saveBankDetails = async () => {
   savingBank.value = true;
   try {
+    const resolvedCode = resolveBankCode(bankForm.value.bankCode || bankForm.value.bankName);
     await updateDoc(doc(db, 'sessions', props.sessionId), {
       bankInfo: {
         bankName: bankForm.value.bankName.trim(),
-        bankCode: bankForm.value.bankCode || resolveBankCode(bankForm.value.bankName),
+        bankCode: resolvedCode,
         accountNumber: bankForm.value.accountNumber.trim(),
         accountName: bankForm.value.accountName.trim(),
       },
     });
+    bankForm.value.bankCode = resolvedCode;
     toast.add({
       severity: 'success',
       summary: t('admin.qr.savedSuccess'),
@@ -376,8 +385,19 @@ const cancelPreview = () => {
         v-if="liveVietQRPreviewUrl"
         class="mt-4 flex flex-col items-center gap-4 rounded-3xl border border-brand-court/20 bg-emerald-50/60 p-4 sm:flex-row"
       >
-        <div class="shrink-0 overflow-hidden rounded-2xl border-2 border-white bg-white p-2 shadow-md">
-          <img :src="liveVietQRPreviewUrl" alt="VietQR Dynamic Preview" class="h-32 w-32 object-contain" />
+        <div class="shrink-0 overflow-hidden rounded-2xl border-2 border-white bg-white p-2 shadow-md flex items-center justify-center">
+          <img
+            v-if="!previewError"
+            :src="liveVietQRPreviewUrl"
+            alt="VietQR Dynamic Preview"
+            class="h-32 w-32 object-contain"
+            @error="previewError = true"
+            @load="previewError = false"
+          />
+          <div v-else class="flex h-32 w-32 flex-col items-center justify-center p-2 text-center text-brand-slate">
+            <QrCode :size="24" class="opacity-40" />
+            <p class="mt-1 text-[10px] font-bold text-amber-600">Lỗi hiển thị QR</p>
+          </div>
         </div>
         <div class="space-y-1">
           <div class="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-100/70 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-800">

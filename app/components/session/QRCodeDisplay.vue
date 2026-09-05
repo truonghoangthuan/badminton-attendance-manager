@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Maximize2, QrCode, X, Copy, Check, Sparkles, Image as ImageIcon } from 'lucide-vue-next';
-import { generateVietQRUrl } from '~/utils/vietqr';
+import { Maximize2, QrCode, X, Copy, Check, Sparkles, Image as ImageIcon, AlertCircle } from 'lucide-vue-next';
+import { generateVietQRUrl, removeVietnameseDiacritics } from '~/utils/vietqr';
 
 const props = defineProps<{
   qrUrl?: string | null;
@@ -28,11 +28,12 @@ const { t } = useI18n();
 const showExpand = ref(false);
 const toast = useToast();
 const copiedField = ref<string | null>(null);
+const qrImageError = ref(false);
 
 const transferMemo = computed(() => {
   const dateFormatted = props.sessionDate ? props.sessionDate.replace(/-/g, '') : '';
-  const name = (props.userName || '').trim().replace(/\s+/g, ' ');
-  return `BDM ${dateFormatted} ${name}`.trim();
+  const cleanName = removeVietnameseDiacritics(props.userName || '').trim().replace(/\s+/g, ' ');
+  return `BDM ${dateFormatted} ${cleanName}`.trim();
 });
 
 const dynamicVietQRUrl = computed(() => {
@@ -45,7 +46,7 @@ const dynamicVietQRUrl = computed(() => {
     accountName: props.bankInfo.accountName,
     amount: props.personalAmount && props.personalAmount > 0 ? props.personalAmount : undefined,
     memo: transferMemo.value,
-    template: 'compact2',
+    template: 'qr_only',
   });
 });
 
@@ -67,6 +68,22 @@ const currentDisplayQR = computed(() => {
   }
   return dynamicVietQRUrl.value || props.qrUrl || '';
 });
+
+watch(currentDisplayQR, () => {
+  qrImageError.value = false;
+});
+
+const onImageError = () => {
+  qrImageError.value = true;
+  // If dynamic VietQR fails to load but a custom QR was uploaded, fallback to custom QR
+  if (selectedQRType.value === 'dynamic' && hasCustomQR.value) {
+    selectedQRType.value = 'custom';
+  }
+};
+
+const onImageLoad = () => {
+  qrImageError.value = false;
+};
 
 const copyText = async (text: string, fieldId: string, label: string) => {
   if (!text) return;
@@ -139,8 +156,22 @@ const formatCurrency = (value: number | undefined) => {
         v-if="currentDisplayQR"
         class="group relative aspect-square w-full shrink-0 border-b border-brand-line bg-white p-6 sm:w-52 sm:border-b-0 sm:border-r flex flex-col items-center justify-center"
       >
-        <img :src="currentDisplayQR" alt="Scan to pay" class="h-full w-full object-contain" />
+        <img
+          v-if="!qrImageError || (hasCustomQR && selectedQRType === 'custom')"
+          :src="currentDisplayQR"
+          alt="Scan to pay"
+          class="h-full w-full object-contain"
+          @error="onImageError"
+          @load="onImageLoad"
+        />
+        <div v-else class="flex flex-col items-center justify-center text-center p-3 text-brand-slate">
+          <AlertCircle :size="32" class="text-amber-500 opacity-80" />
+          <p class="mt-2 text-xs font-black text-brand-ink">{{ t('sessionDetail.qrLoadError') }}</p>
+          <p class="mt-1 text-[11px] leading-tight text-brand-slate">{{ t('sessionDetail.useBankInfoBelow') }}</p>
+        </div>
+
         <button
+          v-if="!qrImageError || (hasCustomQR && selectedQRType === 'custom')"
           class="absolute inset-0 flex items-center justify-center bg-brand-ink/40 opacity-0 transition-opacity hover:opacity-100"
           @click="showExpand = true"
         >
@@ -153,7 +184,7 @@ const formatCurrency = (value: number | undefined) => {
 
         <!-- Dynamic indicator badge -->
         <div
-          v-if="selectedQRType === 'dynamic'"
+          v-if="selectedQRType === 'dynamic' && !qrImageError"
           class="absolute bottom-2 left-2 right-2 flex items-center justify-center gap-1 rounded-md bg-emerald-600/90 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-sm"
         >
           <Sparkles :size="10" />

@@ -176,6 +176,8 @@ export const vi = {
     customQr: 'Mã QR tùy chỉnh',
     prefilled: 'Số tiền điền sẵn: {amount}',
     smartVietQr: 'VietQR thông minh',
+    qrLoadError: 'Không thể hiển thị mã VietQR lúc này.',
+    useBankInfoBelow: 'Vui lòng sao chép thông tin tài khoản bên dưới để chuyển khoản.',
     feeFormulaTitle: 'Công thức tính phí',
     feeFormulaHeading: 'Chi tiết cách chia tiền sân & cầu',
     waitingForCheckin: 'Tiền mỗi người = đang chờ chốt sĩ số thực tế trên sân.',

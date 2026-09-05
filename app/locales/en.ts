@@ -176,6 +176,8 @@ export const en = {
     customQr: 'Custom QR',
     prefilled: 'Pre-filled: {amount}',
     smartVietQr: 'Smart VietQR',
+    qrLoadError: 'Unable to load VietQR image at this time.',
+    useBankInfoBelow: 'Please copy the bank details below to transfer manually.',
     feeFormulaTitle: 'Fee formula',
     feeFormulaHeading: 'How this fee is calculated',
     waitingForCheckin: 'Fee per person = waiting for checked-in players before the split can be calculated.',
