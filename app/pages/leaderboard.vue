@@ -15,7 +15,6 @@ import {
 interface PlayerStats {
   name: string;
   matchesPlayed: number;
-  rsvps: number;
   reliabilityRate: number;
   lastPlayedDate: string;
 }
@@ -87,7 +86,6 @@ onMounted(async () => {
         return {
           name,
           matchesPlayed: stat.matches,
-          rsvps: stat.rsvps,
           reliabilityRate: Math.min(100, reliability),
           lastPlayedDate: stat.lastDate,
         };
@@ -330,9 +328,6 @@ const getPlayerBadge = (index: number) => {
                   {{ t('leaderboard.sessionsAttended') }}
                 </th>
                 <th class="px-5 py-3.5 text-center text-[11px] font-black uppercase tracking-wider text-brand-slate">
-                  {{ t('leaderboard.rsvps') }}
-                </th>
-                <th class="px-5 py-3.5 text-center text-[11px] font-black uppercase tracking-wider text-brand-slate">
                   {{ t('leaderboard.attendanceRate') }}
                 </th>
                 <th class="px-5 py-3.5 text-right text-[11px] font-black uppercase tracking-wider text-brand-slate">
@@ -393,11 +388,6 @@ const getPlayerBadge = (index: number) => {
                 <td class="px-5 py-4 text-center">
                   <span class="font-black text-brand-ink text-base">{{ player.matchesPlayed }}</span>
                   <span class="text-xs text-brand-slate ml-1">{{ t('leaderboard.matchesCount', { count: '' }).trim() }}</span>
-                </td>
-
-                <!-- RSVPs -->
-                <td class="px-5 py-4 text-center text-sm font-medium text-brand-slate">
-                  {{ player.rsvps }}
                 </td>
 
                 <!-- Reliability Rate -->

@@ -229,7 +229,6 @@ export const en = {
     rank: 'Rank',
     player: 'Player',
     sessionsAttended: 'Matches Attended',
-    rsvps: 'RSVPs',
     attendanceRate: 'Attendance Rate',
     totalGames: 'Total Matches',
     titleBadge: 'Title',

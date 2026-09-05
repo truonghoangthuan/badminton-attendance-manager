@@ -229,7 +229,6 @@ export const vi = {
     rank: 'Hạng',
     player: 'Người chơi',
     sessionsAttended: 'Số buổi đã chơi',
-    rsvps: 'Số lần RSVP',
     attendanceRate: 'Tỉ lệ tham gia',
     totalGames: 'Tổng số trận',
     titleBadge: 'Danh hiệu',
