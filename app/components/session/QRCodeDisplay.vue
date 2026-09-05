@@ -24,6 +24,7 @@ const props = defineProps<{
   userName?: string;
 }>();
 
+const { t } = useI18n();
 const showExpand = ref(false);
 const toast = useToast();
 const copiedField = ref<string | null>(null);
@@ -77,8 +78,8 @@ const copyText = async (text: string, fieldId: string, label: string) => {
     }, 2000);
     toast.add({
       severity: 'success',
-      summary: 'Copied!',
-      detail: `Copied ${label}`,
+      summary: t('common.copied'),
+      detail: `${t('common.copied')} ${label}`,
       life: 2500,
     });
   } catch (e) {
@@ -102,14 +103,14 @@ const formatCurrency = (value: number | undefined) => {
     class="rounded-[32px] border border-dashed border-brand-line bg-brand-sand px-6 py-8 text-center text-brand-slate"
   >
     <QrCode :size="32" class="mx-auto opacity-40" />
-    <p class="mt-4 font-black text-brand-ink">No payment details uploaded</p>
-    <p class="mt-1 text-sm font-medium">Please pay directly at the court.</p>
+    <p class="mt-4 font-black text-brand-ink">{{ t('sessionDetail.noPaymentDetails') }}</p>
+    <p class="mt-1 text-sm font-medium">{{ t('sessionDetail.payAtCourt') }}</p>
   </div>
 
   <UIGlassCard v-else class="relative overflow-hidden space-y-4">
     <!-- QR Mode Switcher if both dynamic VietQR and uploaded custom QR exist -->
     <div v-if="hasDynamicQR && hasCustomQR" class="flex items-center justify-between pb-2 border-b border-brand-line/60">
-      <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">Payment QR Option</p>
+      <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">{{ t('sessionDetail.paymentQrOption') }}</p>
       <div class="flex items-center gap-1 rounded-xl bg-brand-sand/80 p-1 border border-brand-line">
         <button
           type="button"
@@ -118,7 +119,7 @@ const formatCurrency = (value: number | undefined) => {
           @click="selectedQRType = 'dynamic'"
         >
           <Sparkles :size="12" />
-          Dynamic VietQR
+          {{ t('sessionDetail.dynamicVietQr') }}
         </button>
         <button
           type="button"
@@ -127,7 +128,7 @@ const formatCurrency = (value: number | undefined) => {
           @click="selectedQRType = 'custom'"
         >
           <ImageIcon :size="12" />
-          Custom QR
+          {{ t('sessionDetail.customQr') }}
         </button>
       </div>
     </div>
@@ -156,16 +157,16 @@ const formatCurrency = (value: number | undefined) => {
           class="absolute bottom-2 left-2 right-2 flex items-center justify-center gap-1 rounded-md bg-emerald-600/90 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-sm"
         >
           <Sparkles :size="10" />
-          <span v-if="personalAmount && personalAmount > 0">Pre-filled: {{ formatCurrency(personalAmount) }}</span>
-          <span v-else>Smart VietQR</span>
+          <span v-if="personalAmount && personalAmount > 0">{{ t('sessionDetail.prefilled', { amount: formatCurrency(personalAmount) }) }}</span>
+          <span v-else>{{ t('sessionDetail.smartVietQr') }}</span>
         </div>
       </div>
 
       <!-- Fee Breakdown -->
       <div class="flex-1 space-y-4 p-6 sm:py-0">
         <div v-if="showFeeBreakdown">
-          <p class="text-[10px] font-black uppercase tracking-[0.2em] text-brand-court">Fee formula</p>
-          <h3 class="mt-1 text-xl font-black tracking-tight text-brand-ink">How this fee is calculated</h3>
+          <p class="text-[10px] font-black uppercase tracking-[0.2em] text-brand-court">{{ t('sessionDetail.feeFormulaTitle') }}</p>
+          <h3 class="mt-1 text-xl font-black tracking-tight text-brand-ink">{{ t('sessionDetail.feeFormulaHeading') }}</h3>
         </div>
 
         <div v-if="showFeeBreakdown" class="space-y-1 text-sm font-medium text-brand-slate">
@@ -191,7 +192,7 @@ const formatCurrency = (value: number | undefined) => {
               {{ formatCurrency(calculatedFeePerPerson) }}
             </template>
             <template v-else>
-              Fee per person = waiting for checked-in players before the split can be calculated.
+              {{ t('sessionDetail.waitingForCheckin') }}
             </template>
           </p>
         </div>
@@ -205,10 +206,10 @@ const formatCurrency = (value: number | undefined) => {
     >
       <div class="mb-3 flex items-center justify-between">
         <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">
-          Mobile Banking Details
+          {{ t('sessionDetail.mobileBankingTitle') }}
         </p>
         <span class="rounded-full bg-brand-court/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-brand-court">
-          1-Tap Copy
+          {{ t('sessionDetail.oneTapCopy') }}
         </span>
       </div>
 
@@ -231,7 +232,7 @@ const formatCurrency = (value: number | undefined) => {
             type="button"
             class="ml-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-brand-line bg-white text-brand-ink transition-all hover:border-brand-court hover:bg-brand-sand active:scale-95"
             :title="'Copy ' + bankInfo.accountNumber"
-            @click="copyText(bankInfo.accountNumber, 'account', 'account number')"
+            @click="copyText(bankInfo.accountNumber, 'account', bankInfo.accountNumber)"
           >
             <Check v-if="copiedField === 'account'" :size="16" class="text-emerald-600" />
             <Copy v-else :size="16" />
@@ -242,18 +243,18 @@ const formatCurrency = (value: number | undefined) => {
         <div class="flex items-center justify-between rounded-2xl border border-brand-line bg-brand-sand/70 p-3.5">
           <div class="min-w-0 flex-1">
             <p class="text-[10px] font-black uppercase tracking-wider text-brand-slate">
-              Transfer Note / Memo
+              {{ t('sessionDetail.transferNoteMemo') }}
             </p>
             <p class="mt-0.5 truncate font-mono text-sm font-bold text-brand-ink">
               {{ transferMemo }}
             </p>
-            <p class="text-[11px] font-medium text-brand-slate">Include in transfer message</p>
+            <p class="text-[11px] font-medium text-brand-slate">{{ t('sessionDetail.includeInTransfer') }}</p>
           </div>
           <button
             type="button"
             class="ml-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-brand-line bg-white text-brand-ink transition-all hover:border-brand-court hover:bg-brand-sand active:scale-95"
             :title="'Copy ' + transferMemo"
-            @click="copyText(transferMemo, 'memo', 'transfer memo')"
+            @click="copyText(transferMemo, 'memo', transferMemo)"
           >
             <Check v-if="copiedField === 'memo'" :size="16" class="text-emerald-600" />
             <Copy v-else :size="16" />
@@ -281,9 +282,9 @@ const formatCurrency = (value: number | undefined) => {
           </button>
 
           <div class="mt-8 text-center">
-            <h2 class="text-3xl font-black tracking-tighter text-brand-ink">Scan & Pay</h2>
+            <h2 class="text-3xl font-black tracking-tighter text-brand-ink">{{ t('sessionDetail.scanAndPay') }}</h2>
             <p class="mt-2 text-sm font-medium text-brand-slate">
-              Scan this code with your banking app to settle the session fee.
+              {{ t('sessionDetail.scanToPayDesc') }}
             </p>
           </div>
 

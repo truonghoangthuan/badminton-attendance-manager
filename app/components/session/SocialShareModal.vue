@@ -22,6 +22,7 @@ const emit = defineEmits<{
 const activeTab = ref<'invite' | 'settlement'>(props.initialTab);
 const copied = ref(false);
 const toast = useToast();
+const { t } = useI18n();
 
 watch(
   () => props.initialTab,
@@ -65,8 +66,8 @@ const copyContent = async () => {
 
     toast.add({
       severity: 'success',
-      summary: 'Đã sao chép!',
-      detail: activeTab.value === 'invite' ? 'Đã sao chép lời mời vào clipboard.' : 'Đã sao chép tổng kết tiền sân vào clipboard.',
+      summary: t('common.copied'),
+      detail: t('socialShare.toastCopied'),
       life: 3000,
     });
   } catch (err) {
@@ -78,7 +79,7 @@ const handleNativeShare = async () => {
   if (typeof navigator !== 'undefined' && navigator.share) {
     try {
       await navigator.share({
-        title: `Cầu lông - ${props.session?.date}`,
+        title: `Badminton - ${props.session?.date}`,
         text: currentText.value,
         url: sessionUrl.value,
       });
@@ -97,14 +98,14 @@ const handleNativeShare = async () => {
       <div class="flex flex-col gap-2 text-center">
         <div class="inline-flex items-center justify-center gap-1.5 text-[11px] font-black uppercase tracking-[0.22em] text-brand-court">
           <MessageSquareShare :size="16" />
-          <span>Social Announcement Generator</span>
+          <span>{{ t('socialShare.socialGenerator') }}</span>
         </div>
         <div>
           <h2 class="text-2xl font-black tracking-tight text-brand-ink">
-            Chia sẻ nhóm Zalo / Messenger
+            {{ t('socialShare.shareZaloMessenger') }}
           </h2>
           <p class="mt-1 text-sm font-medium text-brand-slate">
-            Sao chép nhanh thông báo định dạng sẵn để dán vào nhóm chat.
+            {{ t('socialShare.shareModalDesc') }}
           </p>
         </div>
       </div>
@@ -123,7 +124,7 @@ const handleNativeShare = async () => {
           "
           @click="activeTab = 'invite'"
         >
-          <span>Lời mời tham gia</span>
+          <span>{{ t('socialShare.inviteTab') }}</span>
         </button>
         <button
           type="button"
@@ -135,7 +136,7 @@ const handleNativeShare = async () => {
           "
           @click="activeTab = 'settlement'"
         >
-          <span>Tổng kết chi phí</span>
+          <span>{{ t('socialShare.settlementTab') }}</span>
         </button>
       </div>
 
@@ -148,7 +149,7 @@ const handleNativeShare = async () => {
           class="w-full resize-none rounded-2xl border border-brand-line bg-white/90 p-4 font-mono text-xs leading-relaxed text-brand-ink shadow-inner outline-none focus:border-brand-court focus:ring-2 focus:ring-brand-court/10"
         />
         <div class="pointer-events-none absolute bottom-3 right-3 text-[10px] font-bold text-brand-slate/60">
-          Tự động cập nhật theo dữ liệu thực tế
+          {{ t('socialShare.autoUpdatesNotice') }}
         </div>
       </div>
 
@@ -160,7 +161,7 @@ const handleNativeShare = async () => {
           @click="handleNativeShare"
         >
           <Share2 :size="15" />
-          <span>Chia sẻ hệ thống</span>
+          <span>{{ t('socialShare.nativeShare') }}</span>
         </button>
 
         <UIGlassButton
@@ -171,7 +172,7 @@ const handleNativeShare = async () => {
             <Check v-if="copied" :size="16" class="text-emerald-300" />
             <Copy v-else :size="16" />
           </template>
-          <span>{{ copied ? 'Đã sao chép vào bộ nhớ!' : 'Sao chép nội dung' }}</span>
+          <span>{{ copied ? t('socialShare.copiedText') : t('socialShare.copyButton') }}</span>
         </UIGlassButton>
       </div>
     </div>
