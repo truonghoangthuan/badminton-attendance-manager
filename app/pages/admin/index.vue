@@ -212,18 +212,7 @@ const copySessionLink = (id: string) => {
   navigator.clipboard.writeText(url);
 };
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'open':
-      return 'bg-emerald-50 text-emerald-700 border-emerald-100 ring-4 ring-emerald-500/5';
-    case 'locked':
-      return 'bg-amber-50 text-amber-700 border-amber-100 ring-4 ring-amber-500/5';
-    case 'completed':
-      return 'bg-slate-50 text-slate-600 border-slate-100 ring-4 ring-slate-500/5';
-    default:
-      return 'bg-white text-brand-slate border-brand-line';
-  }
-};
+// Status color is replaced by small indicator dots directly in template
 </script>
 
 <template>
@@ -243,9 +232,9 @@ const getStatusColor = (status: string) => {
     </section>
 
     <div class="md:min-h-0 md:flex-1 md:overflow-hidden">
-      <section v-if="loading" class="space-y-4 md:h-full md:overflow-y-auto md:pr-4">
-        <UIGlassCard v-for="i in 3" :key="i" class="animate-pulse">
-          <div class="h-10 rounded-2xl bg-brand-sand" />
+      <section v-if="loading" class="space-y-3 md:h-full md:overflow-y-auto md:pr-4">
+        <UIGlassCard v-for="i in 5" :key="i" class="animate-pulse !p-3">
+          <div class="h-12 w-full rounded bg-slate-100" />
         </UIGlassCard>
       </section>
 
@@ -256,132 +245,109 @@ const getStatusColor = (status: string) => {
       </div>
 
       <section v-else class="md:h-full md:overflow-y-auto md:pr-4">
-        <div class="grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:grid-cols-3">
+        <div class="flex flex-col gap-3">
           <UIGlassCard
             v-for="session in sessions"
             :key="session.id"
             hoverable
-            class="group transition-all duration-300"
+            class="group !p-3 transition-all duration-200"
           >
-            <div class="flex flex-col gap-6">
-              <!-- Card Header -->
-              <div class="flex items-start justify-between">
-                <div class="flex items-center gap-4">
-                  <!-- Date Icon Box -->
-                  <div
-                    class="flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-brand-sand text-brand-court ring-1 ring-brand-line shadow-sm"
-                  >
-                    <Calendar :size="24" />
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <!-- Info Left Side -->
+              <div class="flex flex-1 items-start md:items-center gap-4">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-colors border border-slate-100">
+                  <Calendar :size="18" />
+                </div>
+                
+                <div class="flex flex-col">
+                  <div class="flex items-center gap-2.5">
+                    <h3 class="text-base font-bold text-brand-ink leading-none">{{ formatDisplayDate(session.date) }}</h3>
+                    <!-- Small indicator dot -->
+                    <div class="relative flex h-2 w-2" :title="session.status">
+                      <span v-if="session.status === 'open'" class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex h-2 w-2 rounded-full" :class="session.status === 'open' ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]' : session.status === 'locked' ? 'bg-amber-500' : 'bg-slate-300'"></span>
+                    </div>
+                  </div>
+                  
+                  <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs font-medium text-slate-500 mt-1.5">
+                    <div class="flex items-center gap-1">
+                      <Clock3 :size="12" />
+                      <span>{{ session.time }}</span>
+                    </div>
+                    <div class="h-1 w-1 rounded-full bg-slate-300" />
+                    <div class="flex items-center gap-1">
+                      <MapPin :size="12" />
+                      <span class="line-clamp-1 truncate max-w-[140px]">{{ session.location }}</span>
+                    </div>
+                    <div class="h-1 w-1 rounded-full bg-slate-300" />
+                    <div class="flex items-center gap-1">
+                      <UsersIcon :size="12" />
+                      <span>{{ session.maxPlayers || 8 }}</span>
+                    </div>
                   </div>
 
-                  <div class="space-y-1">
-                    <div class="flex items-center gap-2">
-                      <h3 class="text-2xl font-black tracking-tight text-brand-ink">{{ formatDisplayDate(session.date) }}</h3>
-                      <span
-                        :class="getStatusColor(session.status)"
-                        class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider"
-                      >
-                        <span class="h-1 w-1 rounded-full bg-current"></span>
-                        {{ session.status }}
-                      </span>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-medium text-brand-slate">
-                      <div class="flex items-center gap-1.5">
-                        <Clock3 :size="14" class="opacity-70" />
-                        <span>{{ session.time }}</span>
-                      </div>
-                      <div class="hidden h-1 w-1 rounded-full bg-brand-line md:block" />
-                      <div class="flex items-center gap-1.5">
-                        <MapPin :size="14" class="opacity-70" />
-                        <span class="line-clamp-1 truncate max-w-[150px]">{{ session.location }}</span>
-                      </div>
-                      <div class="hidden h-1 w-1 rounded-full bg-brand-line md:block" />
-                      <div class="flex items-center gap-1.5">
-                        <UsersIcon :size="14" class="opacity-70" />
-                        <span>{{ t('admin.maxPlayersShort', { count: session.maxPlayers || 8 }) }}</span>
-                      </div>
-                    </div>
-                    <div
-                      v-if="session.courtNumber || session.shuttlecockType || session.level"
-                      class="flex flex-wrap items-center gap-2 pt-1"
-                    >
-                      <span
-                        v-if="session.courtNumber"
-                        class="inline-flex items-center gap-1 rounded-lg border border-emerald-200/60 bg-emerald-50/70 px-2 py-0.5 text-[11px] font-bold text-emerald-800"
-                      >
-                        <Grid2x2 :size="11" class="text-brand-court" />
-                        {{ session.courtNumber }}
-                      </span>
-                      <span
-                        v-if="session.shuttlecockType"
-                        class="inline-flex items-center gap-1 rounded-lg border border-amber-200/60 bg-amber-50/70 px-2 py-0.5 text-[11px] font-bold text-amber-800"
-                      >
-                        <Feather :size="11" class="text-amber-600" />
-                        {{ session.shuttlecockType }}
-                      </span>
-                      <span
-                        v-if="session.level"
-                        class="inline-flex items-center gap-1 rounded-lg border border-sky-200/60 bg-sky-50/70 px-2 py-0.5 text-[11px] font-bold text-sky-800"
-                      >
-                        <Trophy :size="11" class="text-sky-600" />
-                        {{ session.level }}
-                      </span>
-                    </div>
+                  <div
+                    v-if="session.courtNumber || session.shuttlecockType || session.level"
+                    class="flex flex-wrap items-center gap-1.5 mt-2"
+                  >
+                    <span v-if="session.courtNumber" class="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 border border-slate-200">
+                      <Grid2x2 :size="10" /> {{ session.courtNumber }}
+                    </span>
+                    <span v-if="session.shuttlecockType" class="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 border border-slate-200">
+                      <Feather :size="10" /> {{ session.shuttlecockType }}
+                    </span>
+                    <span v-if="session.level" class="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 border border-slate-200">
+                      <Trophy :size="10" /> {{ session.level }}
+                    </span>
                   </div>
                 </div>
+              </div>
+              
+              <!-- Actions Right Side -->
+              <div class="flex items-center gap-2 shrink-0 md:border-l md:border-slate-100 md:pl-4">
+                <NuxtLink :to="`/admin/session/${session.id}`">
+                  <UIGlassButton class="!px-3 !py-1.5 !text-xs !h-8" variant="secondary">
+                    {{ t('admin.openDetails') }}
+                  </UIGlassButton>
+                </NuxtLink>
 
+                <UIGlassButton
+                  variant="ghost"
+                  :title="t('admin.copyLink')"
+                  class="!h-8 !w-8 !p-0 !min-w-[32px] text-slate-400 hover:text-brand-ink"
+                  @click="copySessionLink(session.id)"
+                >
+                  <Copy :size="14" />
+                </UIGlassButton>
+
+                <UIGlassButton
+                  variant="ghost"
+                  :title="t('admin.editSession')"
+                  class="!h-8 !w-8 !p-0 !min-w-[32px] text-slate-400 hover:text-brand-ink"
+                  @click="openEditModal(session)"
+                >
+                  <Clock3 :size="14" />
+                </UIGlassButton>
+
+                <UIGlassButton
+                  variant="ghost"
+                  :title="t('admin.toggleStatus')"
+                  class="!h-8 !w-8 !p-0 !min-w-[32px] text-slate-400 hover:text-brand-ink"
+                  @click="toggleStatus(session)"
+                >
+                  <RefreshCcw :size="14" />
+                </UIGlassButton>
+                
                 <button
                   type="button"
-                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-brand-slate opacity-0 transition-all hover:bg-red-50 hover:text-red-600 group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-all hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-60 ml-1"
                   :disabled="deletingSessionId === session.id"
                   :aria-label="t('admin.deleteSessionLabel')"
                   @click="deleteSession(session)"
                 >
                   <Loader2 v-if="deletingSessionId === session.id" class="animate-spin" :size="14" />
-                  <X v-else :size="18" stroke-width="2.5" />
+                  <X v-else :size="16" stroke-width="2" />
                 </button>
-              </div>
-
-              <!-- Divider -->
-              <div class="h-px w-full bg-gradient-to-r from-brand-line/50 via-brand-line to-brand-line/50" />
-
-              <!-- Actions -->
-              <div class="flex flex-wrap items-center gap-3">
-                <NuxtLink :to="`/admin/session/${session.id}`" class="flex-1">
-                  <UIGlassButton class="!w-full !px-4 !py-2.5 !text-sm">
-                    <template #icon-left><UsersIcon :size="14" /></template>
-                    {{ t('admin.openDetails') }}
-                  </UIGlassButton>
-                </NuxtLink>
-
-                <div class="flex items-center gap-2">
-                  <UIGlassButton
-                    variant="secondary"
-                    :title="t('admin.copyLink')"
-                    class="!h-10 !w-10 !p-0 !min-w-[40px]"
-                    @click="copySessionLink(session.id)"
-                  >
-                    <Copy :size="14" />
-                  </UIGlassButton>
-
-                  <UIGlassButton
-                    variant="ghost"
-                    :title="t('admin.editSession')"
-                    class="!h-10 !w-10 !p-0 !min-w-[40px]"
-                    @click="openEditModal(session)"
-                  >
-                    <Clock3 :size="14" />
-                  </UIGlassButton>
-
-                  <UIGlassButton
-                    variant="ghost"
-                    :title="t('admin.toggleStatus')"
-                    class="!h-10 !w-10 !p-0 !min-w-[40px]"
-                    @click="toggleStatus(session)"
-                  >
-                    <RefreshCcw :size="14" />
-                  </UIGlassButton>
-                </div>
               </div>
             </div>
           </UIGlassCard>

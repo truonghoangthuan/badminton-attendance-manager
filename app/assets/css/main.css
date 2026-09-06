@@ -150,7 +150,7 @@
 
 /* PrimeVue ConfirmDialog Customization */
 .p-dialog.p-confirmdialog {
-  @apply rounded-[32px] border-brand-line bg-white shadow-[0_30px_80px_rgba(29,42,34,0.16)] overflow-hidden border;
+  @apply rounded-xl border-slate-200 bg-white shadow-xl overflow-hidden border;
   max-width: 450px !important;
 }
 
@@ -159,11 +159,11 @@
 }
 
 .p-dialog.p-confirmdialog .p-dialog-title {
-  @apply text-2xl font-black tracking-tight text-brand-ink;
+  @apply text-xl font-bold tracking-tight text-brand-ink;
 }
 
 .p-dialog.p-confirmdialog .p-dialog-content {
-  @apply px-8 py-4 text-sm font-medium text-brand-slate bg-white;
+  @apply px-8 py-4 text-sm text-brand-slate bg-white;
 }
 
 .p-dialog.p-confirmdialog .p-dialog-footer {

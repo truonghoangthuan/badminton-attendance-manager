@@ -25,10 +25,9 @@ const handleLogout = async () => {
 </script>
 
 <template>
-  <div class="relative flex min-h-screen flex-col md:flex-row">
-    <div class="bg-mesh" />
+  <div class="relative flex min-h-screen flex-col md:flex-row bg-slate-50">
 
-    <header class="sticky top-0 z-40 flex w-full items-center justify-between border-b border-brand-line bg-brand-sand/95 p-4 backdrop-blur md:hidden">
+    <header class="sticky top-0 z-40 flex w-full items-center justify-between border-b border-slate-200 bg-white/95 p-4 backdrop-blur md:hidden">
       <div class="flex items-center gap-2">
         <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-court">
           <ShieldCheck class="text-white" :size="16" />
@@ -55,57 +54,58 @@ const handleLogout = async () => {
     />
     
     <aside 
-      class="fixed inset-y-0 left-0 z-40 h-full w-80 p-5 transition-transform duration-500 ease-in-out md:sticky md:top-0 md:h-screen md:translate-x-0"
+      class="fixed inset-y-0 left-0 z-40 h-full w-72 p-4 transition-transform duration-500 ease-in-out md:sticky md:top-0 md:h-screen md:w-20 md:p-3 md:translate-x-0"
       :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
     >
-      <UIGlassCard class="flex h-full flex-col gap-8 bg-white md:!p-8">
-        <div class="flex items-center justify-between gap-3 px-1">
-          <div class="flex items-center gap-3">
-            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-court shrink-0">
-              <ShieldCheck class="text-white" :size="24" />
+      <UIGlassCard class="flex h-full flex-col gap-6 !p-4 md:!p-3 md:items-center">
+        <div class="flex items-center justify-between gap-3 px-1 md:justify-center md:px-0 md:flex-col md:gap-6">
+          <div class="flex items-center gap-3 md:gap-0">
+            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-ink shrink-0 md:h-10 md:w-10">
+              <ShieldCheck class="text-emerald-400" :size="20" />
             </div>
-            <div class="flex flex-col">
-              <span class="text-xl font-black tracking-tighter text-brand-ink">Admin<span class="text-brand-court">Panel</span></span>
-              <span class="text-[10px] font-black uppercase tracking-[0.2em] text-brand-slate">{{ t('admin.panelSubtitle') }}</span>
+            <div class="flex flex-col md:hidden">
+              <span class="text-xl font-bold tracking-tight text-brand-ink">Admin<span class="text-emerald-500">Panel</span></span>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">{{ t('admin.panelSubtitle') }}</span>
             </div>
           </div>
-          <UILanguageSwitcher />
+          <UILanguageSwitcher class="md:scale-90" />
         </div>
 
-        <div class="rounded-[24px] border border-brand-line bg-brand-sand p-4">
-          <p class="section-kicker">{{ t('admin.workflowTitle') }}</p>
-          <p class="mt-2 text-sm font-medium leading-6 text-brand-slate">
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 md:hidden">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">{{ t('admin.workflowTitle') }}</p>
+          <p class="mt-2 text-sm font-medium leading-5 text-slate-600">
             {{ t('admin.workflowDesc') }}
           </p>
         </div>
 
-        <nav class="grow space-y-2">
-          <NuxtLink to="/admin">
+        <nav class="grow space-y-2 md:w-full">
+          <NuxtLink to="/admin" :title="t('nav.dashboard')">
             <UIGlassButton 
               variant="secondary" 
-              class="w-full !justify-start !px-4 !py-4 transition-all"
-              :class="{ '!border-brand-court !bg-brand-court !text-white': $route.path === '/admin' }"
+              class="w-full !justify-start md:!justify-center !px-4 !py-3 md:!px-0 transition-all"
+              :class="{ '!border-emerald-600 !bg-emerald-600 !text-white hover:!bg-emerald-700': $route.path === '/admin' }"
             >
               <template #icon-left><LayoutDashboard :size="20" /></template>
-              {{ t('nav.dashboard') }}
+              <span class="md:hidden">{{ t('nav.dashboard') }}</span>
             </UIGlassButton>
           </NuxtLink>
         </nav>
 
-        <div class="flex flex-col gap-2 border-t border-brand-line pt-6">
-          <NuxtLink to="/">
-             <UIGlassButton variant="ghost" class="w-full !justify-start">
+        <div class="flex w-full flex-col gap-2 border-t border-slate-200 pt-6">
+          <NuxtLink to="/" :title="t('nav.backToSite')">
+             <UIGlassButton variant="ghost" class="w-full !justify-start md:!justify-center md:!px-0">
                 <template #icon-left><ArrowLeft :size="18" /></template>
-                {{ t('nav.backToSite') }}
+                <span class="md:hidden">{{ t('nav.backToSite') }}</span>
              </UIGlassButton>
           </NuxtLink>
           <UIGlassButton 
             variant="ghost" 
             @click="handleLogout"
-            class="w-full !justify-start !text-red-500 hover:!border-red-200 hover:!bg-red-50 hover:!text-red-600"
+            :title="t('nav.logout')"
+            class="w-full !justify-start md:!justify-center md:!px-0 !text-red-500 hover:!border-red-200 hover:!bg-red-50 hover:!text-red-600"
           >
             <template #icon-left><LogOut :size="20" /></template>
-            {{ t('nav.logout') }}
+            <span class="md:hidden">{{ t('nav.logout') }}</span>
           </UIGlassButton>
         </div>
       </UIGlassCard>

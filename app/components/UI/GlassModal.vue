@@ -8,7 +8,7 @@
         tabindex="-1"
       >
         <div 
-          class="absolute inset-0 bg-brand-ink/25 backdrop-blur-sm" 
+          class="absolute inset-0 bg-slate-900/50" 
           @click="persistent ? null : close()"
         />
         
@@ -16,7 +16,7 @@
           <div 
             v-if="modelValue"
             ref="modalContent"
-            class="relative w-full max-w-lg overflow-hidden rounded-[2rem] border border-brand-line bg-white shadow-[0_30px_80px_rgba(29,42,34,0.16)] focus:outline-none"
+            class="relative w-full max-w-lg overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl focus:outline-none"
             role="dialog"
             aria-modal="true"
             aria-labelledby="modal-title"

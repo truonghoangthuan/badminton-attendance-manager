@@ -446,9 +446,9 @@ const getStatusColor = (status: string) => {
     case 'locked':
       return 'border-amber-200 bg-amber-50 text-amber-700';
     case 'completed':
-      return 'border-slate-200 bg-slate-100 text-slate-700';
+      return 'border-slate-200 bg-slate-50 text-slate-600';
     default:
-      return 'border-brand-line bg-white text-brand-slate';
+      return 'border-slate-200 bg-white text-slate-600';
   }
 };
 </script>
@@ -477,11 +477,8 @@ const getStatusColor = (status: string) => {
 
       <div v-else-if="session" class="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,0.9fr)] xl:items-start">
         <div class="space-y-6">
-          <UIGlassCard class="overflow-hidden !p-0">
-            <div class="hero-panel relative overflow-hidden px-6 py-7 sm:px-8">
-              <div
-                class="absolute inset-y-0 right-0 hidden w-1/2 bg-[radial-gradient(circle_at_top_right,rgba(244,201,93,0.28),transparent_55%)] lg:block"
-              />
+          <UIGlassCard class="overflow-hidden !p-0 border-slate-200 shadow-sm">
+            <div class="bg-white relative overflow-hidden px-6 py-6 sm:px-8">
 
               <div class="relative flex flex-col gap-6">
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -538,25 +535,25 @@ const getStatusColor = (status: string) => {
                   <div
                     v-for="stat in summaryStats"
                     :key="stat.label"
-                    class="rounded-[24px] border border-white/70 bg-white/80 p-4 shadow-[0_14px_30px_rgba(18,55,42,0.05)]"
+                    class="rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-sm flex items-center gap-3"
                   >
-                    <div class="flex items-center justify-between gap-4">
-                      <div>
-                        <p class="text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">
-                          {{ stat.label }}
-                        </p>
-                        <p class="mt-3 text-3xl font-black tracking-tight text-brand-ink">
+                    <div
+                      class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br"
+                      :class="stat.accent"
+                    >
+                      <component :is="stat.icon" :size="20" />
+                    </div>
+                    <div>
+                      <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        {{ stat.label }}
+                      </p>
+                      <div class="flex items-baseline gap-2 leading-none mt-1">
+                        <p class="text-xl font-black tracking-tight text-brand-ink">
                           {{ stat.value }}
                         </p>
-                        <p class="mt-1 text-sm font-medium text-brand-slate">
+                        <p class="text-[11px] font-medium text-slate-500">
                           {{ stat.hint }}
                         </p>
-                      </div>
-                      <div
-                        class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br"
-                        :class="stat.accent"
-                      >
-                        <component :is="stat.icon" :size="22" />
                       </div>
                     </div>
                   </div>
@@ -618,7 +615,7 @@ const getStatusColor = (status: string) => {
 
             <div
               v-if="totalJoinedPlayers > 0 && totalActualPlayers === 0"
-              class="flex items-start gap-3 rounded-[20px] border border-amber-200 bg-amber-50/80 p-4 text-amber-900"
+              class="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-900"
             >
               <Info :size="20" class="mt-0.5 shrink-0 text-amber-600" />
               <div class="text-sm">
@@ -631,7 +628,7 @@ const getStatusColor = (status: string) => {
 
             <div
               v-if="attendances.length === 0"
-              class="rounded-[24px] border border-dashed border-brand-line bg-brand-sand px-6 py-12 text-center"
+              class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center"
             >
               <Users :size="28" class="mx-auto text-brand-slate" />
               <p class="mt-4 text-lg font-black text-brand-ink">{{ t('admin.detail.noAttendanceTitle') }}</p>
@@ -649,17 +646,17 @@ const getStatusColor = (status: string) => {
               </div>
             </div>
 
-            <div v-else class="space-y-3 md:hidden">
+            <div v-else class="space-y-2 md:hidden">
               <div
                 v-for="att in attendances"
                 :key="att.id"
-                class="rounded-[24px] border p-4 transition-colors"
-                :class="att.actualAttended ? 'border-brand-court/25 bg-emerald-50/60' : 'border-brand-line bg-white'"
+                class="rounded-xl border p-3 transition-colors"
+                :class="att.actualAttended ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-white'"
               >
                 <div class="flex items-start justify-between gap-4">
                   <div>
                     <div class="flex items-center gap-2">
-                      <p class="text-lg font-black tracking-tight">{{ att.name }}</p>
+                      <p class="text-base font-bold tracking-tight">{{ att.name }}</p>
                       <span
                         v-if="att.isManual"
                         class="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-sky-700"
@@ -683,20 +680,20 @@ const getStatusColor = (status: string) => {
                       </span>
                     </div>
                   </div>
-                  <span class="text-xs font-bold uppercase tracking-[0.18em] text-brand-slate">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                     {{ att.actualAttended ? t('admin.detail.presentStatus') : t('admin.detail.pendingStatus') }}
                   </span>
                   <button
                     type="button"
-                    class="flex h-8 w-8 items-center justify-center rounded-lg border border-red-100 bg-red-50 text-red-500 transition-colors hover:bg-red-100 hover:text-red-600"
+                    class="flex h-7 w-7 items-center justify-center rounded-lg border border-red-100 bg-red-50 text-red-500 transition-colors hover:bg-red-100 hover:text-red-600"
                     @click="deleteAttendee(att)"
                   >
                     <Trash2 :size="14" />
                   </button>
                 </div>
 
-                <div v-if="att.actualAttended" class="mt-3 flex items-center justify-between rounded-xl border border-brand-line/60 bg-brand-sand/50 px-3 py-2 text-xs">
-                  <span class="font-medium text-brand-slate">{{ t('admin.detail.calculatedShare') }}</span>
+                <div v-if="att.actualAttended" class="mt-2 flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs">
+                  <span class="font-medium text-slate-600">{{ t('admin.detail.calculatedShare') }}</span>
                   <div class="text-right">
                     <span class="font-black text-brand-ink">{{ formatCurrency(calculatedFeePerPerson * (1 + (att.guestCount || 0))) }}</span>
                     <span v-if="att.guestCount" class="text-[10px] font-medium text-brand-slate"> ({{ 1 + att.guestCount }} {{ 1 + att.guestCount === 1 ? t('admin.detail.slotUnit') : t('admin.detail.slotsUnit') }})</span>
@@ -737,47 +734,47 @@ const getStatusColor = (status: string) => {
 
             <div
               v-if="attendances.length"
-              class="hidden overflow-hidden rounded-[24px] border border-brand-line md:block"
+              class="hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:block"
             >
               <table class="w-full">
-                <thead class="bg-brand-sand/90">
+                <thead class="bg-slate-50 border-b border-slate-200">
                   <tr class="text-left">
-                    <th class="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">{{ t('admin.detail.thPlayer') }}</th>
-                    <th class="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">{{ t('admin.detail.thRsvp') }}</th>
-                    <th class="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">{{ t('admin.detail.thGuests') }}</th>
-                    <th class="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">
+                    <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">{{ t('admin.detail.thPlayer') }}</th>
+                    <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">{{ t('admin.detail.thRsvp') }}</th>
+                    <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">{{ t('admin.detail.thGuests') }}</th>
+                    <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                       {{ t('admin.detail.thCheckIn') }}
                     </th>
-                    <th class="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">
+                    <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                       {{ t('admin.detail.thPayment') }}
                     </th>
-                    <th class="px-5 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate"></th>
+                    <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-500"></th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-brand-line bg-white">
+                <tbody class="divide-y divide-slate-100 bg-white">
                   <tr
                     v-for="att in attendances"
                     :key="att.id"
-                    class="transition-colors hover:bg-brand-sand/45"
-                    :class="att.actualAttended ? 'bg-emerald-50/45' : ''"
+                    class="transition-colors hover:bg-slate-50"
+                    :class="att.actualAttended ? 'bg-emerald-50/40 hover:bg-emerald-50' : ''"
                   >
-                    <td class="px-5 py-4">
+                    <td class="px-4 py-2.5">
                       <div class="flex flex-col">
                         <div class="flex items-center gap-2">
-                          <span class="font-black text-brand-ink">{{ att.name }}</span>
+                          <span class="font-bold text-brand-ink text-sm">{{ att.name }}</span>
                           <span
                             v-if="att.isManual"
-                            class="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-sky-700"
+                            class="rounded bg-sky-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sky-700"
                           >
                             {{ t('admin.detail.walkInBadge') }}
                           </span>
                         </div>
-                        <span class="text-sm font-medium text-brand-slate">
+                        <span class="text-xs text-slate-500">
                           {{ att.actualAttended ? t('admin.detail.checkedInOnSite') : t('admin.detail.awaitingCheckIn') }}
                         </span>
                       </div>
                     </td>
-                    <td class="px-5 py-4">
+                    <td class="px-4 py-2.5">
                       <span
                         class="status-chip"
                         :class="
@@ -789,58 +786,58 @@ const getStatusColor = (status: string) => {
                         {{ att.isJoining ? t('admin.detail.joining') : t('admin.detail.noBadge') }}
                       </span>
                     </td>
-                    <td class="px-5 py-4">
+                    <td class="px-4 py-2.5">
                       <span
                         v-if="att.guestCount"
                         class="status-chip border-brand-court/20 bg-brand-court/10 text-brand-court"
                       >
                         +{{ att.guestCount }}
                       </span>
-                      <span v-else class="text-sm font-medium text-brand-slate/70">{{ t('admin.detail.none') }}</span>
+                      <span v-else class="text-xs text-slate-500">{{ t('admin.detail.none') }}</span>
                     </td>
-                    <td class="px-5 py-4">
+                    <td class="px-4 py-2.5">
                       <button
                         type="button"
-                        class="action-pill !px-4 !py-2 text-sm"
+                        class="action-pill !px-3 !py-1.5 text-[11px]"
                         :class="
                           att.actualAttended
                             ? 'border-brand-court bg-brand-court text-white'
-                            : 'border-brand-line bg-brand-sand text-brand-slate'
+                            : 'border-slate-200 bg-slate-50 text-slate-600'
                         "
                         @click="toggleAttendanceAttr(att.id, 'actualAttended', !att.actualAttended)"
                       >
-                        <UserCheck :size="16" />
+                        <UserCheck :size="14" />
                         {{ att.actualAttended ? t('admin.detail.presentStatus') : t('admin.detail.markPresent') }}
                       </button>
                     </td>
-                    <td class="px-5 py-4">
-                      <div class="flex flex-col gap-1.5">
+                    <td class="px-4 py-2.5">
+                      <div class="flex flex-col gap-1">
                         <button
                           type="button"
-                          class="action-pill !px-4 !py-2 text-sm"
+                          class="action-pill !px-3 !py-1.5 text-[11px] self-start"
                           :class="
                             att.hasPaid
                               ? 'border-brand-court bg-brand-court text-white'
-                              : 'border-brand-line bg-white text-brand-slate'
+                              : 'border-slate-200 bg-white text-slate-600'
                           "
                           @click="toggleAttendanceAttr(att.id, 'hasPaid', !att.hasPaid)"
                         >
-                          <ReceiptText :size="16" />
+                          <ReceiptText :size="14" />
                           {{ att.hasPaid ? t('admin.detail.paidBtn') : t('admin.detail.unpaidBtn') }}
                         </button>
-                        <div v-if="att.actualAttended" class="px-1 text-xs font-semibold text-brand-slate">
-                          {{ t('admin.detail.owes') }} <span class="font-black text-brand-ink">{{ formatCurrency(calculatedFeePerPerson * (1 + (att.guestCount || 0))) }}</span>
-                          <span v-if="att.guestCount" class="text-[10px] text-brand-slate/70"> ({{ 1 + att.guestCount }} {{ 1 + att.guestCount === 1 ? t('admin.detail.slotUnit') : t('admin.detail.slotsUnit') }})</span>
+                        <div v-if="att.actualAttended" class="text-[10px] font-semibold text-slate-500">
+                          {{ t('admin.detail.owes') }} <span class="font-bold text-brand-ink">{{ formatCurrency(calculatedFeePerPerson * (1 + (att.guestCount || 0))) }}</span>
+                          <span v-if="att.guestCount" class="text-[9px] text-slate-400"> ({{ 1 + att.guestCount }})</span>
                         </div>
                       </div>
                     </td>
-                    <td class="px-5 py-4 text-right">
+                    <td class="px-4 py-2.5 text-right">
                       <button
                         type="button"
-                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-red-100 bg-red-50 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700"
+                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-100 bg-red-50 text-red-500 transition-colors hover:bg-red-100 hover:text-red-700"
                         @click="deleteAttendee(att)"
                       >
-                        <Trash2 :size="16" />
+                        <Trash2 :size="14" />
                       </button>
                     </td>
                   </tr>
@@ -1154,21 +1151,15 @@ const getStatusColor = (status: string) => {
 </template>
 
 <style scoped>
-.hero-panel {
-  background:
-    linear-gradient(135deg, rgba(47, 122, 83, 0.12), transparent 34%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(252, 249, 241, 0.94));
-}
-
 .status-chip {
-  @apply inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em];
+  @apply inline-flex items-center rounded bg-slate-100 border border-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-600;
 }
 
 .action-pill {
-  @apply inline-flex items-center justify-center gap-2 rounded-2xl border px-5 py-3 font-bold transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(18,55,42,0.08)];
+  @apply inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-all shadow-sm active:scale-95;
 }
 
 :deep(.finance-input) {
-  @apply w-full rounded-2xl border border-brand-line bg-[#fcfcf9] px-4 py-4 text-brand-ink outline-none transition-all placeholder:text-brand-slate/70 focus:border-brand-court focus:ring-4 focus:ring-brand-court/10;
+  @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-brand-ink outline-none transition-all placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500;
 }
 </style>

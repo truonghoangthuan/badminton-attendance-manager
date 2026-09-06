@@ -239,25 +239,25 @@ const cancelPreview = () => {
 
     <div v-if="!qrUrl && !previewUrl" class="group relative">
       <div
-        class="flex cursor-pointer flex-col items-center justify-center rounded-[32px] border-2 border-dashed border-brand-line bg-brand-sand/50 px-6 py-12 transition-all hover:border-brand-court hover:bg-brand-sand"
+        class="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 px-6 py-12 transition-all hover:border-emerald-500 hover:bg-emerald-50/50"
         @click="triggerFileInput"
       >
-        <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white text-brand-slate shadow-sm transition-transform group-hover:scale-110">
-          <Upload :size="28" />
+        <div class="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-white text-slate-400 border border-slate-100 shadow-sm transition-transform group-hover:scale-110 group-hover:text-emerald-500 group-hover:border-emerald-100">
+          <Upload :size="24" />
         </div>
-        <p class="text-center font-black text-brand-ink">{{ t('admin.qr.clickToUpload') }}</p>
-        <p class="mt-1 text-center text-sm font-medium text-brand-slate">{{ t('admin.qr.fileFormatHint') }}</p>
+        <p class="text-center text-sm font-bold text-brand-ink">{{ t('admin.qr.clickToUpload') }}</p>
+        <p class="mt-1 text-center text-xs font-medium text-slate-500">{{ t('admin.qr.fileFormatHint') }}</p>
       </div>
     </div>
 
     <div v-else-if="previewUrl" class="space-y-4">
-      <div class="relative mx-auto aspect-square w-full max-w-[280px] overflow-hidden rounded-[32px] border-4 border-white bg-white shadow-xl">
-        <img :src="previewUrl" alt="QR Preview" class="h-full w-full object-contain p-4" />
+      <div class="relative mx-auto aspect-square w-full max-w-[280px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-2">
+        <img :src="previewUrl" alt="QR Preview" class="h-full w-full object-contain" />
         <button
-          class="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-brand-ink/80 text-white backdrop-blur-md transition-colors hover:bg-brand-ink"
+          class="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900/60 text-white backdrop-blur-md transition-colors hover:bg-slate-900"
           @click="cancelPreview"
         >
-          <X :size="20" />
+          <X :size="16" />
         </button>
       </div>
       
@@ -272,9 +272,9 @@ const cancelPreview = () => {
     </div>
 
     <div v-else class="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
-      <div class="relative shrink-0 overflow-hidden rounded-3xl border-4 border-white bg-white shadow-lg sm:w-48">
-        <img :src="qrUrl || undefined" alt="Payment QR" class="aspect-square w-full object-contain p-2" />
-        <div class="absolute inset-0 flex items-center justify-center bg-brand-ink/40 opacity-0 transition-opacity hover:opacity-100">
+      <div class="relative shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-2 sm:w-48">
+        <img :src="qrUrl || undefined" alt="Payment QR" class="aspect-square w-full object-contain" />
+        <div class="absolute inset-0 flex items-center justify-center bg-slate-900/40 opacity-0 transition-opacity hover:opacity-100">
            <UIGlassButton variant="primary" class="scale-90" @click="triggerFileInput">
              {{ t('admin.qr.replace') }}
            </UIGlassButton>
@@ -282,9 +282,9 @@ const cancelPreview = () => {
       </div>
 
       <div class="flex flex-1 flex-col gap-4">
-        <div class="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
-          <p class="text-sm font-bold text-emerald-700">{{ t('admin.qr.qrActiveTitle') }}</p>
-          <p class="mt-1 text-xs font-medium text-emerald-600/80">
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-700">{{ t('admin.qr.qrActiveTitle') }}</p>
+          <p class="mt-1 text-xs font-medium text-emerald-700/80">
             {{ t('admin.qr.qrActiveDesc') }}
           </p>
         </div>
@@ -316,21 +316,21 @@ const cancelPreview = () => {
 
       <form @submit.prevent="saveBankDetails" class="space-y-4">
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div class="flex w-full flex-col gap-2">
-            <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">
+          <div class="flex w-full flex-col gap-1.5">
+            <label class="px-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
               {{ t('admin.qr.selectBankLabel') }}
             </label>
             <div class="group relative">
-              <div class="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate transition-colors group-focus-within:text-brand-court">
+              <div class="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-slate-400">
                 <Building2 :size="16" />
               </div>
-              <div class="pointer-events-none absolute right-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate/80 transition-colors group-focus-within:text-brand-court">
+              <div class="pointer-events-none absolute right-3 top-1/2 z-10 -translate-y-1/2 text-slate-400">
                 <ChevronDown :size="16" />
               </div>
               <select
                 :value="bankForm.bankCode"
                 @change="onBankSelect"
-                class="w-full appearance-none rounded-2xl border border-brand-line bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,246,240,0.96))] py-3.5 pl-11 pr-10 text-sm font-bold tracking-[0.02em] text-brand-ink shadow-[0_18px_40px_-32px_rgba(35,55,34,0.34)] transition-all outline-none hover:border-brand-court/30 focus:border-brand-court focus:ring-4 focus:ring-brand-court/10"
+                class="w-full appearance-none rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-9 text-sm text-brand-ink outline-none transition-all hover:border-emerald-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
               >
                 <option value="">{{ t('admin.qr.chooseStandardBank') }}</option>
                 <option v-for="bank in COMMON_VIETNAMESE_BANKS" :key="bank.code" :value="bank.code">
@@ -383,29 +383,29 @@ const cancelPreview = () => {
       <!-- Dynamic VietQR Live Preview -->
       <div
         v-if="liveVietQRPreviewUrl"
-        class="mt-4 flex flex-col items-center gap-4 rounded-3xl border border-brand-court/20 bg-emerald-50/60 p-4 sm:flex-row"
+        class="mt-4 flex flex-col items-center gap-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 sm:flex-row"
       >
-        <div class="shrink-0 overflow-hidden rounded-2xl border-2 border-white bg-white p-2 shadow-md flex items-center justify-center">
+        <div class="shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-2 shadow-sm flex items-center justify-center">
           <img
             v-if="!previewError"
             :src="liveVietQRPreviewUrl"
             alt="VietQR Dynamic Preview"
-            class="h-32 w-32 object-contain"
+            class="h-28 w-28 object-contain"
             @error="previewError = true"
             @load="previewError = false"
           />
-          <div v-else class="flex h-32 w-32 flex-col items-center justify-center p-2 text-center text-brand-slate">
+          <div v-else class="flex h-28 w-28 flex-col items-center justify-center p-2 text-center text-slate-500">
             <QrCode :size="24" class="opacity-40" />
             <p class="mt-1 text-[10px] font-bold text-amber-600">Lỗi hiển thị QR</p>
           </div>
         </div>
-        <div class="space-y-1">
-          <div class="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-100/70 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-800">
-            <Sparkles :size="12" />
+        <div class="space-y-1.5">
+          <div class="inline-flex items-center gap-1.5 rounded bg-emerald-100 border border-emerald-200 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-800">
+            <Sparkles :size="10" />
             {{ t('admin.qr.dynamicVietQrActive') }}
           </div>
-          <p class="text-sm font-black text-brand-ink">{{ t('admin.qr.dynamicVietQrReady') }}</p>
-          <p class="text-xs font-medium text-brand-slate leading-relaxed">
+          <p class="text-sm font-bold text-brand-ink">{{ t('admin.qr.dynamicVietQrReady') }}</p>
+          <p class="text-xs font-medium text-slate-600 leading-relaxed">
             {{ t('admin.qr.dynamicVietQrDesc') }}
           </p>
         </div>
