@@ -489,7 +489,7 @@ const getStatusColor = (status: string) => {
                     <p class="section-kicker">{{ t('admin.detail.sessionControlKicker') }}</p>
                     <div class="space-y-2">
                       <h1 class="text-3xl font-black tracking-tight text-brand-ink sm:text-[2.5rem]">
-                        {{ session.date }}
+                        {{ formatDisplayDate(session.date) }}
                       </h1>
                       <div class="flex flex-wrap gap-3">
                         <div

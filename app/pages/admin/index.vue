@@ -187,7 +187,7 @@ const deleteSession = async (session: any) => {
   }
 
   confirm.require({
-    message: t('admin.deleteConfirmMsg', { date: session.date, time: session.time }),
+    message: t('admin.deleteConfirmMsg', { date: formatDisplayDate(session.date), time: session.time }),
     header: t('admin.deleteConfirmTitle'),
     severity: 'danger',
     rejectLabel: t('admin.cancel'),
@@ -276,7 +276,7 @@ const getStatusColor = (status: string) => {
 
                   <div class="space-y-1">
                     <div class="flex items-center gap-2">
-                      <h3 class="text-2xl font-black tracking-tight text-brand-ink">{{ session.date }}</h3>
+                      <h3 class="text-2xl font-black tracking-tight text-brand-ink">{{ formatDisplayDate(session.date) }}</h3>
                       <span
                         :class="getStatusColor(session.status)"
                         class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider"
