@@ -26,28 +26,31 @@ export const generateSessionSettlementText = (
 ): string => {
   if (!session) return '';
   const isFourArgs = Array.isArray(attendancesOrFinancials);
+  const attendances = isFourArgs ? attendancesOrFinancials : [];
   const financials = isFourArgs ? financialsOrUrl : attendancesOrFinancials;
-  const url = isFourArgs ? (sessionUrl || '') : (financialsOrUrl || '');
+
+  const actualPlayers = (attendances || []).filter((a: any) => a?.actualAttended);
+  const calculatedPlayers = actualPlayers.reduce(
+    (acc: number, a: any) => acc + 1 + (Number(a?.guestCount) || 0),
+    0,
+  );
+  const totalActualPlayers = calculatedPlayers || Number(financials?.totalActualPlayers) || 0;
 
   const courtCost = financials?.courtCost || 0;
-  const shuttleCost = (financials?.shuttlecocksUsed || 0) * (financials?.shuttlecockPrice || 0);
+  const shuttlecocksUsed = financials?.shuttlecocksUsed || 0;
+  const shuttlePrice = financials?.shuttlecockPrice || 0;
+  const shuttleCost = shuttlecocksUsed * shuttlePrice;
   const totalCost = financials?.totalSessionCost || (courtCost + shuttleCost);
   const feePerPerson = financials?.calculatedFeePerPerson || 0;
+  const courtNumberDisplay = session.courtNumber || 1;
 
   let text = `🏸 TỔNG KẾT TIỀN SÂN - GRAVITY BADMINTON\n`;
-  text += `📅 Ngày: ${session.date} | 📍 ${session.location}\n`;
-  if (session.courtNumber) text += `🏟️ Sân: ${session.courtNumber}\n`;
-  text += `💰 Chi phí: Sân ${courtCost.toLocaleString('vi-VN')}đ + Cầu (${financials?.shuttlecocksUsed || 0} quả = ${shuttleCost.toLocaleString('vi-VN')}đ) = ${totalCost.toLocaleString('vi-VN')}đ\n`;
-  text += `💵 Tiền sân/người: ${feePerPerson.toLocaleString('vi-VN')}đ / người\n`;
+  text += `📅 Ngày: ${session.date || ''} | 📍 ${session.location || ''}\n`;
+  text += `🏟️ Số lượng sân: ${courtNumberDisplay}\n`;
+  text += `🙌 Tổng số người: ${totalActualPlayers}\n`;
+  text += `💰 Chi phí: Sân ${courtCost.toLocaleString('vi-VN')}đ + Cầu (${shuttlecocksUsed} quả = ${shuttleCost.toLocaleString('vi-VN')}đ) = ${totalCost.toLocaleString('vi-VN')}đ\n`;
+  text += `💵 Tiền sân/người: ${feePerPerson.toLocaleString('vi-VN')}đ / người`;
 
-  if (session.bankInfo?.accountNumber) {
-    text += `\n🏦 THÔNG TIN CHUYỂN KHOẢN:\n`;
-    text += `  • STK: ${session.bankInfo.accountNumber} (${session.bankInfo.bankName || 'Ngân hàng'})\n`;
-    if (session.bankInfo.accountName) text += `  • Chủ TK: ${session.bankInfo.accountName}\n`;
-    text += `  • Nội dung: BDM ${session.date.replace(/-/g, '')} [Tên]\n`;
-  }
-
-  text += `\n👉 Chi tiết bảng kê và mã VietQR:\n${url}`;
   return text;
 };
 
