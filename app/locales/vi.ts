@@ -275,6 +275,7 @@ export const vi = {
     sessionsTitle: 'Phiên đấu',
     newSessionBtn: 'Tạo phiên mới',
     maxPlayersShort: 'Tối đa {count}',
+    players: 'Người chơi',
     deleteSessionLabel: 'Xóa phiên đấu',
     openDetails: 'Xem chi tiết',
     copyLink: 'Sao chép liên kết',

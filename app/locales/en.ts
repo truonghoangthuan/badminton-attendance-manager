@@ -275,6 +275,7 @@ export const en = {
     sessionsTitle: 'Sessions',
     newSessionBtn: 'New Session',
     maxPlayersShort: '{count} max',
+    players: 'Players',
     deleteSessionLabel: 'Delete session',
     openDetails: 'Open Details',
     copyLink: 'Copy Link',

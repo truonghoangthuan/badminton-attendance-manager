@@ -224,7 +224,7 @@ const copySessionLink = (id: string) => {
         <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900">{{ t('admin.sessionsTitle') }}</h1>
       </div>
 
-      <button @click="openCreateModal" class="bg-emerald-500 hover:bg-emerald-400 text-white px-6 py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center shadow-lg shadow-emerald-500/20 transition-all hover:-translate-y-0.5 active:translate-y-0 shrink-0">
+      <button type="button" @click="openCreateModal" class="bg-emerald-500 hover:bg-emerald-400 text-white px-6 py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center shadow-lg shadow-emerald-500/20 transition-all hover:-translate-y-0.5 active:translate-y-0 shrink-0">
         <Plus class="mr-2" :size="20" stroke-width="2.5" />
         {{ t('admin.newSessionBtn') }}
       </button>
@@ -276,7 +276,7 @@ const copySessionLink = (id: string) => {
               </div>
               <div class="flex items-center text-slate-600 text-sm font-medium">
                 <UsersIcon class="w-4 h-4 mr-3 text-slate-400 shrink-0" stroke-width="2.5" />
-                <span>{{ session.maxPlayers || 8 }} {{ t('admin.players') || 'Players' }}</span>
+                <span>{{ session.maxPlayers || 8 }} {{ t('admin.players') }}</span>
               </div>
             </div>
 
@@ -302,19 +302,19 @@ const copySessionLink = (id: string) => {
                 {{ t('admin.openDetails') }}
               </NuxtLink>
               
-              <button @click="copySessionLink(session.id)" :title="t('admin.copyLink')" class="w-[42px] h-[42px] bg-slate-100/80 hover:bg-slate-200 text-slate-500 hover:text-slate-800 rounded-xl flex items-center justify-center transition-colors shrink-0 border border-slate-200/50">
+              <button type="button" @click="copySessionLink(session.id)" :title="t('admin.copyLink')" :aria-label="t('admin.copyLink')" class="w-[42px] h-[42px] bg-slate-100/80 hover:bg-slate-200 text-slate-500 hover:text-slate-800 rounded-xl flex items-center justify-center transition-colors shrink-0 border border-slate-200/50">
                 <Copy :size="16" stroke-width="2.5" />
               </button>
 
-              <button @click="openEditModal(session)" :title="t('admin.editSession')" class="w-[42px] h-[42px] bg-slate-100/80 hover:bg-slate-200 text-slate-500 hover:text-slate-800 rounded-xl flex items-center justify-center transition-colors shrink-0 border border-slate-200/50">
+              <button type="button" @click="openEditModal(session)" :title="t('admin.editSession')" :aria-label="t('admin.editSession')" class="w-[42px] h-[42px] bg-slate-100/80 hover:bg-slate-200 text-slate-500 hover:text-slate-800 rounded-xl flex items-center justify-center transition-colors shrink-0 border border-slate-200/50">
                 <Clock3 :size="16" stroke-width="2.5" />
               </button>
 
-              <button @click="toggleStatus(session)" :title="t('admin.toggleStatus')" class="w-[42px] h-[42px] bg-slate-100/80 hover:bg-slate-200 text-slate-500 hover:text-slate-800 rounded-xl flex items-center justify-center transition-colors shrink-0 border border-slate-200/50">
+              <button type="button" @click="toggleStatus(session)" :title="t('admin.toggleStatus')" :aria-label="t('admin.toggleStatus')" class="w-[42px] h-[42px] bg-slate-100/80 hover:bg-slate-200 text-slate-500 hover:text-slate-800 rounded-xl flex items-center justify-center transition-colors shrink-0 border border-slate-200/50">
                 <RefreshCcw :size="16" stroke-width="2.5" />
               </button>
               
-              <button @click="deleteSession(session)" :disabled="deletingSessionId === session.id" class="w-[42px] h-[42px] bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-xl flex items-center justify-center transition-colors shrink-0 border border-rose-100 disabled:opacity-50">
+              <button type="button" @click="deleteSession(session)" :disabled="deletingSessionId === session.id" :title="t('admin.deleteSessionLabel')" :aria-label="t('admin.deleteSessionLabel')" class="w-[42px] h-[42px] bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-xl flex items-center justify-center transition-colors shrink-0 border border-rose-100 disabled:opacity-50">
                 <Loader2 v-if="deletingSessionId === session.id" class="animate-spin" :size="16" />
                 <X v-else :size="18" stroke-width="2.5" />
               </button>
