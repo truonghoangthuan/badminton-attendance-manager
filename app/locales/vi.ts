@@ -203,6 +203,11 @@ export const vi = {
     autoUpdatesNotice: 'Tự động cập nhật theo dữ liệu thực tế',
     nativeShare: 'Chia sẻ hệ thống',
     copiedText: 'Đã sao chép vào bộ nhớ!',
+    copyQRImage: 'Sao chép ảnh QR',
+    toastQRCopied: 'Đã sao chép ảnh QR vào bộ nhớ tạm!',
+    copyQRFailed: 'Không thể sao chép ảnh QR. Bạn có thể nhấn giữ ảnh để lưu.',
+    qrPaymentCard: 'Mã VietQR thanh toán',
+    copiedQRImage: 'Đã sao chép ảnh QR!',
   },
   leaderboard: {
     badge: 'Cộng đồng Gravity',

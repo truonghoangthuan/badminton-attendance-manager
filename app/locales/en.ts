@@ -203,6 +203,11 @@ export const en = {
     autoUpdatesNotice: 'Auto-updated from live court data',
     nativeShare: 'System Share',
     copiedText: 'Copied to clipboard!',
+    copyQRImage: 'Copy QR Image',
+    toastQRCopied: 'QR image copied to clipboard!',
+    copyQRFailed: 'Failed to copy QR image. You can long-press the image to save.',
+    qrPaymentCard: 'VietQR Payment Card',
+    copiedQRImage: 'QR Image Copied!',
   },
   leaderboard: {
     badge: 'Community Roster',
