@@ -25,115 +25,77 @@ const handleLogout = async () => {
 </script>
 
 <template>
-  <div class="relative flex min-h-screen flex-col bg-slate-50">
-    <!-- Direction 2 Header -->
-    <header class="sticky top-0 z-40 w-full bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,246,240,0.96))] backdrop-blur-md border-b border-slate-200/80 shadow-sm px-4 py-3 md:px-6">
-      <div class="mx-auto flex items-center justify-between">
-        
-        <!-- Logo Left Side -->
-        <div class="flex items-center gap-4">
-          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-ink">
-            <ShieldCheck class="text-emerald-400" :size="20" />
+  <div class="relative flex min-h-screen flex-col bg-slate-50/50 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-50/40 via-slate-50/50 to-white">
+    <!-- Floating Top Nav -->
+    <div class="fixed top-4 left-1/2 transform -translate-x-1/2 w-full max-w-5xl px-4 z-50">
+      <nav class="bg-white/70 backdrop-blur-xl border border-white/80 rounded-2xl px-4 md:px-6 py-3 flex items-center justify-between shadow-[0_8px_32px_rgba(0,0,0,0.04)]">
+        <!-- Logo -->
+        <div class="flex items-center gap-3">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 shadow-lg shadow-emerald-500/20">
+            <ShieldCheck class="text-white" :size="20" stroke-width="2.5" />
           </div>
-          <div class="flex flex-col">
-            <span class="text-lg font-bold leading-none tracking-tight text-brand-ink">
+          <div class="flex flex-col hidden sm:flex">
+            <span class="text-lg font-extrabold leading-none tracking-tight text-slate-800">
               Admin<span class="text-emerald-500">Panel</span>
             </span>
-            <span class="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-              {{ t('admin.panelSubtitle') || 'Management' }}
-            </span>
           </div>
         </div>
 
-        <!-- Desktop Nav Center -->
-        <nav class="hidden md:flex items-center gap-2 rounded-lg border border-slate-200/50 bg-slate-100/50 p-1">
-          <NuxtLink 
-            to="/admin" 
-            class="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors"
-            :class="$route.path === '/admin' ? 'bg-white font-bold text-brand-ink shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-200/50 hover:text-brand-ink'"
-          >
-            <LayoutDashboard :size="16" />
+        <!-- Desktop Nav -->
+        <div class="hidden md:flex items-center gap-6">
+          <NuxtLink to="/admin" class="text-sm font-bold transition-colors" :class="$route.path === '/admin' ? 'text-emerald-600' : 'text-slate-500 hover:text-slate-800'">
             {{ t('nav.dashboard') }}
           </NuxtLink>
-          <NuxtLink 
-            to="/" 
-            class="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-200/50 hover:text-brand-ink"
-          >
-            <ArrowLeft :size="16" />
+          <NuxtLink to="/" class="text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors">
             {{ t('nav.backToSite') }}
           </NuxtLink>
-        </nav>
-
-        <!-- Desktop Actions Right -->
-        <div class="hidden md:flex items-center gap-2">
-          <UILanguageSwitcher class="scale-90" />
-          <button 
-            @click="handleLogout"
-            class="flex items-center gap-2 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-red-500 transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-            :title="t('nav.logout')"
-          >
-            <LogOut :size="16" />
-            <span class="hidden xl:inline">{{ t('nav.logout') }}</span>
-          </button>
         </div>
 
-        <!-- Mobile Menu Toggle -->
-        <div class="flex items-center gap-2 md:hidden">
-          <UIGlassButton 
-            variant="ghost" 
-            class="!p-2"
-            @click="isMobileMenuOpen = !isMobileMenuOpen"
-          >
-            <Menu v-if="!isMobileMenuOpen" :size="24" class="text-brand-ink" />
-            <X v-else :size="24" class="text-brand-ink" />
+        <!-- Actions -->
+        <div class="flex items-center gap-2 md:gap-4">
+          <UILanguageSwitcher class="scale-90" />
+          <div class="w-px h-4 bg-slate-200 hidden md:block"></div>
+          <button @click="handleLogout" class="text-sm font-bold text-rose-500 hover:text-rose-600 transition-colors hidden md:block" :title="t('nav.logout')">
+            {{ t('nav.logout') }}
+          </button>
+          
+          <!-- Mobile Menu Toggle -->
+          <UIGlassButton variant="ghost" class="!p-2 md:hidden" @click="isMobileMenuOpen = !isMobileMenuOpen">
+            <Menu v-if="!isMobileMenuOpen" :size="24" class="text-slate-800" />
+            <X v-else :size="24" class="text-slate-800" />
           </UIGlassButton>
         </div>
-      </div>
-    </header>
+      </nav>
+    </div>
 
     <!-- Mobile Dropdown -->
-    <div 
-      v-if="isMobileMenuOpen" 
-      class="fixed inset-0 top-[73px] z-30 animate-fade-in bg-slate-50/95 p-4 backdrop-blur-md md:hidden"
-    >
-      <div class="flex flex-col gap-4">
-        <nav class="flex flex-col gap-2">
-          <NuxtLink to="/admin" :title="t('nav.dashboard')">
-            <UIGlassButton 
-              variant="secondary" 
-              class="w-full !justify-start !px-4 !py-3 transition-all"
-              :class="{ '!border-emerald-600 !bg-emerald-600 !text-white hover:!bg-emerald-700': $route.path === '/admin' }"
-            >
+    <div v-if="isMobileMenuOpen" class="fixed inset-0 top-[76px] z-40 animate-fade-in bg-white/95 p-4 backdrop-blur-xl md:hidden">
+      <div class="flex flex-col gap-4 max-w-sm mx-auto mt-4">
+        <nav class="flex flex-col gap-3">
+          <NuxtLink to="/admin">
+            <UIGlassButton variant="secondary" class="w-full !justify-start !px-4 !py-3 !rounded-xl transition-all" :class="{ '!bg-emerald-500 !text-white !border-emerald-400': $route.path === '/admin' }">
               <template #icon-left><LayoutDashboard :size="20" /></template>
-              <span>{{ t('nav.dashboard') }}</span>
+              <span class="font-bold">{{ t('nav.dashboard') }}</span>
             </UIGlassButton>
           </NuxtLink>
-          <NuxtLink to="/" :title="t('nav.backToSite')">
-             <UIGlassButton variant="ghost" class="w-full !justify-start">
-                <template #icon-left><ArrowLeft :size="18" /></template>
-                <span>{{ t('nav.backToSite') }}</span>
+          <NuxtLink to="/">
+             <UIGlassButton variant="ghost" class="w-full !justify-start !px-4 !py-3 !rounded-xl">
+                <template #icon-left><ArrowLeft :size="20" /></template>
+                <span class="font-bold">{{ t('nav.backToSite') }}</span>
              </UIGlassButton>
           </NuxtLink>
         </nav>
         
-        <div class="flex w-full flex-col gap-2 border-t border-slate-200 pt-4">
-          <div class="flex items-center justify-between px-2">
-            <span class="text-sm font-bold text-slate-500">Language</span>
-            <UILanguageSwitcher />
-          </div>
-          <UIGlassButton 
-            variant="ghost" 
-            @click="handleLogout"
-            class="mt-2 w-full !justify-start !text-red-500 hover:!border-red-200 hover:!bg-red-50 hover:!text-red-600"
-          >
+        <div class="flex w-full flex-col gap-3 border-t border-slate-100 pt-5">
+          <UIGlassButton variant="ghost" @click="handleLogout" class="w-full !justify-start !text-rose-500 hover:!bg-rose-50 !rounded-xl !px-4 !py-3">
             <template #icon-left><LogOut :size="20" /></template>
-            <span>{{ t('nav.logout') }}</span>
+            <span class="font-bold">{{ t('nav.logout') }}</span>
           </UIGlassButton>
         </div>
       </div>
     </div>
 
-    <main class="relative z-10 w-full flex-1 p-4 md:p-8">
+    <main class="relative z-10 w-full flex-1 pt-32 pb-12 px-4 md:px-6 max-w-6xl mx-auto">
       <slot />
     </main>
   </div>
