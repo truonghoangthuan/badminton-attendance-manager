@@ -1,3 +1,5 @@
+import { formatDisplayDate } from './dateFormat.ts';
+
 export const exportSessionToCSV = (
   session: any,
   attendances: any[],
@@ -11,7 +13,7 @@ export const exportSessionToCSV = (
 
   // Metadata Section
   csv += `BÁO CÁO PHIÊN CẦU LÔNG - GRAVITY BADMINTON\r\n`;
-  csv += `Ngày,${session.date || ''},Giờ,${session.time || ''}\r\n`;
+  csv += `Ngày,${formatDisplayDate(session.date)},Giờ,${session.time || ''}\r\n`;
   csv += `Địa điểm,"${(session.location || '').replace(/"/g, '""')}",Sân,"${(session.courtNumber || '').replace(/"/g, '""')}"\r\n`;
   csv += `Trạng thái,${session.status || ''},Sức chứa,"${attendances.length}/${session.maxPlayers || 8}"\r\n`;
   csv += `Cầu lông,"${(session.shuttlecockType || '').replace(/"/g, '""')}",Trình độ,"${(session.level || '').replace(/"/g, '""')}"\r\n`;

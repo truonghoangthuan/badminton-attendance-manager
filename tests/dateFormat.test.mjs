@@ -22,3 +22,19 @@ test('formatDisplayDate handles falsy and edge cases', () => {
   assert.equal(formatDisplayDate(null), '', 'Null should return empty string');
   assert.equal(formatDisplayDate(undefined), '', 'Undefined should return empty string');
 });
+
+test('sessionSocialShare formats date with formatDisplayDate', async () => {
+  const { generateSessionInviteText, generateSessionSettlementText } = await import('../app/utils/sessionSocialShare.ts');
+  const mockSession = {
+    date: '2026-09-04',
+    time: '18:00 - 20:00',
+    location: 'Sân Cầu Lông Quân Đội',
+  };
+
+  const inviteText = generateSessionInviteText(mockSession, 'https://example.com/session/123');
+  assert.ok(inviteText.includes('📅 Ngày: 04/09/2026'), 'Invite text should contain 04/09/2026');
+
+  const settlementText = generateSessionSettlementText(mockSession, [], { totalSessionCost: 200000 });
+  assert.ok(settlementText.includes('📅 Ngày: 04/09/2026'), 'Settlement text should contain 04/09/2026');
+});
+

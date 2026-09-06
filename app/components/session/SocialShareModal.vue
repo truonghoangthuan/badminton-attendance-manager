@@ -169,7 +169,7 @@ const handleNativeShare = async () => {
         const file = new File([blob], 'vietqr.png', { type: blob.type || 'image/png' });
         if (navigator.canShare({ files: [file] })) {
           await navigator.share({
-            title: `Badminton - ${props.session?.date || ''}`,
+            title: `Badminton - ${formatDisplayDate(props.session?.date)}`,
             text: currentText.value,
             files: [file],
           });
@@ -179,7 +179,7 @@ const handleNativeShare = async () => {
     }
 
     await navigator.share({
-      title: `Badminton - ${props.session?.date || ''}`,
+      title: `Badminton - ${formatDisplayDate(props.session?.date)}`,
       text: currentText.value,
       url: activeTab.value === 'invite' ? inviteUrl.value : sessionUrl.value,
     });

@@ -1,3 +1,5 @@
+import { formatDisplayDate } from './dateFormat.ts';
+
 export const normalizeInviteUrl = (rawUrl?: string): string => {
   if (!rawUrl) return '';
   try {
@@ -22,7 +24,7 @@ export const generateSessionInviteText = (
   const url = normalizeInviteUrl(rawUrl);
 
   let text = `🏸 KÈO CẦU LÔNG - GRAVITY BADMINTON\n`;
-  text += `📅 Ngày: ${session.date}\n`;
+  text += `📅 Ngày: ${formatDisplayDate(session.date)}\n`;
   text += `⏰ Giờ: ${session.time}\n`;
   text += `📍 Địa điểm: ${session.location}\n`;
   if (session.courtNumber) text += `🏟️ Sân: ${session.courtNumber}\n`;
@@ -60,7 +62,7 @@ export const generateSessionSettlementText = (
   const courtNumberDisplay = session.courtNumber || 1;
 
   let text = `🏸 TỔNG KẾT TIỀN SÂN - GRAVITY BADMINTON\n`;
-  text += `📅 Ngày: ${session.date || ''} | 📍 ${session.location || ''}\n`;
+  text += `📅 Ngày: ${formatDisplayDate(session.date)} | 📍 ${session.location || ''}\n`;
   text += `🏟️ Số lượng sân: ${courtNumberDisplay}\n`;
   text += `🙌 Tổng số người: ${totalActualPlayers}\n`;
   text += `💰 Chi phí: Sân ${courtCost.toLocaleString('vi-VN')}đ + Cầu (${shuttlecocksUsed} quả = ${shuttleCost.toLocaleString('vi-VN')}đ) = ${totalCost.toLocaleString('vi-VN')}đ\n`;

@@ -24,7 +24,7 @@ test('generateSessionInviteText produces simple invite text with clean root url'
   };
 
   const expected = `🏸 KÈO CẦU LÔNG - GRAVITY BADMINTON
-📅 Ngày: 2026-08-28
+📅 Ngày: 28/08/2026
 ⏰ Giờ: 19:00
 📍 Địa điểm: Sân cầu lông Quang Sport
 
@@ -90,7 +90,7 @@ test('generateSessionSettlementText produces exact 6-line simplified settlement 
   const lines = result.trim().split('\n');
   assert.equal(lines.length, 6, `Expected 6 lines, got ${lines.length}:\n${result}`);
   assert.equal(lines[0], '🏸 TỔNG KẾT TIỀN SÂN - GRAVITY BADMINTON');
-  assert.equal(lines[1], '📅 Ngày: 2026-09-06 | 📍 Sân Cầu Lông Sky');
+  assert.equal(lines[1], '📅 Ngày: 06/09/2026 | 📍 Sân Cầu Lông Sky');
   assert.equal(lines[2], '🏟️ Số lượng sân: Sân 3');
   assert.equal(lines[3], '🙌 Tổng số người: 6'); // (1+1) + (1+0) + (1+2) = 6
   assert.equal(lines[4], '💰 Chi phí: Sân 200.000đ + Cầu (4 quả = 100.000đ) = 300.000đ');
