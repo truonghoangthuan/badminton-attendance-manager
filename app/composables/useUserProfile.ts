@@ -3,7 +3,6 @@ import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 
 export const useUserProfile = () => {
   const { auth, db } = useFirebase()
-  const supabaseQR = useSupabaseQRCode()
   const user = useState<User | null>('auth-user', () => null)
   const profile = useState<any>('user-profile', () => null)
   const loading = useState('auth-loading', () => true)
@@ -77,56 +76,6 @@ export const useUserProfile = () => {
     }
   }
 
-  const uploadQRCode = async (file: File) => {
-    if (!user.value) return null
-
-    try {
-      // 1. Upload to Supabase Storage
-      const downloadURL = await supabaseQR.upload(file, user.value.uid)
-
-      // 2. Save URL to Firestore profile
-      const docRef = doc(db, 'profiles', user.value.uid)
-      await setDoc(docRef, { 
-        paymentQR: downloadURL,
-        updatedAt: serverTimestamp() 
-      }, { merge: true })
-
-      // 3. Update local state
-      if (profile.value) {
-        profile.value.paymentQR = downloadURL
-      }
-      
-      return downloadURL
-    } catch (e) {
-      console.error('Error uploading QR code:', e)
-      throw e
-    }
-  }
-
-  const deleteQRCode = async () => {
-    if (!user.value || !profile.value?.paymentQR) return
-
-    try {
-      // 1. Remove from Supabase Storage
-      await supabaseQR.remove(profile.value.paymentQR)
-      
-      // 2. Clear from Firestore profile
-      const docRef = doc(db, 'profiles', user.value.uid)
-      await setDoc(docRef, { 
-        paymentQR: null,
-        updatedAt: serverTimestamp() 
-      }, { merge: true })
-
-      // 3. Update local state
-      if (profile.value) {
-        profile.value.paymentQR = null
-      }
-    } catch (e) {
-      console.error('Error deleting QR code:', e)
-      throw e
-    }
-  }
-
   const hasUsername = computed(() => !!profile.value?.displayName)
 
   return {
@@ -136,7 +85,5 @@ export const useUserProfile = () => {
     hasUsername,
     setProfile,
     fetchProfile,
-    uploadQRCode,
-    deleteQRCode
   }
 }

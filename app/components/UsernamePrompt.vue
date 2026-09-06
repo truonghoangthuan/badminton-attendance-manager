@@ -7,10 +7,10 @@
         </div>
         <div>
           <h2 class="text-2xl font-black tracking-tight text-brand-ink">
-            Welcome to Gravity
+            {{ t('usernamePrompt.title') }}
           </h2>
           <p class="mt-1 text-sm font-medium text-brand-slate">
-            Please enter a name to join the session
+            {{ t('usernamePrompt.description') }}
           </p>
         </div>
       </div>
@@ -19,12 +19,12 @@
     <form @submit.prevent="handleSubmit" class="space-y-6">
       <div class="space-y-2">
         <label for="username" class="ml-2 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">
-          Your Display Name
+          {{ t('profileModal.nameLabel') }}
         </label>
         <UIGlassInput
           id="username"
           v-model="username"
-          placeholder="e.g. John Doe"
+          :placeholder="t('usernamePrompt.placeholder')"
           :disabled="submitting"
           required
           autofocus
@@ -45,7 +45,7 @@
           <template #icon-right>
             <ArrowRight :size="18" />
           </template>
-          Start Playing
+          {{ t('usernamePrompt.continue') }}
         </UIGlassButton>
       </div>
     </form>
@@ -62,6 +62,7 @@
 import { ArrowRight } from 'lucide-vue-next'
 
 const { profile, loading, hasUsername, setProfile } = useUserProfile()
+const { t } = useI18n()
 
 const show = computed(() => !loading.value && !hasUsername.value)
 const username = ref('')
@@ -70,12 +71,12 @@ const error = ref('')
 
 const handleSubmit = async () => {
   if (!username.value.trim()) {
-    error.value = 'Please enter a name'
+    error.value = t('profileModal.errorRequired')
     return
   }
 
   if (username.value.trim().length < 2) {
-    error.value = 'Name is too short'
+    error.value = t('profileModal.errorTooShort')
     return
   }
 
@@ -85,10 +86,10 @@ const handleSubmit = async () => {
   try {
     const success = await setProfile(username.value)
     if (!success) {
-      error.value = 'Failed to save name. Please try again.'
+      error.value = t('profileModal.errorSaveFailed')
     }
   } catch (e) {
-    error.value = 'An unexpected error occurred.'
+    error.value = t('profileModal.errorSaveFailed')
   } finally {
     submitting.value = false
   }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { Calendar, ChevronDown, Clock3, Copy, Loader2, MapPin, Plus, RefreshCcw, Users as UsersIcon, X } from 'lucide-vue-next';
+import { Calendar, ChevronDown, Clock3, Copy, Feather, Grid2x2, Loader2, MapPin, Plus, RefreshCcw, Trophy, Users as UsersIcon, X } from 'lucide-vue-next';
+import { SKILL_LEVEL_OPTIONS } from '~/types/session';
 
 definePageMeta({
   layout: 'admin',
@@ -10,6 +11,7 @@ definePageMeta({
 const { db } = useFirebase();
 const { isAdmin, adminUser } = useAdminAccess();
 const confirm = useUIConfirm();
+const { t } = useI18n();
 const sessionsRef = collection(db, 'sessions');
 const sessions = ref<any[]>([]);
 const loading = ref(true);
@@ -24,6 +26,10 @@ const newSession = ref({
   date: new Date().toISOString().split('T')[0],
   time: '19:00',
   location: 'Sân cầu lông Quang Sport',
+  maxPlayers: 8,
+  courtNumber: '',
+  shuttlecockType: '',
+  level: '',
 });
 const timeOptions = Array.from({ length: 24 * 12 }, (_, index) => {
   const hours = `${Math.floor(index / 12)}`.padStart(2, '0');
@@ -59,7 +65,7 @@ onMounted(() => {
     },
     (err) => {
       console.error('Firestore Error:', err);
-      error.value = 'Failed to fetch sessions.';
+      error.value = t('admin.fetchError');
       loading.value = false;
     },
   );
@@ -70,12 +76,17 @@ onMounted(() => {
 const createSession = async () => {
   adding.value = true;
   try {
+    const sessionPayload = {
+      ...newSession.value,
+      maxPlayers: Number(newSession.value.maxPlayers) || 8,
+    };
+
     if (isEditing.value && editingSessionId.value) {
       const docRef = doc(db, 'sessions', editingSessionId.value);
-      await updateDoc(docRef, { ...newSession.value });
+      await updateDoc(docRef, sessionPayload);
     } else {
       await addDoc(sessionsRef, {
-        ...newSession.value,
+        ...sessionPayload,
         status: 'open',
         financials: {
           courtCost: 0,
@@ -104,6 +115,10 @@ const resetForm = () => {
     date: new Date().toISOString().split('T')[0],
     time: '19:00',
     location: 'Sân cầu lông Quang Sport',
+    maxPlayers: 8,
+    courtNumber: '',
+    shuttlecockType: '',
+    level: '',
   };
 };
 
@@ -119,6 +134,10 @@ const openEditModal = (session: any) => {
     date: session.date,
     time: session.time,
     location: session.location,
+    maxPlayers: session.maxPlayers || 8,
+    courtNumber: session.courtNumber || '',
+    shuttlecockType: session.shuttlecockType || '',
+    level: session.level || '',
   };
   showCreateForm.value = true;
 };
@@ -137,12 +156,23 @@ const toggleStatus = async (session: any) => {
     }
   };
 
+  if (session.status === 'completed') {
+    confirm.require({
+      message: t('admin.reopenConfirmMessage', { status: nextStatus }),
+      header: t('admin.reopenConfirmHeader'),
+      rejectLabel: t('admin.cancel'),
+      acceptLabel: t('admin.reopen'),
+      accept: updateStatus,
+    });
+    return;
+  }
+
   if (nextStatus === 'completed') {
     confirm.require({
-      message: 'Mark this session as completed?',
-      header: 'Complete Session',
-      rejectLabel: 'Cancel',
-      acceptLabel: 'Complete',
+      message: t('admin.completeConfirmMessage'),
+      header: t('admin.completeConfirmHeader'),
+      rejectLabel: t('admin.cancel'),
+      acceptLabel: t('admin.complete'),
       accept: updateStatus,
     });
     return;
@@ -157,11 +187,11 @@ const deleteSession = async (session: any) => {
   }
 
   confirm.require({
-    message: `Delete the session on ${session.date} at ${session.time}? This removes it from the admin and public session lists.`,
-    header: 'Delete Session',
+    message: t('admin.deleteConfirmMsg', { date: formatDisplayDate(session.date), time: session.time }),
+    header: t('admin.deleteConfirmTitle'),
     severity: 'danger',
-    rejectLabel: 'Cancel',
-    acceptLabel: 'Delete',
+    rejectLabel: t('admin.cancel'),
+    acceptLabel: t('admin.delete'),
     accept: async () => {
       deletingSessionId.value = session.id;
 
@@ -169,7 +199,7 @@ const deleteSession = async (session: any) => {
         await deleteDoc(doc(db, 'sessions', session.id));
       } catch (e) {
         console.error('Error deleting session:', e);
-        error.value = 'Failed to delete session.';
+        error.value = t('admin.deleteError');
       } finally {
         deletingSessionId.value = null;
       }
@@ -200,15 +230,15 @@ const getStatusColor = (status: string) => {
   <div class="space-y-8 pb-16 md:flex md:h-screen md:flex-col md:gap-8 md:space-y-0 md:overflow-hidden md:pb-0">
     <section class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <div>
-        <p class="section-kicker">Admin</p>
-        <h1 class="mt-2 text-3xl font-black tracking-tight">Sessions</h1>
+        <p class="section-kicker">{{ t('admin.kicker') }}</p>
+        <h1 class="mt-2 text-3xl font-black tracking-tight">{{ t('admin.sessionsTitle') }}</h1>
       </div>
 
       <UIGlassButton @click="openCreateModal">
         <template #icon-left>
           <Plus :size="18" />
         </template>
-        New Session
+        {{ t('admin.newSessionBtn') }}
       </UIGlassButton>
     </section>
 
@@ -246,7 +276,7 @@ const getStatusColor = (status: string) => {
 
                   <div class="space-y-1">
                     <div class="flex items-center gap-2">
-                      <h3 class="text-2xl font-black tracking-tight text-brand-ink">{{ session.date }}</h3>
+                      <h3 class="text-2xl font-black tracking-tight text-brand-ink">{{ formatDisplayDate(session.date) }}</h3>
                       <span
                         :class="getStatusColor(session.status)"
                         class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider"
@@ -265,6 +295,37 @@ const getStatusColor = (status: string) => {
                         <MapPin :size="14" class="opacity-70" />
                         <span class="line-clamp-1 truncate max-w-[150px]">{{ session.location }}</span>
                       </div>
+                      <div class="hidden h-1 w-1 rounded-full bg-brand-line md:block" />
+                      <div class="flex items-center gap-1.5">
+                        <UsersIcon :size="14" class="opacity-70" />
+                        <span>{{ t('admin.maxPlayersShort', { count: session.maxPlayers || 8 }) }}</span>
+                      </div>
+                    </div>
+                    <div
+                      v-if="session.courtNumber || session.shuttlecockType || session.level"
+                      class="flex flex-wrap items-center gap-2 pt-1"
+                    >
+                      <span
+                        v-if="session.courtNumber"
+                        class="inline-flex items-center gap-1 rounded-lg border border-emerald-200/60 bg-emerald-50/70 px-2 py-0.5 text-[11px] font-bold text-emerald-800"
+                      >
+                        <Grid2x2 :size="11" class="text-brand-court" />
+                        {{ session.courtNumber }}
+                      </span>
+                      <span
+                        v-if="session.shuttlecockType"
+                        class="inline-flex items-center gap-1 rounded-lg border border-amber-200/60 bg-amber-50/70 px-2 py-0.5 text-[11px] font-bold text-amber-800"
+                      >
+                        <Feather :size="11" class="text-amber-600" />
+                        {{ session.shuttlecockType }}
+                      </span>
+                      <span
+                        v-if="session.level"
+                        class="inline-flex items-center gap-1 rounded-lg border border-sky-200/60 bg-sky-50/70 px-2 py-0.5 text-[11px] font-bold text-sky-800"
+                      >
+                        <Trophy :size="11" class="text-sky-600" />
+                        {{ session.level }}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -273,7 +334,7 @@ const getStatusColor = (status: string) => {
                   type="button"
                   class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-brand-slate opacity-0 transition-all hover:bg-red-50 hover:text-red-600 group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-60"
                   :disabled="deletingSessionId === session.id"
-                  aria-label="Delete session"
+                  :aria-label="t('admin.deleteSessionLabel')"
                   @click="deleteSession(session)"
                 >
                   <Loader2 v-if="deletingSessionId === session.id" class="animate-spin" :size="14" />
@@ -289,14 +350,14 @@ const getStatusColor = (status: string) => {
                 <NuxtLink :to="`/admin/session/${session.id}`" class="flex-1">
                   <UIGlassButton class="!w-full !px-4 !py-2.5 !text-sm">
                     <template #icon-left><UsersIcon :size="14" /></template>
-                    Open Details
+                    {{ t('admin.openDetails') }}
                   </UIGlassButton>
                 </NuxtLink>
 
                 <div class="flex items-center gap-2">
                   <UIGlassButton
                     variant="secondary"
-                    title="Copy Link"
+                    :title="t('admin.copyLink')"
                     class="!h-10 !w-10 !p-0 !min-w-[40px]"
                     @click="copySessionLink(session.id)"
                   >
@@ -305,7 +366,7 @@ const getStatusColor = (status: string) => {
 
                   <UIGlassButton
                     variant="ghost"
-                    title="Edit Session"
+                    :title="t('admin.editSession')"
                     class="!h-10 !w-10 !p-0 !min-w-[40px]"
                     @click="openEditModal(session)"
                   >
@@ -314,7 +375,7 @@ const getStatusColor = (status: string) => {
 
                   <UIGlassButton
                     variant="ghost"
-                    title="Toggle Status"
+                    :title="t('admin.toggleStatus')"
                     class="!h-10 !w-10 !p-0 !min-w-[40px]"
                     @click="toggleStatus(session)"
                   >
@@ -332,16 +393,16 @@ const getStatusColor = (status: string) => {
   <UIGlassModal v-model="showCreateForm">
     <template #header>
       <div class="flex flex-col gap-2 text-center">
-        <p class="text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">Session Setup</p>
+        <p class="text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">{{ t('admin.setupKicker') }}</p>
         <div>
           <h2 class="text-2xl font-black tracking-tight text-brand-ink">
-            {{ isEditing ? 'Edit Session' : 'Create a New Session' }}
+            {{ isEditing ? t('admin.editModalTitle') : t('admin.createModalTitle') }}
           </h2>
           <p class="mt-1 text-sm font-medium text-brand-slate">
             {{
               isEditing
-                ? 'Update the session details below.'
-                : 'Add the date, time, and location to open attendance for players.'
+                ? t('admin.editModalDesc')
+                : t('admin.createModalDesc')
             }}
           </p>
         </div>
@@ -350,7 +411,7 @@ const getStatusColor = (status: string) => {
 
     <form @submit.prevent="createSession" class="flex flex-col gap-5">
       <div class="flex w-full flex-col gap-2">
-        <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate"> Date </label>
+        <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate"> {{ t('admin.dateLabel') }} </label>
         <div class="group relative" @click="openDatePicker">
           <div class="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate transition-colors group-focus-within:text-brand-court">
             <Calendar :size="18" />
@@ -368,7 +429,7 @@ const getStatusColor = (status: string) => {
         </div>
       </div>
       <div class="flex w-full flex-col gap-2">
-        <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate"> Time </label>
+        <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate"> {{ t('admin.timeLabel') }} </label>
         <div class="group relative">
           <div class="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate transition-colors group-focus-within:text-brand-court">
             <Clock3 :size="18" />
@@ -387,14 +448,75 @@ const getStatusColor = (status: string) => {
           </select>
         </div>
       </div>
-      <UIGlassInput v-model="newSession.location" type="text" label="Location" placeholder="Badminton Court A" required>
+      <UIGlassInput
+        v-model="newSession.location"
+        type="text"
+        :label="t('admin.locationLabel')"
+        :placeholder="t('admin.locationPlaceholder')"
+        required
+      >
         <template #icon><MapPin :size="18" /></template>
       </UIGlassInput>
+
+      <UIGlassInput
+        v-model.number="newSession.maxPlayers"
+        type="number"
+        min="2"
+        max="50"
+        :label="t('admin.capacityLabel')"
+        placeholder="8"
+        required
+      >
+        <template #icon><UsersIcon :size="18" /></template>
+      </UIGlassInput>
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <UIGlassInput
+          v-model="newSession.courtNumber"
+          type="text"
+          :label="t('admin.courtNumberLabel')"
+          :placeholder="t('admin.courtNumberPlaceholder')"
+        >
+          <template #icon><Grid2x2 :size="18" /></template>
+        </UIGlassInput>
+
+        <UIGlassInput
+          v-model="newSession.shuttlecockType"
+          type="text"
+          :label="t('admin.shuttlecockLabel')"
+          :placeholder="t('admin.shuttlecockPlaceholder')"
+        >
+          <template #icon><Feather :size="18" /></template>
+        </UIGlassInput>
+      </div>
+
+      <div class="flex w-full flex-col gap-2">
+        <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">
+          {{ t('admin.skillLevelLabel') }}
+        </label>
+        <div class="group relative">
+          <div class="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate transition-colors group-focus-within:text-brand-court">
+            <Trophy :size="18" />
+          </div>
+          <div class="pointer-events-none absolute right-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate/80 transition-colors group-focus-within:text-brand-court">
+            <ChevronDown :size="18" />
+          </div>
+          <select
+            v-model="newSession.level"
+            class="w-full appearance-none rounded-2xl border border-brand-line bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,246,240,0.96))] py-4 pl-12 pr-12 text-base font-bold tracking-[0.02em] text-brand-ink shadow-[0_18px_40px_-32px_rgba(35,55,34,0.34)] transition-all outline-none hover:border-brand-court/30 hover:shadow-[0_20px_42px_-30px_rgba(56,126,88,0.26)] focus:border-brand-court focus:ring-4 focus:ring-brand-court/10"
+          >
+            <option value="">{{ t('admin.allSkillLevels') }}</option>
+            <option v-for="lvl in SKILL_LEVEL_OPTIONS" :key="lvl" :value="lvl">
+              {{ lvl }}
+            </option>
+          </select>
+        </div>
+      </div>
 
       <div class="flex justify-end md:col-span-3">
         <UIGlassButton type="submit" :disabled="adding">
           <Loader2 v-if="adding" class="animate-spin" :size="18" />
-          <span v-else>{{ isEditing ? 'Save Changes' : 'Create' }}</span>
+          <span v-else>{{ isEditing ? t('admin.saveChangesBtn') : t('admin.createBtn') }}</span>
         </UIGlassButton>
       </div>
     </form>

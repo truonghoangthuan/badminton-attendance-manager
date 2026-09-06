@@ -3,6 +3,7 @@ import { signOut } from 'firebase/auth'
 import { ArrowLeft, CircleAlert, Info, LayoutDashboard, LogOut, Menu, ShieldCheck, X } from 'lucide-vue-next'
 
 const { auth } = useFirebase()
+const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 
@@ -34,14 +35,17 @@ const handleLogout = async () => {
         </div>
         <span class="text-lg font-black tracking-tighter text-brand-ink">Admin<span class="text-brand-court">Panel</span></span>
       </div>
-      <UIGlassButton 
-        variant="ghost" 
-        class="!p-2"
-        @click="isSidebarOpen = !isSidebarOpen"
-      >
-        <Menu v-if="!isSidebarOpen" :size="24" class="text-brand-ink" />
-        <X v-else :size="24" class="text-brand-ink" />
-      </UIGlassButton>
+      <div class="flex items-center gap-2">
+        <UILanguageSwitcher />
+        <UIGlassButton 
+          variant="ghost" 
+          class="!p-2"
+          @click="isSidebarOpen = !isSidebarOpen"
+        >
+          <Menu v-if="!isSidebarOpen" :size="24" class="text-brand-ink" />
+          <X v-else :size="24" class="text-brand-ink" />
+        </UIGlassButton>
+      </div>
     </header>
 
     <div 
@@ -55,20 +59,23 @@ const handleLogout = async () => {
       :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
     >
       <UIGlassCard class="flex h-full flex-col gap-8 bg-white md:!p-8">
-        <div class="flex items-center gap-3 px-1">
-          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-court">
-            <ShieldCheck class="text-white" :size="24" />
+        <div class="flex items-center justify-between gap-3 px-1">
+          <div class="flex items-center gap-3">
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-court shrink-0">
+              <ShieldCheck class="text-white" :size="24" />
+            </div>
+            <div class="flex flex-col">
+              <span class="text-xl font-black tracking-tighter text-brand-ink">Admin<span class="text-brand-court">Panel</span></span>
+              <span class="text-[10px] font-black uppercase tracking-[0.2em] text-brand-slate">{{ t('admin.panelSubtitle') }}</span>
+            </div>
           </div>
-          <div class="flex flex-col">
-            <span class="text-xl font-black tracking-tighter text-brand-ink">Admin<span class="text-brand-court">Panel</span></span>
-            <span class="text-[10px] font-black uppercase tracking-[0.2em] text-brand-slate">Management Console</span>
-          </div>
+          <UILanguageSwitcher />
         </div>
 
         <div class="rounded-[24px] border border-brand-line bg-brand-sand p-4">
-          <p class="section-kicker">Workflow</p>
+          <p class="section-kicker">{{ t('admin.workflowTitle') }}</p>
           <p class="mt-2 text-sm font-medium leading-6 text-brand-slate">
-            Review upcoming sessions, then drill into a single match to manage attendance and finance.
+            {{ t('admin.workflowDesc') }}
           </p>
         </div>
 
@@ -80,7 +87,7 @@ const handleLogout = async () => {
               :class="{ '!border-brand-court !bg-brand-court !text-white': $route.path === '/admin' }"
             >
               <template #icon-left><LayoutDashboard :size="20" /></template>
-              Dashboard
+              {{ t('nav.dashboard') }}
             </UIGlassButton>
           </NuxtLink>
         </nav>
@@ -89,7 +96,7 @@ const handleLogout = async () => {
           <NuxtLink to="/">
              <UIGlassButton variant="ghost" class="w-full !justify-start">
                 <template #icon-left><ArrowLeft :size="18" /></template>
-                Back to Site
+                {{ t('nav.backToSite') }}
              </UIGlassButton>
           </NuxtLink>
           <UIGlassButton 
@@ -98,7 +105,7 @@ const handleLogout = async () => {
             class="w-full !justify-start !text-red-500 hover:!border-red-200 hover:!bg-red-50 hover:!text-red-600"
           >
             <template #icon-left><LogOut :size="20" /></template>
-            Logout session
+            {{ t('nav.logout') }}
           </UIGlassButton>
         </div>
       </UIGlassCard>

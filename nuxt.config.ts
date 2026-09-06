@@ -6,6 +6,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
+      title: 'Gravity Badminton',
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }
       ]
