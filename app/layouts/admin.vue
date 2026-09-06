@@ -95,7 +95,7 @@ const handleLogout = async () => {
       </div>
     </div>
 
-    <main class="relative z-10 w-full flex-1 pt-32 pb-12 px-4 md:px-6 max-w-6xl mx-auto">
+    <main class="relative z-10 w-full flex-1 pt-32 pb-12 px-4 md:px-6 max-w-7xl mx-auto">
       <slot />
     </main>
   </div>
