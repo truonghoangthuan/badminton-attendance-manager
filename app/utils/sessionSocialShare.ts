@@ -1,10 +1,25 @@
+export const normalizeInviteUrl = (rawUrl?: string): string => {
+  if (!rawUrl) return '';
+  try {
+    const parsed = new URL(rawUrl);
+    return `${parsed.origin}/`;
+  } catch {
+    if (rawUrl.startsWith('/')) {
+      return '/';
+    }
+    const clean = rawUrl.replace(/\/session(\/[^/?#]*)?([?#].*)?$/, '/');
+    return clean.endsWith('/') ? clean : `${clean}/`;
+  }
+};
+
 export const generateSessionInviteText = (
   session: any,
   attendancesOrUrl?: any[] | string,
   sessionUrl?: string,
 ): string => {
   if (!session) return '';
-  const url = typeof attendancesOrUrl === 'string' ? attendancesOrUrl : (sessionUrl || '');
+  const rawUrl = typeof attendancesOrUrl === 'string' ? attendancesOrUrl : (sessionUrl || '');
+  const url = normalizeInviteUrl(rawUrl);
 
   let text = `🏸 KÈO CẦU LÔNG - GRAVITY BADMINTON\n`;
   text += `📅 Ngày: ${session.date}\n`;

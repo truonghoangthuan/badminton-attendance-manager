@@ -1,6 +1,67 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { generateSessionSettlementText } from '../app/utils/sessionSocialShare.ts';
+import {
+  generateSessionInviteText,
+  generateSessionSettlementText,
+  normalizeInviteUrl,
+} from '../app/utils/sessionSocialShare.ts';
+
+test('normalizeInviteUrl strips session id from full url', () => {
+  assert.equal(normalizeInviteUrl('http://localhost:3002/session/cK856h8qL7'), 'http://localhost:3002/');
+  assert.equal(normalizeInviteUrl('http://localhost:3002/'), 'http://localhost:3002/');
+  assert.equal(normalizeInviteUrl('http://localhost:3002'), 'http://localhost:3002/');
+  assert.equal(normalizeInviteUrl('https://example.com/session/123?tab=invite'), 'https://example.com/');
+  assert.equal(normalizeInviteUrl('/session/123'), '/');
+  assert.equal(normalizeInviteUrl(''), '');
+  assert.equal(normalizeInviteUrl(undefined), '');
+});
+
+test('generateSessionInviteText produces simple invite text with clean root url', () => {
+  const session = {
+    date: '2026-08-28',
+    time: '19:00',
+    location: 'Sân cầu lông Quang Sport',
+  };
+
+  const expected = `🏸 KÈO CẦU LÔNG - GRAVITY BADMINTON
+📅 Ngày: 2026-08-28
+⏰ Giờ: 19:00
+📍 Địa điểm: Sân cầu lông Quang Sport
+
+👉 Bấm vào link để xác nhận tham gia:
+http://localhost:3002/`;
+
+  const resultWithSessionUrl = generateSessionInviteText(
+    session,
+    [],
+    'http://localhost:3002/session/cK856h8qL7'
+  );
+  assert.equal(resultWithSessionUrl, expected);
+
+  const resultWithRootUrl = generateSessionInviteText(
+    session,
+    'http://localhost:3002/'
+  );
+  assert.equal(resultWithRootUrl, expected);
+});
+
+test('generateSessionInviteText includes optional court, shuttle, and level details if present', () => {
+  const session = {
+    date: '2026-08-28',
+    time: '19:00',
+    location: 'Sân cầu lông Quang Sport',
+    courtNumber: 'Sân 1',
+    shuttlecockType: 'Vina Star',
+    level: 'Yếu - Trung bình',
+  };
+
+  const result = generateSessionInviteText(session, 'http://localhost:3002/session/123');
+  assert.ok(result.includes('🏟️ Sân: Sân 1'));
+  assert.ok(result.includes('🏸 Cầu: Vina Star'));
+  assert.ok(result.includes('🎯 Trình độ: Yếu - Trung bình'));
+  assert.ok(result.endsWith('👉 Bấm vào link để xác nhận tham gia:\nhttp://localhost:3002/'));
+});
+
 
 test('generateSessionSettlementText produces exact 6-line simplified settlement text', () => {
   const session = {

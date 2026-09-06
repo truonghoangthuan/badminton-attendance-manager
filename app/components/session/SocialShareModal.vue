@@ -42,6 +42,13 @@ const sessionUrl = computed(() => {
   return `/session/${props.session?.id}`;
 });
 
+const inviteUrl = computed(() => {
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/`;
+  }
+  return '/';
+});
+
 const vietQRUrl = computed(() => {
   if (props.session?.paymentQR) {
     return props.session.paymentQR;
@@ -68,7 +75,7 @@ watch(vietQRUrl, () => {
 });
 
 const inviteText = computed(() => {
-  return generateSessionInviteText(props.session, props.attendances || [], sessionUrl.value);
+  return generateSessionInviteText(props.session, props.attendances || [], inviteUrl.value);
 });
 
 const settlementText = computed(() => {
@@ -174,7 +181,7 @@ const handleNativeShare = async () => {
     await navigator.share({
       title: `Badminton - ${props.session?.date || ''}`,
       text: currentText.value,
-      url: sessionUrl.value,
+      url: activeTab.value === 'invite' ? inviteUrl.value : sessionUrl.value,
     });
   } catch (e) {
     // User cancelled or share failed
