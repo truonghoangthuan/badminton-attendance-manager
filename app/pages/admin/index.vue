@@ -216,7 +216,7 @@ const copySessionLink = (id: string) => {
 </script>
 
 <template>
-  <div class="space-y-8 pb-16 md:flex md:h-screen md:flex-col md:gap-8 md:space-y-0 md:overflow-hidden md:pb-0">
+  <div class="space-y-8 pb-16 md:space-y-8 md:pb-8">
     <section class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <div>
         <p class="section-kicker">{{ t('admin.kicker') }}</p>
@@ -231,20 +231,20 @@ const copySessionLink = (id: string) => {
       </UIGlassButton>
     </section>
 
-    <div class="md:min-h-0 md:flex-1 md:overflow-hidden">
-      <section v-if="loading" class="space-y-3 md:h-full md:overflow-y-auto md:pr-4">
+    <div class="md:min-h-0 md:flex-1">
+      <section v-if="loading" class="space-y-3">
         <UIGlassCard v-for="i in 5" :key="i" class="animate-pulse !p-3">
           <div class="h-12 w-full rounded bg-slate-100" />
         </UIGlassCard>
       </section>
 
-      <div v-else-if="error" class="md:h-full md:overflow-y-auto md:pr-4">
+      <div v-else-if="error">
         <UIGlassCard class="border-red-200 bg-red-50 text-red-700">
           {{ error }}
         </UIGlassCard>
       </div>
 
-      <section v-else class="md:h-full md:overflow-y-auto md:pr-4">
+      <section v-else>
         <div class="flex flex-col gap-3">
           <UIGlassCard
             v-for="session in sessions"

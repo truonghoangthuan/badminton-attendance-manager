@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { signOut } from 'firebase/auth'
-import { ArrowLeft, CircleAlert, Info, LayoutDashboard, LogOut, Menu, ShieldCheck, X } from 'lucide-vue-next'
+import { ArrowLeft, LayoutDashboard, LogOut, Menu, ShieldCheck, X } from 'lucide-vue-next'
 
 const { auth } = useFirebase()
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 
-const isSidebarOpen = ref(false)
+const isMobileMenuOpen = ref(false)
 
-// Close sidebar on navigation (mobile)
+// Close menu on navigation (mobile)
 watch(() => route.path, () => {
-  if (isSidebarOpen.value) isSidebarOpen.value = false
+  if (isMobileMenuOpen.value) isMobileMenuOpen.value = false
 })
 
 const handleLogout = async () => {
@@ -25,93 +25,115 @@ const handleLogout = async () => {
 </script>
 
 <template>
-  <div class="relative flex min-h-screen flex-col md:flex-row bg-slate-50">
-
-    <header class="sticky top-0 z-40 flex w-full items-center justify-between border-b border-slate-200 bg-white/95 p-4 backdrop-blur md:hidden">
-      <div class="flex items-center gap-2">
-        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-court">
-          <ShieldCheck class="text-white" :size="16" />
-        </div>
-        <span class="text-lg font-black tracking-tighter text-brand-ink">Admin<span class="text-brand-court">Panel</span></span>
-      </div>
-      <div class="flex items-center gap-2">
-        <UILanguageSwitcher />
-        <UIGlassButton 
-          variant="ghost" 
-          class="!p-2"
-          @click="isSidebarOpen = !isSidebarOpen"
-        >
-          <Menu v-if="!isSidebarOpen" :size="24" class="text-brand-ink" />
-          <X v-else :size="24" class="text-brand-ink" />
-        </UIGlassButton>
-      </div>
-    </header>
-
-    <div 
-      v-if="isSidebarOpen" 
-      class="fixed inset-0 z-30 animate-fade-in bg-brand-ink/20 backdrop-blur-sm md:hidden"
-      @click="isSidebarOpen = false"
-    />
-    
-    <aside 
-      class="fixed inset-y-0 left-0 z-40 h-full w-72 p-4 transition-transform duration-500 ease-in-out md:sticky md:top-0 md:h-screen md:w-20 md:p-3 md:translate-x-0"
-      :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
-    >
-      <UIGlassCard class="flex h-full flex-col gap-6 !p-4 md:!p-3 md:items-center">
-        <div class="flex items-center justify-between gap-3 px-1 md:justify-center md:px-0 md:flex-col md:gap-6">
-          <div class="flex items-center gap-3 md:gap-0">
-            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-ink shrink-0 md:h-10 md:w-10">
-              <ShieldCheck class="text-emerald-400" :size="20" />
-            </div>
-            <div class="flex flex-col md:hidden">
-              <span class="text-xl font-bold tracking-tight text-brand-ink">Admin<span class="text-emerald-500">Panel</span></span>
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">{{ t('admin.panelSubtitle') }}</span>
-            </div>
+  <div class="relative flex min-h-screen flex-col bg-slate-50">
+    <!-- Direction 2 Header -->
+    <header class="sticky top-0 z-40 w-full bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,246,240,0.96))] backdrop-blur-md border-b border-slate-200/80 shadow-sm px-4 py-3 md:px-6">
+      <div class="mx-auto flex items-center justify-between">
+        
+        <!-- Logo Left Side -->
+        <div class="flex items-center gap-4">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-ink">
+            <ShieldCheck class="text-emerald-400" :size="20" />
           </div>
-          <UILanguageSwitcher class="md:scale-90" />
+          <div class="flex flex-col">
+            <span class="text-lg font-bold leading-none tracking-tight text-brand-ink">
+              Admin<span class="text-emerald-500">Panel</span>
+            </span>
+            <span class="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              {{ t('admin.panelSubtitle') || 'Management' }}
+            </span>
+          </div>
         </div>
 
-        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 md:hidden">
-          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">{{ t('admin.workflowTitle') }}</p>
-          <p class="mt-2 text-sm font-medium leading-5 text-slate-600">
-            {{ t('admin.workflowDesc') }}
-          </p>
-        </div>
-
-        <nav class="grow space-y-2 md:w-full">
-          <NuxtLink to="/admin" :title="t('nav.dashboard')">
-            <UIGlassButton 
-              variant="secondary" 
-              class="w-full !justify-start md:!justify-center !px-4 !py-3 md:!px-0 transition-all"
-              :class="{ '!border-emerald-600 !bg-emerald-600 !text-white hover:!bg-emerald-700': $route.path === '/admin' }"
-            >
-              <template #icon-left><LayoutDashboard :size="20" /></template>
-              <span class="md:hidden">{{ t('nav.dashboard') }}</span>
-            </UIGlassButton>
+        <!-- Desktop Nav Center -->
+        <nav class="hidden md:flex items-center gap-2 rounded-lg border border-slate-200/50 bg-slate-100/50 p-1">
+          <NuxtLink 
+            to="/admin" 
+            class="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors"
+            :class="$route.path === '/admin' ? 'bg-white font-bold text-brand-ink shadow-sm border border-slate-200/50' : 'text-slate-500 hover:bg-slate-200/50 hover:text-brand-ink'"
+          >
+            <LayoutDashboard :size="16" />
+            {{ t('nav.dashboard') }}
+          </NuxtLink>
+          <NuxtLink 
+            to="/" 
+            class="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-200/50 hover:text-brand-ink"
+          >
+            <ArrowLeft :size="16" />
+            {{ t('nav.backToSite') }}
           </NuxtLink>
         </nav>
 
-        <div class="flex w-full flex-col gap-2 border-t border-slate-200 pt-6">
+        <!-- Desktop Actions Right -->
+        <div class="hidden md:flex items-center gap-2">
+          <UILanguageSwitcher class="scale-90" />
+          <button 
+            @click="handleLogout"
+            class="flex items-center gap-2 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-red-500 transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+            :title="t('nav.logout')"
+          >
+            <LogOut :size="16" />
+            <span class="hidden xl:inline">{{ t('nav.logout') }}</span>
+          </button>
+        </div>
+
+        <!-- Mobile Menu Toggle -->
+        <div class="flex items-center gap-2 md:hidden">
+          <UIGlassButton 
+            variant="ghost" 
+            class="!p-2"
+            @click="isMobileMenuOpen = !isMobileMenuOpen"
+          >
+            <Menu v-if="!isMobileMenuOpen" :size="24" class="text-brand-ink" />
+            <X v-else :size="24" class="text-brand-ink" />
+          </UIGlassButton>
+        </div>
+      </div>
+    </header>
+
+    <!-- Mobile Dropdown -->
+    <div 
+      v-if="isMobileMenuOpen" 
+      class="fixed inset-0 top-[73px] z-30 animate-fade-in bg-slate-50/95 p-4 backdrop-blur-md md:hidden"
+    >
+      <div class="flex flex-col gap-4">
+        <nav class="flex flex-col gap-2">
+          <NuxtLink to="/admin" :title="t('nav.dashboard')">
+            <UIGlassButton 
+              variant="secondary" 
+              class="w-full !justify-start !px-4 !py-3 transition-all"
+              :class="{ '!border-emerald-600 !bg-emerald-600 !text-white hover:!bg-emerald-700': $route.path === '/admin' }"
+            >
+              <template #icon-left><LayoutDashboard :size="20" /></template>
+              <span>{{ t('nav.dashboard') }}</span>
+            </UIGlassButton>
+          </NuxtLink>
           <NuxtLink to="/" :title="t('nav.backToSite')">
-             <UIGlassButton variant="ghost" class="w-full !justify-start md:!justify-center md:!px-0">
+             <UIGlassButton variant="ghost" class="w-full !justify-start">
                 <template #icon-left><ArrowLeft :size="18" /></template>
-                <span class="md:hidden">{{ t('nav.backToSite') }}</span>
+                <span>{{ t('nav.backToSite') }}</span>
              </UIGlassButton>
           </NuxtLink>
+        </nav>
+        
+        <div class="flex w-full flex-col gap-2 border-t border-slate-200 pt-4">
+          <div class="flex items-center justify-between px-2">
+            <span class="text-sm font-bold text-slate-500">Language</span>
+            <UILanguageSwitcher />
+          </div>
           <UIGlassButton 
             variant="ghost" 
             @click="handleLogout"
-            :title="t('nav.logout')"
-            class="w-full !justify-start md:!justify-center md:!px-0 !text-red-500 hover:!border-red-200 hover:!bg-red-50 hover:!text-red-600"
+            class="mt-2 w-full !justify-start !text-red-500 hover:!border-red-200 hover:!bg-red-50 hover:!text-red-600"
           >
             <template #icon-left><LogOut :size="20" /></template>
-            <span class="md:hidden">{{ t('nav.logout') }}</span>
+            <span>{{ t('nav.logout') }}</span>
           </UIGlassButton>
         </div>
-      </UIGlassCard>
-    </aside>
+      </div>
+    </div>
 
-    <main class="relative z-10 w-full flex-1 p-6 md:p-10">
+    <main class="relative z-10 w-full flex-1 p-4 md:p-8">
       <slot />
     </main>
   </div>
@@ -126,6 +148,6 @@ const handleLogout = async () => {
   to { opacity: 1; }
 }
 .animate-fade-in {
-  animation: fade-in 0.3s ease-out forwards;
+  animation: fade-in 0.2s ease-out forwards;
 }
 </style>
