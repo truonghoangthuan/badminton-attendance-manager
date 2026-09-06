@@ -1,10 +1,11 @@
 # SDD Progress Ledger
 
-Plan: docs/superpowers/plans/2026-09-06-settlement-share-vietqr.md
+Plan: docs/superpowers/plans/2026-09-06-date-format-refactor.md
 Branch: feat/enhance-app-features
 
-## Settlement Text Simplification & VietQR Image Sharing Tasks
-- [x] Task 1: Unit Tests & Settlement Text Simplification (`sessionSocialShare.ts`) (commit dce2f93)
-- [x] Task 2: Internationalization Keys (`en.ts` and `vi.ts`) (commit 3aa36d6)
-- [x] Task 3: VietQR Card Preview, 1-Tap Copy & Native File Sharing (`SocialShareModal.vue`) (commit e0b17c0)
-- [x] Task 4: End-to-End Build & Automated Test Suite Verification (Verified tests & production build)
+## Date Format Refactor (DD/MM/YYYY) Tasks
+- [x] Task 1: Centralized Date Utility (`app/utils/dateFormat.ts`) (commit 8b32c28)
+- [x] Task 2: Refactor Public UI Pages (`index.vue`, `session/[id].vue`, `leaderboard.vue`) (commit 9a44ead)
+- [x] Task 3: Refactor Admin UI Pages (`admin/index.vue`, `admin/session/[id].vue`) (commit 556ff51)
+- [x] Task 4: Refactor Social Sharing and CSV Export Utilities (`sessionSocialShare.ts`, `SocialShareModal.vue`, `sessionExport.ts`) (commit effd718)
+- [x] Task 5: End-to-End Build & Regression Verification (Verified 13/13 tests passing & production build clean)
