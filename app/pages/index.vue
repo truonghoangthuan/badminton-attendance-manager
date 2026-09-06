@@ -105,7 +105,7 @@ const getStatusStyles = (status: string) => {
           <div class="mx-auto rounded-[28px] border border-brand-line bg-brand-sand p-6 md:w-1/2">
             <div class="flex items-start justify-between gap-3">
               <div>
-                <p class="text-3xl font-black tracking-tight">{{ featuredSession.date }}</p>
+                <p class="text-3xl font-black tracking-tight">{{ formatDisplayDate(featuredSession.date) }}</p>
                 <p class="mt-1 text-sm font-medium text-brand-slate">{{ t('home.nextSession') }}</p>
               </div>
               <span
@@ -214,7 +214,7 @@ const getStatusStyles = (status: string) => {
                   <Calendar :size="20" />
                 </div>
                 <div>
-                  <p class="text-xl font-black">{{ session.date }}</p>
+                  <p class="text-xl font-black">{{ formatDisplayDate(session.date) }}</p>
                   <p class="text-sm font-medium text-brand-slate">{{ session.time }}</p>
                 </div>
               </div>

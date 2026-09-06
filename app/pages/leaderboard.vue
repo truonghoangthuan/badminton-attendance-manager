@@ -378,7 +378,7 @@ const getPlayerBadge = (index: number) => {
                     <div>
                       <p class="font-black text-brand-ink text-sm sm:text-base">{{ player.name }}</p>
                       <p v-if="player.lastPlayedDate" class="text-[11px] text-brand-slate">
-                        {{ t('leaderboard.latestPlayed', { date: player.lastPlayedDate }) }}
+                        {{ t('leaderboard.latestPlayed', { date: formatDisplayDate(player.lastPlayedDate) }) }}
                       </p>
                     </div>
                   </div>

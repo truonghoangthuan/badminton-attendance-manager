@@ -287,7 +287,7 @@ const getGuestLabel = (guestCount: number) => {
           <div class="flex items-start justify-between gap-3">
             <div>
               <p class="section-kicker">{{ t('sessionDetail.sectionKicker') }}</p>
-              <h1 class="mt-2 text-3xl font-black tracking-tight">{{ session.date }}</h1>
+              <h1 class="mt-2 text-3xl font-black tracking-tight">{{ formatDisplayDate(session.date) }}</h1>
             </div>
             <div class="flex items-center gap-2">
               <button
