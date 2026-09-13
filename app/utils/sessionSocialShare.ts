@@ -23,7 +23,7 @@ export const generateSessionInviteText = (
   const rawUrl = typeof attendancesOrUrl === 'string' ? attendancesOrUrl : (sessionUrl || '');
   const url = normalizeInviteUrl(rawUrl);
 
-  let text = `🏸 KÈO CẦU LÔNG - GRAVITY BADMINTON\n`;
+  let text = `🏸 CẦU LÔNG\n`;
   text += `📅 Ngày: ${formatDisplayDate(session.date)}\n`;
   text += `⏰ Giờ: ${session.time}\n`;
   text += `📍 Địa điểm: ${session.location}\n`;
@@ -61,7 +61,7 @@ export const generateSessionSettlementText = (
   const feePerPerson = financials?.calculatedFeePerPerson || 0;
   const courtNumberDisplay = session.courtNumber || 1;
 
-  let text = `🏸 TỔNG KẾT TIỀN SÂN - GRAVITY BADMINTON\n`;
+  let text = `🏸 TỔNG KẾT TIỀN SÂN\n`;
   text += `📅 Ngày: ${formatDisplayDate(session.date)} | 📍 ${session.location || ''}\n`;
   text += `🏟️ Số lượng sân: ${courtNumberDisplay}\n`;
   text += `🙌 Tổng số người: ${totalActualPlayers}\n`;
