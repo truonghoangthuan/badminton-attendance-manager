@@ -228,15 +228,15 @@ const copySessionLink = (id: string) => {
       </div>
     </header>
 
-    <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div v-for="i in 4" :key="i" class="h-64 rounded-xl bg-black/5 animate-pulse"></div>
+    <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div v-for="i in 6" :key="i" class="h-64 rounded-xl bg-black/5 animate-pulse"></div>
     </div>
 
     <div v-else-if="error" class="p-6 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 font-medium">
       {{ error }}
     </div>
 
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div v-for="session in sessions" :key="session.id" class="bg-white border border-[#E8E3DA] rounded-xl p-6 transition-all duration-200 relative hover:border-[#D5CFC4] hover:shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
         <!-- Status Badge -->
         <div class="absolute top-6 right-6 text-[11px] uppercase tracking-[0.05em] font-semibold py-1 px-2 rounded" 

@@ -34,7 +34,7 @@ const handleLogout = async () => {
 <template>
   <div class="relative flex min-h-screen flex-col items-center bg-[#F5F0E8] text-[#191919] font-['Inter',sans-serif]">
     <!-- Top Nav -->
-    <nav class="w-full max-w-[900px] flex items-center justify-between py-6 px-4 md:px-0 border-b border-[#E8E3DA] mb-12">
+    <nav class="w-full max-w-[1200px] flex items-center justify-between py-6 px-4 md:px-0 border-b border-[#E8E3DA] mb-12">
       <!-- Logo -->
       <NuxtLink to="/admin" class="font-['Newsreader',serif] text-[22px] font-medium text-[#191919] tracking-[-0.02em] no-underline">
         AdminPanel.
@@ -79,7 +79,7 @@ const handleLogout = async () => {
     </div>
 
     <!-- Main Content -->
-    <main class="w-full max-w-[900px] px-4 md:px-0 pb-16 flex-1">
+    <main class="w-full max-w-[1200px] px-4 md:px-0 pb-16 flex-1">
       <slot />
     </main>
   </div>
