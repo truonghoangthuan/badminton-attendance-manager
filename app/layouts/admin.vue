@@ -2,6 +2,14 @@
 import { signOut } from 'firebase/auth'
 import { ArrowLeft, LayoutDashboard, LogOut, Menu, ShieldCheck, X } from 'lucide-vue-next'
 
+useHead({
+  link: [
+    { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+    { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+    { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap' }
+  ]
+})
+
 const { auth } = useFirebase()
 const { t } = useI18n()
 const router = useRouter()
@@ -9,7 +17,6 @@ const route = useRoute()
 
 const isMobileMenuOpen = ref(false)
 
-// Close menu on navigation (mobile)
 watch(() => route.path, () => {
   if (isMobileMenuOpen.value) isMobileMenuOpen.value = false
 })
@@ -25,77 +32,54 @@ const handleLogout = async () => {
 </script>
 
 <template>
-  <div class="relative flex min-h-screen flex-col bg-slate-50/50 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-50/40 via-slate-50/50 to-white">
-    <!-- Floating Top Nav -->
-    <div class="fixed top-4 left-1/2 transform -translate-x-1/2 w-full max-w-5xl px-4 z-50">
-      <nav class="bg-white/70 backdrop-blur-xl border border-white/80 rounded-2xl px-4 md:px-6 py-3 flex items-center justify-between shadow-[0_8px_32px_rgba(0,0,0,0.04)]">
-        <!-- Logo -->
-        <div class="flex items-center gap-3">
-          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 shadow-lg shadow-emerald-500/20">
-            <ShieldCheck class="text-white" :size="20" stroke-width="2.5" />
-          </div>
-          <div class="flex flex-col hidden sm:flex">
-            <span class="text-lg font-extrabold leading-none tracking-tight text-slate-800">
-              Admin<span class="text-emerald-500">Panel</span>
-            </span>
-          </div>
-        </div>
+  <div class="relative flex min-h-screen flex-col items-center bg-[#F5F0E8] text-[#191919] font-['Inter',sans-serif]">
+    <!-- Top Nav -->
+    <nav class="w-full max-w-[1200px] flex items-center justify-between py-6 px-4 md:px-0 border-b border-[#E8E3DA] mb-12">
+      <!-- Logo -->
+      <NuxtLink to="/admin" class="font-['Newsreader',serif] text-[22px] font-medium text-[#191919] tracking-[-0.02em] no-underline">
+        AdminPanel.
+      </NuxtLink>
 
-        <!-- Desktop Nav -->
-        <div class="hidden md:flex items-center gap-6">
-          <NuxtLink to="/admin" class="text-sm font-bold transition-colors" :class="$route.path === '/admin' ? 'text-emerald-600' : 'text-slate-500 hover:text-slate-800'">
-            {{ t('nav.dashboard') }}
-          </NuxtLink>
-          <NuxtLink to="/" class="text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors">
-            {{ t('nav.backToSite') }}
-          </NuxtLink>
-        </div>
+      <!-- Desktop Nav -->
+      <div class="hidden md:flex items-center gap-6">
+        <NuxtLink to="/admin" class="text-sm font-medium transition-colors" :class="$route.path === '/admin' ? 'text-[#CC785C]' : 'text-[#666666] hover:text-[#191919]'">
+          {{ t('nav.dashboard') }}
+        </NuxtLink>
+        <NuxtLink to="/" class="text-sm font-medium text-[#666666] hover:text-[#191919] transition-colors">
+          {{ t('nav.backToSite') }}
+        </NuxtLink>
+        <UILanguageSwitcher class="scale-90" />
+        <button @click="handleLogout" class="text-sm font-medium text-[#666666] hover:text-[#191919] transition-colors" :title="t('nav.logout')">
+          {{ t('nav.logout') }}
+        </button>
+      </div>
 
-        <!-- Actions -->
-        <div class="flex items-center gap-2 md:gap-4">
-          <UILanguageSwitcher class="scale-90" />
-          <div class="w-px h-4 bg-slate-200 hidden md:block"></div>
-          <button @click="handleLogout" class="text-sm font-bold text-rose-500 hover:text-rose-600 transition-colors hidden md:block" :title="t('nav.logout')">
-            {{ t('nav.logout') }}
-          </button>
-          
-          <!-- Mobile Menu Toggle -->
-          <UIGlassButton variant="ghost" class="!p-2 md:hidden" @click="isMobileMenuOpen = !isMobileMenuOpen">
-            <Menu v-if="!isMobileMenuOpen" :size="24" class="text-slate-800" />
-            <X v-else :size="24" class="text-slate-800" />
-          </UIGlassButton>
-        </div>
-      </nav>
-    </div>
+      <!-- Mobile Menu Toggle -->
+      <button class="md:hidden p-2 text-[#666666]" @click="isMobileMenuOpen = !isMobileMenuOpen">
+        <Menu v-if="!isMobileMenuOpen" :size="24" />
+        <X v-else :size="24" />
+      </button>
+    </nav>
 
     <!-- Mobile Dropdown -->
-    <div v-if="isMobileMenuOpen" class="fixed inset-0 top-[76px] z-40 animate-fade-in bg-white/95 p-4 backdrop-blur-xl md:hidden">
+    <div v-if="isMobileMenuOpen" class="fixed inset-0 top-[76px] z-40 bg-[#F5F0E8] p-4 md:hidden border-t border-[#E8E3DA]">
       <div class="flex flex-col gap-4 max-w-sm mx-auto mt-4">
         <nav class="flex flex-col gap-3">
-          <NuxtLink to="/admin">
-            <UIGlassButton variant="secondary" class="w-full !justify-start !px-4 !py-3 !rounded-xl transition-all" :class="{ '!bg-emerald-500 !text-white !border-emerald-400': $route.path === '/admin' }">
-              <template #icon-left><LayoutDashboard :size="20" /></template>
-              <span class="font-bold">{{ t('nav.dashboard') }}</span>
-            </UIGlassButton>
+          <NuxtLink to="/admin" class="px-4 py-3 text-sm font-medium transition-colors rounded-lg" :class="$route.path === '/admin' ? 'text-[#CC785C] bg-[#F7EBE8]' : 'text-[#666666] hover:text-[#191919]'">
+            {{ t('nav.dashboard') }}
           </NuxtLink>
-          <NuxtLink to="/">
-             <UIGlassButton variant="ghost" class="w-full !justify-start !px-4 !py-3 !rounded-xl">
-                <template #icon-left><ArrowLeft :size="20" /></template>
-                <span class="font-bold">{{ t('nav.backToSite') }}</span>
-             </UIGlassButton>
+          <NuxtLink to="/" class="px-4 py-3 text-sm font-medium text-[#666666] hover:text-[#191919] transition-colors">
+            {{ t('nav.backToSite') }}
           </NuxtLink>
+          <button @click="handleLogout" class="text-left px-4 py-3 text-sm font-medium text-[#666666] hover:text-[#191919] transition-colors">
+            {{ t('nav.logout') }}
+          </button>
         </nav>
-        
-        <div class="flex w-full flex-col gap-3 border-t border-slate-100 pt-5">
-          <UIGlassButton variant="ghost" @click="handleLogout" class="w-full !justify-start !text-rose-500 hover:!bg-rose-50 !rounded-xl !px-4 !py-3">
-            <template #icon-left><LogOut :size="20" /></template>
-            <span class="font-bold">{{ t('nav.logout') }}</span>
-          </UIGlassButton>
-        </div>
       </div>
     </div>
 
-    <main class="relative z-10 w-full flex-1 pt-32 pb-12 px-4 md:px-6 max-w-7xl mx-auto">
+    <!-- Main Content -->
+    <main class="w-full max-w-[1200px] px-4 md:px-0 pb-16 flex-1">
       <slot />
     </main>
   </div>
@@ -103,13 +87,3 @@ const handleLogout = async () => {
   <UIConfirmDialog />
   <Toast />
 </template>
-
-<style scoped>
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-.animate-fade-in {
-  animation: fade-in 0.2s ease-out forwards;
-}
-</style>
