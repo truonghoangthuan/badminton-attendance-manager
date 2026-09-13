@@ -90,27 +90,17 @@ export const resolveBankCode = (input?: string): string => {
 };
 
 export const generateVietQRUrl = (params: VietQRParams): string => {
-  const { bankId, accountNumber, accountName, amount, memo, template = 'qr_only' } = params;
+  const { bankId, accountNumber, accountName, amount, template = 'qr_only' } = params;
   if (!bankId || !accountNumber) return '';
   const cleanAccount = accountNumber.replace(/[^a-zA-Z0-9]/g, '');
   const cleanBank = resolveBankCode(bankId);
   if (!cleanBank || !cleanAccount) return '';
 
-  const url = `https://img.vietqr.io/image/${cleanBank}-${cleanAccount}-${template}.png`;
+  const url = `https://img.vietqr.io/image/${cleanBank}-${cleanAccount}-${template}.jpg`;
   const searchParams = new URLSearchParams();
 
   if (amount && amount > 0) {
     searchParams.append('amount', Math.round(amount).toString());
-  }
-  if (memo) {
-    const cleanMemo = removeVietnameseDiacritics(memo)
-      .replace(/[^a-zA-Z0-9\s]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .slice(0, 50);
-    if (cleanMemo) {
-      searchParams.append('addInfo', cleanMemo);
-    }
   }
   if (accountName) {
     const cleanName = removeVietnameseDiacritics(accountName)
