@@ -17,7 +17,10 @@ export default <Partial<Config>>{
         }
       },
       fontFamily: {
-        jakarta: ['"Plus Jakarta Sans Variable"', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans Variable"', '"Plus Jakarta Sans"', 'Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        jakarta: ['"Plus Jakarta Sans Variable"', '"Plus Jakarta Sans"', 'Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        inter: ['Inter', '"Plus Jakarta Sans Variable"', 'system-ui', '-apple-system', 'sans-serif'],
+        newsreader: ['Newsreader', 'Georgia', 'serif'],
       },
       boxShadow: {
         'glass': '0 18px 45px rgba(18, 55, 42, 0.08)',
