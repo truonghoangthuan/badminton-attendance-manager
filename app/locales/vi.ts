@@ -254,6 +254,8 @@ export const vi = {
     rulesSecondaryTitle: '2. Tiêu chí phụ: Điểm uy tín (Reliability)',
     rulesSecondaryDesc: 'Tỉ lệ % số buổi thực tế trên số lần đăng ký (RSVP). Giúp phân định thứ hạng khi hai người chơi có cùng số buổi tham gia.',
     rulesBadgesTitle: '3. Hệ thống danh hiệu vinh danh',
+    rulesRegularDesc: 'Chuyên cần thường xuyên',
+    rulesMemberDesc: 'Thành viên phong trào',
     rulesClose: 'Đã hiểu',
     filterAll: 'Tất cả',
     filterThisMonth: 'Tháng này',

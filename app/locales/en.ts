@@ -254,6 +254,8 @@ export const en = {
     rulesSecondaryTitle: '2. Tiebreaker: Attendance Reliability',
     rulesSecondaryDesc: 'Percentage of actual attendance vs total RSVPs. Used to break ties when two players have the same match count.',
     rulesBadgesTitle: '3. Title Badges & Tiers',
+    rulesRegularDesc: 'Consistent attendance',
+    rulesMemberDesc: 'Active community member',
     rulesClose: 'Got It',
     filterAll: 'All Time',
     filterThisMonth: 'This Month',

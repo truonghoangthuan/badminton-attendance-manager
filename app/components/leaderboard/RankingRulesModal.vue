@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Award, CheckCircle2, ShieldCheck, Sparkles, Trophy } from 'lucide-vue-next';
+import { Award, ShieldCheck, Sparkles, Trophy } from 'lucide-vue-next';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -18,17 +18,20 @@ const isOpen = computed({
 </script>
 
 <template>
-  <UIGlassModal
-    v-model="isOpen"
-    :title="t('leaderboard.rulesTitle')"
-    max-width="max-w-2xl"
-  >
-    <div class="space-y-4 text-left">
-      <!-- Kicker -->
-      <div class="inline-flex items-center gap-1.5 rounded-full bg-brand-court/10 px-3 py-1 text-xs font-black uppercase tracking-wider text-brand-court">
-        <Sparkles :size="14" />
-        <span>{{ t('leaderboard.rulesKicker') }}</span>
+  <UIGlassModal v-model="isOpen">
+    <template #header>
+      <div class="space-y-2 text-left">
+        <div class="inline-flex items-center gap-1.5 rounded-full bg-brand-court/10 px-3 py-1 text-xs font-black uppercase tracking-wider text-brand-court">
+          <Sparkles :size="14" />
+          <span>{{ t('leaderboard.rulesKicker') }}</span>
+        </div>
+        <h3 class="text-xl sm:text-2xl font-black tracking-tight text-brand-ink">
+          {{ t('leaderboard.rulesTitle') }}
+        </h3>
       </div>
+    </template>
+
+    <div class="space-y-4 text-left">
 
       <!-- Rule 1: Primary Metric -->
       <div class="rounded-2xl border border-brand-line bg-white/60 p-4 transition-all hover:bg-white/80">
@@ -100,7 +103,14 @@ const isOpen = computed({
                 <span class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-200 text-emerald-800 font-black text-[10px]">#</span>
                 <div>
                   <p class="font-black text-emerald-900">Top 4 - 10: {{ t('leaderboard.regularBadge') }}</p>
-                  <p class="text-[11px] text-emerald-700">Chuyên cần thường xuyên</p>
+                  <p class="text-[11px] text-emerald-700">{{ t('leaderboard.rulesRegularDesc') }}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 p-2 rounded-xl bg-brand-sand/80 border border-brand-line sm:col-span-2">
+                <span class="text-base">⚪</span>
+                <div>
+                  <p class="font-black text-brand-ink">Top 11+: {{ t('leaderboard.memberBadge') }}</p>
+                  <p class="text-[11px] text-brand-slate">{{ t('leaderboard.rulesMemberDesc') }}</p>
                 </div>
               </div>
             </div>
