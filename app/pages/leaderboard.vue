@@ -10,27 +10,12 @@ import {
   Users,
 } from 'lucide-vue-next';
 
-interface RawAttendance {
-  name: string;
-  isJoining: boolean;
-  actualAttended: boolean;
-  guestCount?: number;
-}
-
-interface RawSessionItem {
-  id: string;
-  date: string;
-  shuttlecocksUsed: number;
-  attendances: RawAttendance[];
-}
-
-interface PlayerStats {
-  rank?: number;
-  name: string;
-  matchesPlayed: number;
-  reliabilityRate: number;
-  lastPlayedDate: string;
-}
+import {
+  calculatePlayerStats,
+  type PlayerStats,
+  type RawAttendance,
+  type RawSessionItem,
+} from '~/utils/leaderboardStats';
 
 const { db } = useFirebase();
 const { t } = useI18n();
@@ -141,61 +126,7 @@ const totalPlayerCheckIns = computed(() => {
   return count;
 });
 
-const allPlayers = computed<PlayerStats[]>(() => {
-  const statsMap: Record<string, { matches: number; rsvps: number; lastDate: string }> = {};
-
-  for (const session of filteredSessions.value) {
-    const sessionDate = (session.date || '').split('T')[0];
-    for (const att of session.attendances) {
-      const name = att.name;
-      if (!name) continue;
-
-      if (!statsMap[name]) {
-        statsMap[name] = { matches: 0, rsvps: 0, lastDate: '' };
-      }
-
-      if (att.isJoining) {
-        statsMap[name].rsvps += 1;
-      }
-
-      if (att.actualAttended) {
-        statsMap[name].matches += 1;
-        if (!statsMap[name].lastDate || sessionDate > statsMap[name].lastDate) {
-          statsMap[name].lastDate = sessionDate;
-        }
-      }
-    }
-  }
-
-  return Object.entries(statsMap)
-    .filter(([_, stat]) => stat.matches > 0)
-    .map(([name, stat]) => {
-      const reliability = stat.rsvps > 0 ? Math.round((stat.matches / stat.rsvps) * 100) : 100;
-      return {
-        name,
-        matchesPlayed: stat.matches,
-        reliabilityRate: Math.min(100, reliability),
-        lastPlayedDate: stat.lastDate,
-      };
-    })
-    .sort((a, b) => {
-      if (b.matchesPlayed !== a.matchesPlayed) {
-        return b.matchesPlayed - a.matchesPlayed;
-      }
-      if (b.reliabilityRate !== a.reliabilityRate) {
-        return b.reliabilityRate - a.reliabilityRate;
-      }
-      const dateComparison = (b.lastPlayedDate || '').localeCompare(a.lastPlayedDate || '');
-      if (dateComparison !== 0) {
-        return dateComparison;
-      }
-      return a.name.localeCompare(b.name);
-    })
-    .map((player, index) => ({
-      ...player,
-      rank: index + 1,
-    }));
-});
+const allPlayers = computed<PlayerStats[]>(() => calculatePlayerStats(filteredSessions.value));
 
 const filteredPlayers = computed(() => {
   if (!searchQuery.value.trim()) return allPlayers.value;
@@ -494,8 +425,13 @@ const getPlayerBadge = (index: number) => {
 
                 <!-- Matches -->
                 <td class="px-5 py-4 text-center">
-                  <span class="font-black text-brand-ink text-base">{{ player.matchesPlayed }}</span>
-                  <span class="text-xs text-brand-slate ml-1">{{ t('leaderboard.matchesCount', { count: '' }).trim() }}</span>
+                  <div class="inline-flex items-baseline gap-1">
+                    <span class="font-black text-brand-ink text-base">{{ player.matchesPlayed }}</span>
+                    <span class="text-xs font-bold text-brand-slate">/ {{ player.totalRsvps }}</span>
+                  </div>
+                  <p class="text-[11px] font-medium text-brand-slate">
+                    {{ t('leaderboard.rsvpsLabel', { count: player.totalRsvps }) }}
+                  </p>
                 </td>
 
                 <!-- Reliability Rate -->
