@@ -115,7 +115,7 @@ const resetFilter = () => {
         @click="resetFilter"
       >
         <RotateCcw :size="12" />
-        <span>Reset</span>
+        <span>{{ t('leaderboard.filterReset') }}</span>
       </button>
     </div>
 

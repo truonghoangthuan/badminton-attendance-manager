@@ -116,8 +116,9 @@ const filteredSessions = computed(() => {
   const { start, end } = effectiveDateRange.value;
   return rawSessions.value.filter((session) => {
     if (!session.date) return false;
-    if (start && session.date < start) return false;
-    if (end && session.date > end) return false;
+    const sessionDate = (session.date || '').split('T')[0];
+    if (start && sessionDate < start) return false;
+    if (end && sessionDate > end) return false;
     return true;
   });
 });
@@ -144,7 +145,7 @@ const allPlayers = computed<PlayerStats[]>(() => {
   const statsMap: Record<string, { matches: number; rsvps: number; lastDate: string }> = {};
 
   for (const session of filteredSessions.value) {
-    const sessionDate = session.date || '';
+    const sessionDate = (session.date || '').split('T')[0];
     for (const att of session.attendances) {
       const name = att.name;
       if (!name) continue;
@@ -508,9 +509,9 @@ const getPlayerBadge = (index: number) => {
                 <td class="px-5 py-4 text-right">
                   <span
                     class="inline-block rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider"
-                    :class="getPlayerBadge((player.rank ? player.rank - 1 : idx)).color"
+                    :class="getPlayerBadge(player.rank !== undefined ? player.rank - 1 : idx).color"
                   >
-                    {{ getPlayerBadge((player.rank ? player.rank - 1 : idx)).label }}
+                    {{ getPlayerBadge(player.rank !== undefined ? player.rank - 1 : idx).label }}
                   </span>
                 </td>
               </tr>

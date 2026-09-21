@@ -260,6 +260,7 @@ export const vi = {
     filterAll: 'Tất cả',
     filterThisMonth: 'Tháng này',
     filterCustom: 'Khoảng thời gian',
+    filterReset: 'Đặt lại',
     fromDate: 'Từ ngày',
     toDate: 'Đến ngày',
     sessionsInPeriod: '{count} buổi trong giai đoạn này',

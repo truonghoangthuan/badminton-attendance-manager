@@ -260,6 +260,7 @@ export const en = {
     filterAll: 'All Time',
     filterThisMonth: 'This Month',
     filterCustom: 'Time Range',
+    filterReset: 'Reset',
     fromDate: 'From',
     toDate: 'To',
     sessionsInPeriod: '{count} sessions in this period',
