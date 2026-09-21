@@ -27,12 +27,12 @@
 **Interfaces:**
 - Produces: `leaderboard.attendedVsRsvps` and `leaderboard.rsvpsLabel` i18n strings.
 
-- [ ] **Step 1: Run existing i18n test to verify baseline**
+- [x] **Step 1: Run existing i18n test to verify baseline**
 
 Run: `node --test tests/i18n.test.mjs`
 Expected: PASS
 
-- [ ] **Step 2: Add localization keys to `app/locales/en.ts` and `app/locales/vi.ts`**
+- [x] **Step 2: Add localization keys to `app/locales/en.ts` and `app/locales/vi.ts`**
 
 In `app/locales/en.ts` under `leaderboard`:
 ```typescript
@@ -46,12 +46,12 @@ attendedVsRsvps: '{attended} / {total} lượt đăng ký',
 rsvpsLabel: '{count} lượt đăng ký',
 ```
 
-- [ ] **Step 3: Run i18n parity test to verify**
+- [x] **Step 3: Run i18n parity test to verify**
 
 Run: `node --test tests/i18n.test.mjs`
 Expected: PASS with 0 missing keys.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/locales/en.ts app/locales/vi.ts
@@ -95,7 +95,7 @@ git commit -m "feat(i18n): add attended vs rsvps labels to leaderboard translati
   export function calculatePlayerStats(sessions: RawSessionItem[]): PlayerStats[];
   ```
 
-- [ ] **Step 1: Write failing unit test `tests/leaderboardStats.test.mjs`**
+- [x] **Step 1: Write failing unit test `tests/leaderboardStats.test.mjs`**
 
 ```javascript
 import { test } from 'node:test';
@@ -150,12 +150,12 @@ test('calculatePlayerStats correctly computes matches, totalRsvps, and reliabili
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `node --test tests/leaderboardStats.test.mjs`
 Expected: FAIL (module not found).
 
-- [ ] **Step 3: Implement `app/utils/leaderboardStats.ts`**
+- [x] **Step 3: Implement `app/utils/leaderboardStats.ts`**
 
 ```typescript
 export interface RawAttendance {
@@ -240,12 +240,12 @@ export function calculatePlayerStats(sessions: RawSessionItem[]): PlayerStats[] 
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `node --test tests/leaderboardStats.test.mjs`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/utils/leaderboardStats.ts tests/leaderboardStats.test.mjs
@@ -267,7 +267,7 @@ git commit -m "feat: implement calculatePlayerStats utility with totalRsvps supp
     - Separator & total: `<span class="text-xs font-bold text-brand-slate"> / {{ player.totalRsvps }}</span>`
     - Subtitle / badge: `<p class="text-[11px] font-medium text-brand-slate">{{ t('leaderboard.rsvpsLabel', { count: player.totalRsvps }) }}</p>`
 
-- [ ] **Step 1: Update `app/pages/leaderboard.vue`**
+- [x] **Step 1: Update `app/pages/leaderboard.vue`**
 
 Replace local interfaces and `allPlayers` calculation logic with `calculatePlayerStats`:
 ```typescript
@@ -287,17 +287,17 @@ Update the table cell for `Sessions Attended` in `app/pages/leaderboard.vue`:
 </td>
 ```
 
-- [ ] **Step 2: Run all unit tests**
+- [x] **Step 2: Run all unit tests**
 
 Run: `node --test tests/*.mjs`
 Expected: All 14 tests pass.
 
-- [ ] **Step 3: Run production build verification**
+- [x] **Step 3: Run production build verification**
 
 Run: `npm run build`
 Expected: Build succeeds without TypeScript or Vite errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/pages/leaderboard.vue
