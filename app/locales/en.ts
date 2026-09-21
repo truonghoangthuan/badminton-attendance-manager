@@ -241,6 +241,8 @@ export const en = {
     titleBadge: 'Title',
     latestPlayed: 'Latest: {date}',
     matchesCount: '{count} matches',
+    attendedVsRsvps: '{attended} / {total} RSVPs',
+    rsvpsLabel: '{count} RSVPs',
     legendBadge: 'Club Legend',
     contenderBadge: 'Top Contender',
     starBadge: 'Star Player',

@@ -241,6 +241,8 @@ export const vi = {
     titleBadge: 'Danh hiệu',
     latestPlayed: 'Gần nhất: {date}',
     matchesCount: '{count} buổi',
+    attendedVsRsvps: '{attended} / {total} lượt đăng ký',
+    rsvpsLabel: '{count} lượt đăng ký',
     legendBadge: 'Club Legend',
     contenderBadge: 'Top Contender',
     starBadge: 'Star Player',
