@@ -6,7 +6,7 @@ useHead({
   link: [
     { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
     { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
-    { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap' }
+    { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&display=swap' }
   ]
 })
 
@@ -32,11 +32,11 @@ const handleLogout = async () => {
 </script>
 
 <template>
-  <div class="relative flex min-h-screen flex-col items-center bg-[#F5F0E8] text-[#191919] font-['Inter',sans-serif]">
+  <div class="relative flex min-h-screen flex-col items-center bg-[#F5F0E8] text-[#191919] font-inter">
     <!-- Top Nav -->
     <nav class="w-full max-w-[1200px] flex items-center justify-between py-6 px-4 md:px-0 border-b border-[#E8E3DA] mb-12">
       <!-- Logo -->
-      <NuxtLink to="/admin" class="font-['Newsreader',serif] text-[22px] font-medium text-[#191919] tracking-[-0.02em] no-underline">
+      <NuxtLink to="/admin" class="font-newsreader text-[22px] font-medium text-[#191919] tracking-[-0.02em] no-underline">
         AdminPanel.
       </NuxtLink>
 

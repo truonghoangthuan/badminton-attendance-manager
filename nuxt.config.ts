@@ -35,7 +35,10 @@ export default defineNuxtConfig({
     compatibilityVersion: 4,
   },
 
-  css: ['~/assets/css/main.css'],
+  css: [
+    '@fontsource-variable/plus-jakarta-sans',
+    '~/assets/css/main.css',
+  ],
 
   vite: {
     plugins: [],

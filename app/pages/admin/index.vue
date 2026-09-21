@@ -218,7 +218,7 @@ const copySessionLink = (id: string) => {
 <template>
   <div>
     <header class="text-center mb-12">
-      <h1 class="font-['Newsreader',serif] text-[40px] font-normal mb-4 tracking-[-0.02em] text-[#191919]">
+      <h1 class="font-newsreader text-[40px] font-normal mb-4 tracking-[-0.02em] text-[#191919]">
         {{ t('admin.sessionsTitle') }}
       </h1>
       <div class="mt-6">
@@ -244,7 +244,7 @@ const copySessionLink = (id: string) => {
           {{ session.status }}
         </div>
 
-        <div class="font-['Newsreader',serif] text-[28px] font-medium mb-1 text-[#191919]">
+        <div class="font-newsreader text-[28px] font-medium mb-1 text-[#191919]">
           {{ formatDisplayDate(session.date) }}
         </div>
         <div class="text-[14px] text-[#CC785C] font-medium mb-6">
@@ -284,7 +284,7 @@ const copySessionLink = (id: string) => {
     <div v-if="showCreateForm" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#191919]/20 backdrop-blur-sm">
       <div class="bg-[#F5F0E8] rounded-2xl w-full max-w-lg shadow-xl overflow-hidden border border-[#E8E3DA]">
         <div class="p-6 border-b border-[#E8E3DA]">
-          <h2 class="font-['Newsreader',serif] text-2xl text-[#191919]">
+          <h2 class="font-newsreader text-2xl text-[#191919]">
             {{ isEditing ? t('admin.editModalTitle') : t('admin.createModalTitle') }}
           </h2>
         </div>
