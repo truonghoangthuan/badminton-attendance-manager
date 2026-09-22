@@ -5,103 +5,128 @@ import {
   Award,
   Calendar,
   Flame,
-  Medal,
   Search,
   Sparkles,
-  Trophy,
   Users,
 } from 'lucide-vue-next';
 
-interface PlayerStats {
-  name: string;
-  matchesPlayed: number;
-  reliabilityRate: number;
-  lastPlayedDate: string;
-}
+import {
+  calculatePlayerStats,
+  type PlayerStats,
+  type RawAttendance,
+  type RawSessionItem,
+} from '~/utils/leaderboardStats';
 
 const { db } = useFirebase();
 const { t } = useI18n();
 const loading = ref(true);
 const searchQuery = ref('');
 
-const allPlayers = ref<PlayerStats[]>([]);
-const totalSessionsCount = ref(0);
-const totalShuttlecocksUsed = ref(0);
-const totalPlayerCheckIns = ref(0);
+const rawSessions = ref<RawSessionItem[]>([]);
+const filterMode = ref<'all' | 'this_month' | 'custom'>('all');
+const customStartDate = ref('');
+const customEndDate = ref('');
+const showRulesModal = ref(false);
 
 onMounted(async () => {
   try {
     const sessionsSnap = await getDocs(query(collection(db, 'sessions'), orderBy('date', 'desc')));
-    totalSessionsCount.value = sessionsSnap.docs.length;
-
-    const statsMap: Record<string, { matches: number; rsvps: number; lastDate: string }> = {};
-
-    let totalShuttles = 0;
-    let totalCheckIns = 0;
 
     // Fetch attendances across sessions in parallel batches
-    await Promise.all(
+    const loadedSessions = await Promise.all(
       sessionsSnap.docs.map(async (sessionDoc) => {
         const sessionData = sessionDoc.data();
         const sessionDate = sessionData.date || '';
-        totalShuttles += sessionData.financials?.shuttlecocksUsed || 0;
+        const shuttlecocksUsed = sessionData.financials?.shuttlecocksUsed || 0;
 
         const attendancesSnap = await getDocs(
           collection(db, `sessions/${sessionDoc.id}/attendances`)
         );
 
-        attendancesSnap.docs.forEach((attDoc) => {
-          const att = attDoc.data();
-          const rawName = (att.name || '').trim();
-          if (!rawName) return;
+        const attendances: RawAttendance[] = attendancesSnap.docs
+          .map((attDoc) => {
+            const att = attDoc.data();
+            return {
+              name: (att.name || '').trim(),
+              isJoining: !!att.isJoining,
+              actualAttended: !!att.actualAttended,
+              guestCount: att.guestCount || 0,
+            };
+          })
+          .filter((att) => !!att.name);
 
-          // Normalize player key by lowercase name for consistent tracking
-          const key = rawName;
-
-          if (!statsMap[key]) {
-            statsMap[key] = { matches: 0, rsvps: 0, lastDate: sessionDate };
-          }
-
-          if (att.isJoining) {
-            statsMap[key].rsvps += 1;
-          }
-
-          if (att.actualAttended) {
-            statsMap[key].matches += 1;
-            totalCheckIns += 1 + (att.guestCount || 0);
-            if (!statsMap[key].lastDate || sessionDate > statsMap[key].lastDate) {
-              statsMap[key].lastDate = sessionDate;
-            }
-          }
-        });
+        return {
+          id: sessionDoc.id,
+          date: sessionDate,
+          shuttlecocksUsed,
+          attendances,
+        };
       })
     );
 
-    totalShuttlecocksUsed.value = totalShuttles;
-    totalPlayerCheckIns.value = totalCheckIns;
-
-    allPlayers.value = Object.entries(statsMap)
-      .map(([name, stat]) => {
-        const reliability = stat.rsvps > 0 ? Math.round((stat.matches / stat.rsvps) * 100) : 100;
-        return {
-          name,
-          matchesPlayed: stat.matches,
-          reliabilityRate: Math.min(100, reliability),
-          lastPlayedDate: stat.lastDate,
-        };
-      })
-      .sort((a, b) => {
-        if (b.matchesPlayed !== a.matchesPlayed) {
-          return b.matchesPlayed - a.matchesPlayed;
-        }
-        return b.reliabilityRate - a.reliabilityRate;
-      });
+    rawSessions.value = loadedSessions;
   } catch (e) {
     console.error('Error fetching leaderboard data:', e);
   } finally {
     loading.value = false;
   }
 });
+
+const effectiveDateRange = computed(() => {
+  if (filterMode.value === 'this_month') {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const start = `${firstDay.getFullYear()}-${pad(firstDay.getMonth() + 1)}-${pad(firstDay.getDate())}`;
+    const end = `${lastDay.getFullYear()}-${pad(lastDay.getMonth() + 1)}-${pad(lastDay.getDate())}`;
+
+    return { start, end };
+  }
+
+  if (filterMode.value === 'custom') {
+    return {
+      start: customStartDate.value || undefined,
+      end: customEndDate.value || undefined,
+    };
+  }
+
+  return { start: undefined, end: undefined };
+});
+
+const filteredSessions = computed(() => {
+  const { start, end } = effectiveDateRange.value;
+  return rawSessions.value.filter((session) => {
+    if (!session.date) return false;
+    const sessionDate = (session.date || '').split('T')[0];
+    if (start && sessionDate < start) return false;
+    if (end && sessionDate > end) return false;
+    return true;
+  });
+});
+
+const totalSessionsCount = computed(() => filteredSessions.value.length);
+
+const totalShuttlecocksUsed = computed(() =>
+  filteredSessions.value.reduce((sum, s) => sum + (s.shuttlecocksUsed || 0), 0)
+);
+
+const totalPlayerCheckIns = computed(() => {
+  let count = 0;
+  for (const session of filteredSessions.value) {
+    for (const att of session.attendances) {
+      if (att.actualAttended) {
+        count += 1 + (att.guestCount || 0);
+      }
+    }
+  }
+  return count;
+});
+
+const allPlayers = computed<PlayerStats[]>(() => calculatePlayerStats(filteredSessions.value));
 
 const filteredPlayers = computed(() => {
   if (!searchQuery.value.trim()) return allPlayers.value;
@@ -143,6 +168,15 @@ const getPlayerBadge = (index: number) => {
         </p>
       </div>
     </div>
+
+    <!-- Timeframe Filter Bar -->
+    <LeaderboardTimeframeFilterBar
+      v-model:filter-mode="filterMode"
+      v-model:start-date="customStartDate"
+      v-model:end-date="customEndDate"
+      :session-count="totalSessionsCount"
+      @open-rules="showRulesModal = true"
+    />
 
     <!-- Club Lifetime Stats Bento Grid -->
     <section class="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -307,6 +341,11 @@ const getPlayerBadge = (index: number) => {
         </UIGlassCard>
       </div>
 
+      <UIGlassCard v-else-if="allPlayers.length === 0" class="text-center py-12">
+        <Users :size="28" class="mx-auto text-brand-slate" />
+        <p class="mt-3 font-black text-brand-ink">{{ t('leaderboard.noActivityInPeriod') }}</p>
+      </UIGlassCard>
+
       <UIGlassCard v-else-if="filteredPlayers.length === 0" class="text-center py-12">
         <Users :size="28" class="mx-auto text-brand-slate" />
         <p class="mt-3 font-black text-brand-ink">{{ t('leaderboard.noPlayersFound') }}</p>
@@ -344,28 +383,28 @@ const getPlayerBadge = (index: number) => {
                 <!-- Rank -->
                 <td class="px-5 py-4 font-black">
                   <span
-                    v-if="idx === 0"
+                    v-if="(player.rank || idx + 1) === 1"
                     class="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-amber-800 text-sm"
                     title="Hạng 1"
                   >
                     🥇
                   </span>
                   <span
-                    v-else-if="idx === 1"
+                    v-else-if="(player.rank || idx + 1) === 2"
                     class="flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 text-slate-800 text-sm"
                     title="Hạng 2"
                   >
                     🥈
                   </span>
                   <span
-                    v-else-if="idx === 2"
+                    v-else-if="(player.rank || idx + 1) === 3"
                     class="flex h-7 w-7 items-center justify-center rounded-full bg-orange-100 text-orange-800 text-sm"
                     title="Hạng 3"
                   >
                     🥉
                   </span>
                   <span v-else class="text-sm font-bold text-brand-slate pl-2">
-                    #{{ idx + 1 }}
+                    #{{ player.rank || idx + 1 }}
                   </span>
                 </td>
 
@@ -386,8 +425,13 @@ const getPlayerBadge = (index: number) => {
 
                 <!-- Matches -->
                 <td class="px-5 py-4 text-center">
-                  <span class="font-black text-brand-ink text-base">{{ player.matchesPlayed }}</span>
-                  <span class="text-xs text-brand-slate ml-1">{{ t('leaderboard.matchesCount', { count: '' }).trim() }}</span>
+                  <div class="inline-flex items-baseline gap-1">
+                    <span class="font-black text-brand-ink text-base">{{ player.matchesPlayed }}</span>
+                    <span class="text-xs font-bold text-brand-slate">/ {{ player.totalRsvps }}</span>
+                  </div>
+                  <p class="text-[11px] font-medium text-brand-slate">
+                    {{ t('leaderboard.rsvpsLabel', { count: player.totalRsvps }) }}
+                  </p>
                 </td>
 
                 <!-- Reliability Rate -->
@@ -401,9 +445,9 @@ const getPlayerBadge = (index: number) => {
                 <td class="px-5 py-4 text-right">
                   <span
                     class="inline-block rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider"
-                    :class="getPlayerBadge(idx).color"
+                    :class="getPlayerBadge(player.rank !== undefined ? player.rank - 1 : idx).color"
                   >
-                    {{ getPlayerBadge(idx).label }}
+                    {{ getPlayerBadge(player.rank !== undefined ? player.rank - 1 : idx).label }}
                   </span>
                 </td>
               </tr>
@@ -412,5 +456,8 @@ const getPlayerBadge = (index: number) => {
         </div>
       </UIGlassCard>
     </section>
+
+    <!-- Ranking Rules Modal -->
+    <LeaderboardRankingRulesModal v-model="showRulesModal" />
   </div>
 </template>
