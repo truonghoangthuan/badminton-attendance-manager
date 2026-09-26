@@ -27,5 +27,10 @@
   },
   "devDependencies": {
     "@primevue/nuxt-module": "^4.5.4"
+  },
+  "overrides": {
+    "@vercel/speed-insights": {
+      "vue-router": "$vue-router"
+    }
   }
 }

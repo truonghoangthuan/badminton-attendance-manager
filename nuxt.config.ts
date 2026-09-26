@@ -13,7 +13,7 @@ export default defineNuxtConfig({
     }
   },
 
-  modules: ['@pinia/nuxt', '@nuxtjs/tailwindcss', '@primevue/nuxt-module', '@nuxtjs/supabase', '@vercel/speed-insights'],
+  modules: ['@pinia/nuxt', '@nuxtjs/tailwindcss', '@primevue/nuxt-module', '@nuxtjs/supabase', '@vercel/speed-insights/nuxt'],
 
   supabase: {
     redirect: false,
