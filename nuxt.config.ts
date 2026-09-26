@@ -18,8 +18,8 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@primevue/nuxt-module',
     '@nuxtjs/supabase',
-    '@vercel/speed-insights/nuxt',
-    '@vercel/analytics/nuxt',
+    '@vercel/speed-insights',
+    '@vercel/analytics',
   ],
 
   supabase: {
