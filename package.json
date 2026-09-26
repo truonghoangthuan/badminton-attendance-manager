@@ -23,8 +23,8 @@
     "pinia": "^3.0.4",
     "primevue": "^4.5.4",
     "tailwindcss": "^3.4.19",
-    "vue": "^3.5.31",
-    "vue-router": "^5.0.4"
+    "vue": "^3.5.43",
+    "vue-router": "^5.3.1"
   },
   "devDependencies": {
     "@primevue/nuxt-module": "^4.5.4"

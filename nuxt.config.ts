@@ -18,12 +18,14 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@primevue/nuxt-module',
     '@nuxtjs/supabase',
-    '@vercel/speed-insights',
-    '@vercel/analytics',
+    '@vercel/speed-insights/nuxt',
+    '@vercel/analytics/nuxt',
   ],
 
   supabase: {
     redirect: false,
+    url: process.env.NUXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || 'https://placeholder.supabase.co',
+    key: process.env.NUXT_PUBLIC_SUPABASE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY || 'placeholder-key',
   },
 
   primevue: {
