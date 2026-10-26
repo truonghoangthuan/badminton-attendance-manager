@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, getDocs } from 'firebase/firestore';
-import { Copy, Plus, RefreshCcw, X, Edit2, ExternalLink, Calendar, MapPin, Users, Trophy, Feather, Grid2x2, CheckCircle2 } from 'lucide-vue-next';
+import { collection, collectionGroup, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, getDocs } from 'firebase/firestore';
+import { Copy, Plus, RefreshCcw, X, Edit2, ExternalLink, Calendar, MapPin, Users, Trophy, Feather, Grid2x2, CheckCircle2, CircleDollarSign, ReceiptText } from 'lucide-vue-next';
 import { useToast } from 'primevue/usetoast';
 import { formatDisplayDate, getLocalTodayDate } from '~/utils/dateFormat';
+import { calculateUnpaidSummary } from '~/utils/sessionFinancials';
 
 definePageMeta({
   layout: 'admin',
@@ -20,12 +21,14 @@ const sessions = ref<any[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 
-const activeFilter = ref<'all' | 'active' | 'completed'>('all');
+const activeFilter = ref<'all' | 'active' | 'completed' | 'unpaid'>('all');
 const showCreateForm = ref(false);
 const adding = ref(false);
 const deletingSessionId = ref<string | null>(null);
 const isEditing = ref(false);
 const editingSessionId = ref<string | null>(null);
+const attendancesBySession = ref<Record<string, any[]>>({});
+const markingPaidId = ref<string | null>(null);
 
 const createDefaultSession = () => ({
   date: getLocalTodayDate(),
@@ -39,9 +42,24 @@ const createDefaultSession = () => ({
 
 const sessionForm = ref(createDefaultSession());
 
+const loadAttendancesFallback = async () => {
+  const map: Record<string, any[]> = {};
+  await Promise.all(
+    sessions.value.map(async (s) => {
+      try {
+        const snap = await getDocs(collection(db, `sessions/${s.id}/attendances`));
+        map[s.id] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      } catch (err) {
+        console.error('Fallback attendance read error:', err);
+      }
+    }),
+  );
+  attendancesBySession.value = map;
+};
+
 onMounted(() => {
   const q = query(sessionsRef, orderBy('date', 'desc'));
-  const unsubscribe = onSnapshot(
+  const unsubscribeSessions = onSnapshot(
     q,
     (snapshot) => {
       sessions.value = snapshot.docs.map((doc) => ({
@@ -57,10 +75,84 @@ onMounted(() => {
     },
   );
 
-  onUnmounted(unsubscribe);
+  let unsubscribeAttendances: (() => void) | null = null;
+  try {
+    const attQuery = collectionGroup(db, 'attendances');
+    unsubscribeAttendances = onSnapshot(
+      attQuery,
+      (snapshot) => {
+        const map: Record<string, any[]> = {};
+        for (const attDoc of snapshot.docs) {
+          const sessionId = attDoc.ref.parent?.parent?.id;
+          if (!sessionId) continue;
+          if (!map[sessionId]) map[sessionId] = [];
+          map[sessionId].push({ id: attDoc.id, ...attDoc.data() });
+        }
+        attendancesBySession.value = map;
+      },
+      async (err) => {
+        console.warn('collectionGroup(attendances) error, using fallback:', err);
+        await loadAttendancesFallback();
+      },
+    );
+  } catch (err) {
+    console.warn('collectionGroup error, using fallback:', err);
+    loadAttendancesFallback();
+  }
+
+  onUnmounted(() => {
+    unsubscribeSessions();
+    if (unsubscribeAttendances) {
+      unsubscribeAttendances();
+    }
+  });
 });
 
 const latestSession = computed(() => (sessions.value.length ? sessions.value[0] : null));
+
+const unpaidSummary = computed(() =>
+  calculateUnpaidSummary(sessions.value, attendancesBySession.value),
+);
+
+const totalUnpaidAmount = computed(() =>
+  unpaidSummary.value.reduce((sum, p) => sum + p.totalOwed, 0),
+);
+
+const totalUnpaidSlots = computed(() =>
+  unpaidSummary.value.reduce((sum, p) => sum + p.totalSlots, 0),
+);
+
+const markSessionAttendancePaid = async (
+  sessionId: string,
+  attendanceId: string,
+  playerName: string,
+) => {
+  markingPaidId.value = `${sessionId}_${attendanceId}`;
+  try {
+    const attRef = doc(db, `sessions/${sessionId}/attendances`, attendanceId);
+    await updateDoc(attRef, { hasPaid: true });
+    const list = attendancesBySession.value[sessionId];
+    if (list) {
+      const item = list.find((a) => a.id === attendanceId);
+      if (item) item.hasPaid = true;
+    }
+    toast.add({
+      severity: 'success',
+      summary: t('profileModal.toastSuccessTitle'),
+      detail: t('admin.markedPaidSuccess', { name: playerName }),
+      life: 2500,
+    });
+  } catch (e) {
+    console.error('Error marking paid:', e);
+    toast.add({
+      severity: 'error',
+      summary: t('admin.saveError'),
+      life: 3000,
+    });
+  } finally {
+    markingPaidId.value = null;
+  }
+};
 
 const filteredSessions = computed(() => {
   if (activeFilter.value === 'active') {
@@ -136,6 +228,8 @@ const handleSaveSession = async () => {
           shuttlecocksUsed: 0,
           shuttlecockPackPrice: inherit?.financials?.shuttlecockPackPrice || 0,
           shuttlecockPrice: inherit?.financials?.shuttlecockPrice || 0,
+          additionalShuttlecocksUsed: 0,
+          additionalShuttlecockPrice: inherit?.financials?.additionalShuttlecockPrice || 0,
           calculatedFeePerPerson: 0,
         },
         bankInfo: inherit?.bankInfo || null,
@@ -302,10 +396,10 @@ const formatCurrency = (val?: number) => {
     </header>
 
     <!-- Filter Tabs -->
-    <div class="flex items-center gap-2 border-b border-brand-line pb-3">
+    <div class="flex items-center gap-2 border-b border-brand-line pb-3 overflow-x-auto">
       <button
         type="button"
-        class="rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wider transition-all"
+        class="rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wider transition-all shrink-0"
         :class="activeFilter === 'all' ? 'bg-brand-court text-white shadow-sm' : 'bg-white/70 text-brand-slate hover:bg-white hover:text-brand-ink'"
         @click="activeFilter = 'all'"
       >
@@ -313,7 +407,7 @@ const formatCurrency = (val?: number) => {
       </button>
       <button
         type="button"
-        class="rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wider transition-all"
+        class="rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wider transition-all shrink-0"
         :class="activeFilter === 'active' ? 'bg-brand-court text-white shadow-sm' : 'bg-white/70 text-brand-slate hover:bg-white hover:text-brand-ink'"
         @click="activeFilter = 'active'"
       >
@@ -321,11 +415,26 @@ const formatCurrency = (val?: number) => {
       </button>
       <button
         type="button"
-        class="rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wider transition-all"
+        class="rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wider transition-all shrink-0"
         :class="activeFilter === 'completed' ? 'bg-brand-court text-white shadow-sm' : 'bg-white/70 text-brand-slate hover:bg-white hover:text-brand-ink'"
         @click="activeFilter = 'completed'"
       >
         {{ t('admin.filterCompleted') }} ({{ sessions.filter((s) => s.status === 'completed').length }})
+      </button>
+      <button
+        type="button"
+        class="rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wider transition-all shrink-0 inline-flex items-center gap-1.5"
+        :class="
+          activeFilter === 'unpaid'
+            ? 'bg-amber-600 text-white shadow-sm'
+            : unpaidSummary.length > 0
+            ? 'bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100'
+            : 'bg-white/70 text-brand-slate hover:bg-white hover:text-brand-ink'
+        "
+        @click="activeFilter = 'unpaid'"
+      >
+        <CircleDollarSign :size="13" />
+        <span>{{ t('admin.filterUnpaid') }} ({{ unpaidSummary.length }})</span>
       </button>
     </div>
 
@@ -337,6 +446,101 @@ const formatCurrency = (val?: number) => {
     <!-- Error State -->
     <div v-else-if="error" class="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-rose-700 font-medium">
       {{ error }}
+    </div>
+
+    <!-- Unpaid Summary Section -->
+    <div v-else-if="activeFilter === 'unpaid'" class="space-y-6">
+      <div v-if="unpaidSummary.length === 0" class="rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/60 p-12 text-center">
+        <CheckCircle2 :size="36" class="mx-auto text-emerald-600" />
+        <h3 class="mt-4 text-lg font-black text-brand-ink">{{ t('admin.allSessionsPaidTitle') }}</h3>
+        <p class="mt-1 text-sm font-medium text-brand-slate">{{ t('admin.allSessionsPaidDesc') }}</p>
+      </div>
+
+      <div v-else class="space-y-6">
+        <!-- KPI Strip -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <UIGlassCard class="!p-4 border-amber-200/60 bg-amber-50/40">
+            <p class="text-[10px] font-black uppercase tracking-wider text-slate-500">{{ t('admin.unpaidPlayersCount') }}</p>
+            <p class="mt-1 text-2xl font-black text-amber-700">{{ unpaidSummary.length }}</p>
+          </UIGlassCard>
+
+          <UIGlassCard class="!p-4 border-amber-200/60 bg-amber-50/40">
+            <p class="text-[10px] font-black uppercase tracking-wider text-slate-500">{{ t('admin.detail.activePlayers') }}</p>
+            <p class="mt-1 text-2xl font-black text-brand-ink">{{ t('admin.unpaidTotalSlots', { count: totalUnpaidSlots }) }}</p>
+          </UIGlassCard>
+
+          <UIGlassCard class="!p-4 border-amber-200/60 bg-amber-50/40">
+            <p class="text-[10px] font-black uppercase tracking-wider text-slate-500">{{ t('admin.unpaidTotalAmount') }}</p>
+            <p class="mt-1 text-2xl font-black text-brand-court">{{ formatCurrency(totalUnpaidAmount) }}</p>
+          </UIGlassCard>
+        </div>
+
+        <!-- Player Debt Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <UIGlassCard
+            v-for="player in unpaidSummary"
+            :key="player.name"
+            class="flex flex-col justify-between space-y-4 border-amber-200/80 bg-white shadow-sm"
+          >
+            <div>
+              <div class="flex items-start justify-between gap-3 border-b border-brand-line pb-3">
+                <div>
+                  <h3 class="text-lg font-black tracking-tight text-brand-ink">{{ player.name }}</h3>
+                  <p class="text-xs font-semibold text-slate-500 mt-0.5">
+                    {{ t('admin.unpaidSessionsCount', { count: player.sessions.length }) }}
+                  </p>
+                </div>
+                <div class="text-right">
+                  <span class="text-base font-black text-amber-700">{{ formatCurrency(player.totalOwed) }}</span>
+                  <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    {{ player.totalSlots }} {{ player.totalSlots === 1 ? t('admin.detail.slotUnit') : t('admin.detail.slotsUnit') }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- List of unpaid sessions for this player -->
+              <div class="divide-y divide-slate-100 mt-2">
+                <div
+                  v-for="s in player.sessions"
+                  :key="s.sessionId + '_' + s.attendanceId"
+                  class="py-2.5 flex items-center justify-between gap-3 text-xs"
+                >
+                  <div class="min-w-0 flex-1">
+                    <NuxtLink
+                      :to="'/admin/session/' + s.sessionId"
+                      class="font-bold text-brand-ink hover:text-brand-court flex items-center gap-1 group truncate"
+                      :title="s.location"
+                    >
+                      <span>{{ formatDisplayDate(s.date) }}</span>
+                      <span class="text-brand-slate font-medium">({{ s.time }})</span>
+                      <ExternalLink :size="11" class="text-slate-400 group-hover:text-brand-court shrink-0" />
+                    </NuxtLink>
+                    <p class="text-[11px] text-slate-500 mt-0.5 truncate">
+                      <span>{{ formatCurrency(s.feePerPerson) }} / {{ t('admin.detail.slotUnit') }}</span>
+                      <span v-if="s.guestCount > 0" class="ml-1.5 font-bold text-amber-700">
+                        (+{{ s.guestCount }} {{ t('admin.detail.guestUnit') }})
+                      </span>
+                    </p>
+                  </div>
+
+                  <div class="flex items-center gap-2 shrink-0">
+                    <span class="font-black text-brand-ink">{{ formatCurrency(s.amountOwed) }}</span>
+                    <button
+                      type="button"
+                      class="inline-flex items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-800 transition-all hover:bg-emerald-100 active:scale-95 disabled:opacity-50"
+                      :disabled="markingPaidId === s.sessionId + '_' + s.attendanceId"
+                      @click="markSessionAttendancePaid(s.sessionId, s.attendanceId, player.name)"
+                    >
+                      <ReceiptText :size="12" />
+                      <span>{{ t('admin.markPaidQuickBtn') }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </UIGlassCard>
+        </div>
+      </div>
     </div>
 
     <!-- Empty State -->

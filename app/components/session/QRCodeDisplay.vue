@@ -8,6 +8,10 @@ const props = defineProps<{
   shuttlecockPackPrice?: number;
   shuttlecockPrice?: number;
   shuttlecocksUsed?: number;
+  packShuttlecockCost?: number;
+  additionalShuttlecocksUsed?: number;
+  additionalShuttlecockPrice?: number;
+  additionalShuttlecockCost?: number;
   shuttlecockCost?: number;
   courtCost?: number;
   totalSessionCost?: number;
@@ -207,7 +211,16 @@ const formatCurrency = (value: number | undefined) => {
           </p>
           <p>
             Shuttlecock cost = {{ shuttlecocksUsed || 0 }} × {{ formatCurrency(shuttlecockPrice) }} =
-            {{ formatCurrency(shuttlecockCost) }}
+            {{ formatCurrency(packShuttlecockCost ?? shuttlecockCost) }}
+          </p>
+          <p v-if="(additionalShuttlecocksUsed || 0) > 0">
+            {{
+              t('sessionDetail.additionalShuttleCostLine', {
+                count: additionalShuttlecocksUsed,
+                price: formatCurrency(additionalShuttlecockPrice),
+                total: formatCurrency(additionalShuttlecockCost),
+              })
+            }}
           </p>
           <p>Court cost = {{ formatCurrency(courtCost) }}</p>
           <p>

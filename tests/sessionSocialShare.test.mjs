@@ -144,3 +144,31 @@ test('generateSessionSettlementText handles 3-argument legacy signature graceful
   assert.equal(lines[2], '🏟️ Số lượng sân: 2');
   assert.equal(lines[3], '🙌 Tổng số người: 4');
 });
+
+test('generateSessionSettlementText includes additional shuttlecocks in shuttle count and cost', () => {
+  const session = {
+    date: '2026-09-06',
+    location: 'Sân Cầu Lông Sky',
+    courtNumber: 'Sân 3',
+  };
+
+  const attendances = [
+    { name: 'Thuan', actualAttended: true, guestCount: 1 },
+    { name: 'Minh', actualAttended: true, guestCount: 2 },
+  ];
+
+  const financials = {
+    courtCost: 200000,
+    shuttlecocksUsed: 4,
+    shuttlecockPrice: 25000,
+    additionalShuttlecocksUsed: 2,
+    additionalShuttlecockPrice: 30000,
+    shuttlecockCost: 160000,
+    totalSessionCost: 360000,
+    calculatedFeePerPerson: 72000,
+  };
+
+  const result = generateSessionSettlementText(session, attendances, financials);
+  const lines = result.trim().split('\n');
+  assert.equal(lines[4], '💰 Chi phí: Sân 200.000đ + Cầu (6 quả = 160.000đ) = 360.000đ');
+});

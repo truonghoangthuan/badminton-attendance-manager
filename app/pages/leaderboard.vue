@@ -83,7 +83,9 @@ onMounted(async () => {
         id: sessionDoc.id,
         date: sessionData.date || '',
         status: sessionData.status || 'completed',
-        shuttlecocksUsed: sessionData.financials?.shuttlecocksUsed || 0,
+        shuttlecocksUsed:
+          (sessionData.financials?.shuttlecocksUsed || 0) +
+          (sessionData.financials?.additionalShuttlecocksUsed || 0),
         attendances: attendancesBySessionId.get(sessionDoc.id) || [],
       };
     });

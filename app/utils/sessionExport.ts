@@ -22,8 +22,12 @@ export const exportSessionToCSV = (
   // Financial Summary Section
   csv += `TỔNG KẾT TÀI CHÍNH\r\n`;
   csv += `Tiền sân (VND),${financials?.courtCost || 0}\r\n`;
-  csv += `Số quả cầu dùng,${financials?.shuttlecocksUsed || 0},quả\r\n`;
-  csv += `Đơn giá cầu (VND),${financials?.shuttlecockPrice || 0}\r\n`;
+  csv += `Số quả cầu dùng (trong ống),${financials?.shuttlecocksUsed || 0},quả\r\n`;
+  csv += `Đơn giá cầu trong ống (VND),${financials?.shuttlecockPrice || 0}\r\n`;
+  if ((financials?.additionalShuttlecocksUsed || 0) > 0) {
+    csv += `Số quả cầu mua thêm,${financials?.additionalShuttlecocksUsed || 0},quả\r\n`;
+    csv += `Đơn giá cầu mua thêm (VND),${financials?.additionalShuttlecockPrice || 0}\r\n`;
+  }
   csv += `Tổng chi phí phiên (VND),${financials?.totalSessionCost || 0}\r\n`;
   csv += `Số người thực tế chia tiền,${financials?.totalActualPlayers || 0},người\r\n`;
   csv += `Tiền chia mỗi người (VND),${fee}\r\n`;

@@ -14,7 +14,10 @@ export interface BankInfo {
 export interface SessionFinancials {
   courtCost: number;
   shuttlecocksUsed: number;
+  shuttlecockPackPrice?: number;
   shuttlecockPrice: number;
+  additionalShuttlecocksUsed?: number;
+  additionalShuttlecockPrice?: number;
   calculatedFeePerPerson: number;
 }
 
