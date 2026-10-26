@@ -1,112 +1,118 @@
-# Badminton Attendance Manager Frontend
+# Badminton Attendance Manager
 
-Nuxt 4 frontend for managing badminton sessions, collecting RSVPs, tracking attendance, and calculating per-player session costs. The app has two sides:
+Nuxt 4 frontend for managing badminton sessions, collecting RSVPs, tracking court attendance, splitting session costs, and ranking community participation.
 
-- A public flow where players can open a session link, identify themselves, and submit an RSVP.
-- An admin flow where organizers create sessions, monitor attendance, lock or complete sessions, and manage cost splitting.
+The app serves two flows backed by Firebase and Supabase:
+
+- **Public flow** (`/`, `/session/:id`, `/leaderboard`): session discovery, anonymous RSVP with guest counts, live capacity & fee breakdown, dynamic VietQR payment, social share announcements, and community leaderboard analytics.
+- **Admin flow** (`/admin/login`, `/admin`, `/admin/session/:id`): custom-claim protected session creation, capacity & court metadata management, on-court attendance & payment check-in, manual walk-in entries, QR/bank configuration, and CSV reporting.
 
 ## Feature Overview
 
 ### Public player experience
 
-- Browse recent and upcoming badminton sessions from the landing page.
-- Open a dedicated session page for a specific date and location.
-- Join anonymously through Firebase Authentication and save a display name in Firestore.
-- RSVP as attending or unavailable.
-- Add guest count to an RSVP.
-- See live response counts and the current calculated fee per player.
+- Browse featured upcoming and recent sessions on the landing page (`/`).
+- Switch between Vietnamese (`vi`, default) and English (`en`) via the header language switcher.
+- Authenticate anonymously via Firebase Auth and persist `displayName` in Firestore (`profiles`).
+- Submit or update RSVPs (`isJoining`, `guestCount`) while a session is `open`, subject to `maxPlayers` capacity limits.
+- View live attendance status, court metadata (`courtNumber`, `shuttlecockType`, `level`), and real-time per-person fee calculation.
+- Pay via dynamic VietQR (pre-filled with exact personalized fee and `BDM <date> <name>` transfer memo) or static QR uploaded to Supabase Storage, with 1-tap copy for bank details.
+- Generate 1-click Zalo/Messenger invite and settlement announcements (with clipboard QR image copy).
+- Explore the community leaderboard (`/leaderboard`) with timeframe filters (`all`, `this_month`, `custom` date range), top-3 podium, actual attendance vs total RSVPs (`matchesPlayed / totalRsvps`), reliability rates, and ranking rules modal.
 
 ### Admin experience
 
-- Sign in through Firebase Authentication at `/admin/login`.
-- View all sessions from a protected admin dashboard.
-- Create new sessions with date, time, and location.
-- Copy a public session link to share with players.
-- Change session state between `open`, `locked`, and `completed`.
-- Open a session control page to monitor attendance and payment status.
-- Track expected players, actual attendees, unpaid players, and total session cost.
-- Update financial inputs such as court cost, shuttlecocks used, and shuttlecock price.
+- Sign in with email/password at `/admin/login` (validated against Firebase custom claim `admin: true`).
+- Create, edit, and delete sessions (cascading deletion to `sessions/{sessionId}/attendances`) with date, time, location, `maxPlayers`, court number, shuttlecock brand, and skill level.
+- Transition session lifecycle between `open`, `locked`, and `completed` (with confirmation dialogs when completing or reopening).
+- Check in attendees (`actualAttended`), record fee payments (`hasPaid`), and add manual walk-in players (`walkin_<timestamp>`).
+- Configure court cost, shuttlecock count, and shuttlecock tube/unit pricing with automatic 1,000 VND rounding.
+- Manage bank details (`bankName`, `bankCode`, `accountNumber`, `accountName`) with live VietQR preview and upload custom payment QR images to Supabase Storage.
+- Export session metadata, financial summary, and attendance ledger to UTF-8 BOM CSV for Microsoft Excel compatibility.
 
 ## Route Map
 
-- `/`: public landing page showing featured and recent sessions
-- `/session/:id`: public RSVP page for a single session
-- `/admin/login`: admin sign-in page
-- `/admin`: protected admin dashboard for session management
-- `/admin/session/:id`: protected admin detail page for attendance and financial tracking
+- `/`: public landing page with featured upcoming session, recent sessions, and leaderboard CTA
+- `/session/:id`: public session detail, RSVP form, attendance table, fee breakdown, and VietQR payment
+- `/leaderboard`: community leaderboard, timeframe filter bar, and lifetime/period stats from completed sessions
+- `/admin/login`: admin email/password sign-in page
+- `/admin`: protected admin dashboard for session lifecycle and metadata management
+- `/admin/session/:id`: protected admin control center for check-in, walk-ins, financials, QR/bank setup, and CSV export
 
 ## Tech Stack
 
-- [Nuxt 4](https://nuxt.com/)
-- [Vue 3](https://vuejs.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Pinia](https://pinia.vuejs.org/)
-- [PrimeVue](https://primevue.org/)
-- [Firebase Authentication](https://firebase.google.com/docs/auth)
-- [Cloud Firestore](https://firebase.google.com/docs/firestore)
+- [Nuxt 4](https://nuxt.com/) + [Vue 3](https://vuejs.org/) + TypeScript
+- [Tailwind CSS](https://tailwindcss.com/) + custom `UIGlass*` components
+- [PrimeVue 4](https://primevue.org/) (`@primeuix/themes/aura` for Toast notifications)
+- [Firebase Authentication](https://firebase.google.com/docs/auth) & [Cloud Firestore](https://firebase.google.com/docs/firestore)
+- [Supabase Storage](https://supabase.com/docs/guides/storage) (`@nuxtjs/supabase` for custom payment QR images)
 - [Lucide Vue Next](https://lucide.dev/)
+- [Vercel Analytics](https://vercel.com/analytics) & [Vercel Speed Insights](https://vercel.com/docs/speed-insights)
+- Node.js built-in test runner (`node --test`)
 
 ## How The App Works
 
 ### Authentication model
 
-- Public players are signed in anonymously through Firebase Auth.
-- A player display name is stored in the `profiles` collection.
-- Admin pages use Firebase Auth email/password sign-in and a Nuxt route middleware guard.
+- Public players sign in anonymously via Firebase Auth (`useUserProfile`), storing `displayName` in `profiles/{uid}`.
+- Admin routes require Firebase Auth email/password sign-in with custom claim `admin: true` (`useAdminAccess` + `app/middleware/auth.ts`).
 
 ### Session lifecycle
 
 Each session moves through three states:
 
-- `open`: players can still submit or update RSVPs
-- `locked`: RSVP collection is frozen and the session is ready for final attendance and payment handling
-- `completed`: session is closed
+- `open`: players can submit or update RSVPs (gated by `maxPlayers` capacity, default `8`)
+- `locked`: RSVPs are frozen; on-court attendance check-in and settlement are active
+- `completed`: session is finalized and included in `/leaderboard` statistics
 
 ### Cost calculation
 
-The admin session page calculates the fee per player using:
+Shared financial math lives in `app/utils/sessionFinancials.ts`:
 
-`courtCost + (shuttlecocksUsed * shuttlecockPrice)`
+- **Shuttlecock unit price**: if `shuttlecockPackPrice > 0`, unit price is `Math.round((shuttlecockPackPrice / 12) / 1000) * 1000`; otherwise `shuttlecockPrice`.
+- **Total session cost**: `courtCost + (shuttlecocksUsed * shuttlecockPrice)`.
+- **Fee per person**: `Math.ceil(totalSessionCost / totalActualPlayers / 1000) * 1000` (rounded up to the nearest 1,000 VND; `0` when `totalActualPlayers <= 0`).
+- **Actual player count**: counts `1 + guestCount` for each record where `actualAttended === true`.
+- **Personal share**: `calculatedFeePerPerson * (1 + guestCount)` for attending players (`0` for absent players once locked/completed).
 
-That total is divided by the number of actual attendees, including guests counted against confirmed attendance records.
+## Firebase & Supabase Setup
 
-## Firebase Setup
+### Expected Firebase configuration
 
-This frontend expects a Firebase project with:
+- Firebase Authentication enabled with **Anonymous** and **Email/Password** providers
+- Cloud Firestore enabled with a collection group index on `attendances` if required by Firestore queries
 
-- Authentication enabled
-- Anonymous authentication enabled for public player access
-- Email/password authentication enabled for admin access
-- Cloud Firestore enabled
+### Firestore collections
 
-The repository includes Firestore security rules in [`firestore.rules`](/Users/truonghoangthuan/Documents/Coding/personal/badminton-attendance-manager/badminton-attendance-manager-frontend/firestore.rules).
+- `sessions`: session documents (`date`, `time`, `location`, `maxPlayers`, `status`, `courtNumber`, `shuttlecockType`, `level`, `bankInfo`, `paymentQR`, `financials`)
+- `sessions/{sessionId}/attendances`: RSVP and check-in records (`uid`, `name`, `isJoining`, `guestCount`, `actualAttended`, `hasPaid`, `isManual`, `updatedAt`)
+- `profiles`: public user profiles (`displayName`, `isAnonymous`, `createdAt`, `updatedAt`)
+- `roster`: optional legacy member lookup used as fallback greeting on `/`
 
-### Expected Firestore collections
+### Supabase configuration
 
-- `sessions`
-  - stores session metadata such as `date`, `time`, `location`, `status`, and `financials`
-- `sessions/{sessionId}/attendances`
-  - stores RSVP and attendance records per authenticated user
-- `profiles`
-  - stores public player profile data such as `displayName`
-- `roster`
-  - legacy or admin-managed member list used by the landing page for saved identity lookup
+- Supabase Storage bucket `payment-qr-codes` with public read access for uploaded session QR images (`useSupabaseQRCode.ts`)
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` and fill in your Firebase client configuration:
+Copy `.env.example` to `.env` and fill in your Firebase and Supabase credentials:
 
 ```bash
 cp .env.example .env
 ```
 
 ```env
+# Firebase Client Configuration
 NUXT_PUBLIC_FIREBASE_API_KEY=
 NUXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
 NUXT_PUBLIC_FIREBASE_PROJECT_ID=
 NUXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NUXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NUXT_PUBLIC_FIREBASE_APP_ID=
+NUXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NUXT_PUBLIC_SUPABASE_KEY=your-anon-public-key
+
+# Nuxt App Configuration
 NUXT_APP_BASE_URL=/
 ```
 
@@ -114,38 +120,28 @@ NUXT_APP_BASE_URL=/
 
 ### Prerequisites
 
-- Node.js 18 or newer
+- Node.js 18+
 - npm
 
-### Install dependencies
+### Commands
 
 ```bash
+# Install dependencies
 npm install
-```
 
-### Start the development server
-
-```bash
+# Start development server
 npm run dev
-```
 
-Nuxt will start the local development server and hot-reload changes automatically.
+# Run unit tests
+npm test
 
-### Build for production
-
-```bash
+# Build for production
 npm run build
-```
 
-### Preview the production build
-
-```bash
+# Preview production build
 npm run preview
-```
 
-### Generate a static build
-
-```bash
+# Generate static site
 npm run generate
 ```
 
@@ -153,41 +149,35 @@ npm run generate
 
 ```text
 app/
-  assets/css/             Global styles
-  components/             Shared UI and form components
-  composables/            Reusable state and auth/profile logic
-  layouts/                Default and admin layouts
-  middleware/             Route protection for admin pages
-  pages/                  Public and admin route pages
-  utils/                  Firebase initialization
-public/                   Static assets
-nuxt.config.ts            Nuxt configuration and runtime config
-tailwind.config.ts        Tailwind configuration
-firestore.rules           Firestore security rules
+  assets/                 Global CSS and SVG assets
+  components/
+    UI/                   Glass UI primitives (GlassCard, GlassButton, GlassInput, GlassModal, ConfirmDialog, LanguageSwitcher)
+    admin/                AdminQRCodeManager
+    leaderboard/          TimeframeFilterBar, RankingRulesModal
+    session/              QRCodeDisplay, SocialShareModal
+    UsernamePrompt.vue    Public display-name onboarding modal
+  composables/            useAdminAccess, useI18n, useSupabaseQRCode, useUIConfirm, useUserProfile
+  layouts/                default.vue (public) and admin.vue (admin)
+  locales/                Bilingual dictionaries (vi.ts, en.ts)
+  middleware/             auth.ts (admin route protection)
+  pages/                  /, /leaderboard, /session/[id], /admin, /admin/login, /admin/session/[id]
+  types/                  Shared TypeScript interfaces (session.ts)
+  utils/                  dateFormat, firebase, leaderboardStats, sessionExport, sessionFinancials, sessionSocialShare, vietqr
+public/                   Static public assets
+tests/                    Node test suites (*.test.mjs)
+nuxt.config.ts            Nuxt 4, PrimeVue, Tailwind, Supabase, and Vercel module config
+tailwind.config.ts        Tailwind theme and custom brand tokens
 ```
-
-## Scripts
-
-- `npm run dev`: start the Nuxt development server
-- `npm run build`: create a production build
-- `npm run preview`: preview the production build locally
-- `npm run generate`: generate a static site build
 
 ## Admin Authorization
 
-The admin dashboard and all session-management write operations (create, update, delete) require a Firebase Auth user with a custom claim:
+Admin write operations and `/admin*` routes require a Firebase Auth user with custom claim:
 
 - `admin: true`
 
 ### Provisioning an admin
 
-Signing in with email/password is not sufficient on its own. An operator must assign the custom claim using the Firebase Admin SDK (usually via a separate backend or a local script).
-
-**Operator Checklist:**
-1. Create or identify the Firebase Auth user in the Firebase Console.
-2. Assign the custom claim `admin: true` to the user's UID.
-3. Have the user sign out and sign back in to refresh their ID token.
-4. Confirm the user can now see the **Dashboard** button on the home page and access `/admin`.
-
-## Project Structure
-...
+1. Create or locate the email/password user in Firebase Console.
+2. Assign custom claim `{ "admin": true }` to the user's UID via the Firebase Admin SDK.
+3. Sign in at `/admin/login` (which forces a token refresh via `refreshAdminClaims(true)`).
+4. Verify the **Dashboard** button appears in the public header and `/admin` is accessible.
