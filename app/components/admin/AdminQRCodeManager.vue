@@ -396,7 +396,7 @@ const cancelPreview = () => {
           />
           <div v-else class="flex h-28 w-28 flex-col items-center justify-center p-2 text-center text-slate-500">
             <QrCode :size="24" class="opacity-40" />
-            <p class="mt-1 text-[10px] font-bold text-amber-600">Lỗi hiển thị QR</p>
+            <p class="mt-1 text-[10px] font-bold text-amber-600">{{ t('sessionDetail.qrLoadError') }}</p>
           </div>
         </div>
         <div class="space-y-1.5">

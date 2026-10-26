@@ -1,85 +1,117 @@
 <script setup lang="ts">
-import { signOut } from 'firebase/auth'
-import { ArrowLeft, LayoutDashboard, LogOut, Menu, ShieldCheck, X } from 'lucide-vue-next'
+import { signOut } from 'firebase/auth';
+import { Home, LayoutDashboard, LogOut, Menu, X } from 'lucide-vue-next';
 
-useHead({
-  link: [
-    { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-    { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
-    { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&display=swap' }
-  ]
-})
+const { auth } = useFirebase();
+const { t } = useI18n();
+const router = useRouter();
+const route = useRoute();
 
-const { auth } = useFirebase()
-const { t } = useI18n()
-const router = useRouter()
-const route = useRoute()
+const isMobileMenuOpen = ref(false);
 
-const isMobileMenuOpen = ref(false)
-
-watch(() => route.path, () => {
-  if (isMobileMenuOpen.value) isMobileMenuOpen.value = false
-})
+watch(
+  () => route.path,
+  () => {
+    isMobileMenuOpen.value = false;
+  },
+);
 
 const handleLogout = async () => {
   try {
-    await signOut(auth)
-    router.push('/admin/login')
+    await signOut(auth);
+    router.push('/admin/login');
   } catch (e) {
-    console.error('Logout failed', e)
+    console.error('Logout failed', e);
   }
-}
+};
 </script>
 
 <template>
-  <div class="relative flex min-h-screen flex-col items-center bg-[#F5F0E8] text-[#191919] font-inter">
-    <!-- Top Nav -->
-    <nav class="w-full max-w-[1200px] flex items-center justify-between py-6 px-4 md:px-0 border-b border-[#E8E3DA] mb-12">
-      <!-- Logo -->
-      <NuxtLink to="/admin" class="font-newsreader text-[22px] font-medium text-[#191919] tracking-[-0.02em] no-underline">
-        AdminPanel.
-      </NuxtLink>
+  <div class="relative min-h-screen">
+    <div class="bg-mesh" />
+    <nav class="sticky top-0 z-50 w-full px-4 py-4 md:px-6">
+      <div class="mx-auto max-w-7xl">
+        <div class="glass-shell flex items-center justify-between gap-3 px-4 py-3.5 md:px-6">
+          <NuxtLink to="/admin" class="group flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-2xl border border-brand-line bg-brand-court transition-transform group-hover:scale-105">
+              <img src="/favicon.svg" alt="Gravity Badminton" class="h-6 w-6" />
+            </div>
+            <div>
+              <p class="section-kicker">{{ t('admin.kicker') }}</p>
+              <span class="text-lg font-black tracking-tight text-brand-ink">
+                {{ t('admin.panelTitle') }}
+              </span>
+            </div>
+          </NuxtLink>
 
-      <!-- Desktop Nav -->
-      <div class="hidden md:flex items-center gap-6">
-        <NuxtLink to="/admin" class="text-sm font-medium transition-colors" :class="$route.path === '/admin' ? 'text-[#CC785C]' : 'text-[#666666] hover:text-[#191919]'">
-          {{ t('nav.dashboard') }}
-        </NuxtLink>
-        <NuxtLink to="/" class="text-sm font-medium text-[#666666] hover:text-[#191919] transition-colors">
-          {{ t('nav.backToSite') }}
-        </NuxtLink>
-        <UILanguageSwitcher class="scale-90" />
-        <button @click="handleLogout" class="text-sm font-medium text-[#666666] hover:text-[#191919] transition-colors" :title="t('nav.logout')">
-          {{ t('nav.logout') }}
-        </button>
+          <div class="hidden items-center gap-3 md:flex">
+            <NuxtLink
+              to="/admin"
+              class="inline-flex items-center gap-2 rounded-2xl px-3.5 py-2 text-sm font-bold transition-colors"
+              :class="route.path === '/admin' ? 'bg-brand-sand text-brand-ink' : 'text-brand-slate hover:bg-brand-sand hover:text-brand-ink'"
+            >
+              <LayoutDashboard :size="16" />
+              {{ t('nav.dashboard') }}
+            </NuxtLink>
+            <NuxtLink
+              to="/"
+              class="inline-flex items-center gap-2 rounded-2xl px-3.5 py-2 text-sm font-bold text-brand-slate transition-colors hover:bg-brand-sand hover:text-brand-ink"
+            >
+              <Home :size="16" />
+              {{ t('nav.backToSite') }}
+            </NuxtLink>
+            <UILanguageSwitcher />
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 rounded-2xl border border-brand-line bg-white/80 px-3.5 py-2 text-sm font-bold text-brand-slate transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+              @click="handleLogout"
+            >
+              <LogOut :size="16" />
+              {{ t('nav.logout') }}
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2 md:hidden">
+            <UILanguageSwitcher />
+            <button
+              type="button"
+              class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-brand-line bg-white/80 text-brand-slate"
+              @click="isMobileMenuOpen = !isMobileMenuOpen"
+            >
+              <Menu v-if="!isMobileMenuOpen" :size="20" />
+              <X v-else :size="20" />
+            </button>
+          </div>
+        </div>
+
+        <div v-if="isMobileMenuOpen" class="mt-2 rounded-2xl border border-brand-line bg-white p-3 shadow-lg md:hidden">
+          <nav class="flex flex-col gap-1">
+            <NuxtLink
+              to="/admin"
+              class="flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm font-bold"
+              :class="route.path === '/admin' ? 'bg-brand-sand text-brand-ink' : 'text-brand-slate'"
+            >
+              <LayoutDashboard :size="16" />
+              {{ t('nav.dashboard') }}
+            </NuxtLink>
+            <NuxtLink to="/" class="flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm font-bold text-brand-slate">
+              <Home :size="16" />
+              {{ t('nav.backToSite') }}
+            </NuxtLink>
+            <button
+              type="button"
+              class="flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-left text-sm font-bold text-red-600 hover:bg-red-50"
+              @click="handleLogout"
+            >
+              <LogOut :size="16" />
+              {{ t('nav.logout') }}
+            </button>
+          </nav>
+        </div>
       </div>
-
-      <!-- Mobile Menu Toggle -->
-      <button class="md:hidden p-2 text-[#666666]" @click="isMobileMenuOpen = !isMobileMenuOpen">
-        <Menu v-if="!isMobileMenuOpen" :size="24" />
-        <X v-else :size="24" />
-      </button>
     </nav>
 
-    <!-- Mobile Dropdown -->
-    <div v-if="isMobileMenuOpen" class="fixed inset-0 top-[76px] z-40 bg-[#F5F0E8] p-4 md:hidden border-t border-[#E8E3DA]">
-      <div class="flex flex-col gap-4 max-w-sm mx-auto mt-4">
-        <nav class="flex flex-col gap-3">
-          <NuxtLink to="/admin" class="px-4 py-3 text-sm font-medium transition-colors rounded-lg" :class="$route.path === '/admin' ? 'text-[#CC785C] bg-[#F7EBE8]' : 'text-[#666666] hover:text-[#191919]'">
-            {{ t('nav.dashboard') }}
-          </NuxtLink>
-          <NuxtLink to="/" class="px-4 py-3 text-sm font-medium text-[#666666] hover:text-[#191919] transition-colors">
-            {{ t('nav.backToSite') }}
-          </NuxtLink>
-          <button @click="handleLogout" class="text-left px-4 py-3 text-sm font-medium text-[#666666] hover:text-[#191919] transition-colors">
-            {{ t('nav.logout') }}
-          </button>
-        </nav>
-      </div>
-    </div>
-
-    <!-- Main Content -->
-    <main class="w-full max-w-[1200px] px-4 md:px-0 pb-16 flex-1">
+    <main class="relative z-10 mx-auto max-w-7xl px-4 py-6 pb-16 md:px-6 md:py-8">
       <slot />
     </main>
   </div>

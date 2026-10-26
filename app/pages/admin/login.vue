@@ -185,19 +185,3 @@ definePageMeta({
     </div>
   </div>
 </template>
-
-<style scoped>
-.animate-spin {
-  animation: login-spin 0.8s linear infinite;
-}
-
-@keyframes login-spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-</style>

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { formatDisplayDate } from '../app/utils/dateFormat.ts';
+import { formatDisplayDate, getLocalTodayDate } from '../app/utils/dateFormat.ts';
 
 test('formatDisplayDate converts YYYY-MM-DD to DD/MM/YYYY', () => {
   assert.equal(formatDisplayDate('2026-09-04'), '04/09/2026', 'Should convert YYYY-MM-DD to DD/MM/YYYY');
@@ -37,4 +37,10 @@ test('sessionSocialShare formats date with formatDisplayDate', async () => {
   const settlementText = generateSessionSettlementText(mockSession, [], { totalSessionCost: 200000 });
   assert.ok(settlementText.includes('📅 Ngày: 04/09/2026'), 'Settlement text should contain 04/09/2026');
 });
+
+test('getLocalTodayDate returns YYYY-MM-DD in local timezone', () => {
+  const sample = new Date(2026, 9, 26, 1, 30, 0); // Oct 26, 2026 01:30 local
+  assert.equal(getLocalTodayDate(sample), '2026-10-26');
+});
+
 
