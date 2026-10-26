@@ -38,7 +38,7 @@ const { state, accept, reject } = useUIConfirm()
           {{ state.options?.rejectLabel || 'Cancel' }}
         </UIGlassButton>
         <UIGlassButton
-          :variant="state.options?.severity === 'danger' ? 'primary' : 'primary'"
+          variant="primary"
           :class="state.options?.severity === 'danger' ? '!bg-red-500 !border-red-500 hover:!bg-red-600' : ''"
           @click="accept"
         >
