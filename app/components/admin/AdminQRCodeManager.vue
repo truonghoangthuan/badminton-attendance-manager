@@ -315,22 +315,23 @@ const cancelPreview = () => {
       </div>
 
       <form @submit.prevent="saveBankDetails" class="space-y-4">
-        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div class="flex w-full flex-col gap-1.5">
-            <label class="px-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+          <!-- Full-width Standard Bank Selector -->
+          <div class="flex w-full flex-col gap-2 sm:col-span-2">
+            <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">
               {{ t('admin.qr.selectBankLabel') }}
             </label>
             <div class="group relative">
-              <div class="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-slate-400">
+              <div class="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-brand-slate transition-colors group-focus-within:text-brand-court">
                 <Building2 :size="16" />
               </div>
-              <div class="pointer-events-none absolute right-3 top-1/2 z-10 -translate-y-1/2 text-slate-400">
+              <div class="pointer-events-none absolute right-3.5 top-1/2 z-10 -translate-y-1/2 text-slate-400">
                 <ChevronDown :size="16" />
               </div>
               <select
                 :value="bankForm.bankCode"
                 @change="onBankSelect"
-                class="w-full appearance-none rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-9 text-sm text-brand-ink outline-none transition-all hover:border-emerald-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                class="w-full appearance-none rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-9 text-sm text-brand-ink outline-none transition-all hover:border-emerald-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
               >
                 <option value="">{{ t('admin.qr.chooseStandardBank') }}</option>
                 <option v-for="bank in COMMON_VIETNAMESE_BANKS" :key="bank.code" :value="bank.code">
@@ -340,6 +341,7 @@ const cancelPreview = () => {
             </div>
           </div>
 
+          <!-- Bank Name & Account Number side-by-side -->
           <UIGlassInput
             v-model="bankForm.bankName"
             type="text"
@@ -359,21 +361,24 @@ const cancelPreview = () => {
             <template #icon><CreditCard :size="16" /></template>
           </UIGlassInput>
 
-          <UIGlassInput
-            v-model="bankForm.accountName"
-            type="text"
-            :label="t('admin.qr.accountNameLabel')"
-            :placeholder="t('admin.qr.accountNamePlaceholder')"
-          >
-            <template #icon><UserCheck :size="16" /></template>
-          </UIGlassInput>
+          <!-- Full-width Account Holder Name -->
+          <div class="sm:col-span-2">
+            <UIGlassInput
+              v-model="bankForm.accountName"
+              type="text"
+              :label="t('admin.qr.accountNameLabel')"
+              :placeholder="t('admin.qr.accountNamePlaceholder')"
+            >
+              <template #icon><UserCheck :size="16" /></template>
+            </UIGlassInput>
+          </div>
         </div>
 
-        <div class="flex items-center justify-between">
-          <p class="text-xs text-brand-slate">
+        <div class="flex flex-col gap-3 pt-1">
+          <p class="text-xs leading-relaxed text-brand-slate">
             {{ t('admin.qr.vietQrHint') }}
           </p>
-          <UIGlassButton type="submit" :loading="savingBank" class="!px-4 !py-2 !text-xs">
+          <UIGlassButton type="submit" :loading="savingBank" class="w-full justify-center !py-2.5 !text-xs font-bold">
             <template #icon-left><Save :size="14" /></template>
             {{ t('admin.qr.saveBankBtn') }}
           </UIGlassButton>
