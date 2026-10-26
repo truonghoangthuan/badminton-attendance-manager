@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, collectionGroup, getDocs, query, orderBy } from 'firebase/firestore';
 import {
   ArrowLeft,
   Award,
@@ -31,38 +31,62 @@ const showRulesModal = ref(false);
 onMounted(async () => {
   try {
     const sessionsSnap = await getDocs(query(collection(db, 'sessions'), orderBy('date', 'desc')));
+    // Only completed sessions count towards leaderboard stats (Finding #6)
+    const completedSessions = sessionsSnap.docs.filter((doc) => doc.data().status === 'completed');
 
-    // Fetch attendances across sessions in parallel batches
-    const loadedSessions = await Promise.all(
-      sessionsSnap.docs.map(async (sessionDoc) => {
-        const sessionData = sessionDoc.data();
-        const sessionDate = sessionData.date || '';
-        const shuttlecocksUsed = sessionData.financials?.shuttlecocksUsed || 0;
+    // Finding #7: Try collectionGroup('attendances') first to fetch in 1 batch, with fallback
+    let attendancesBySessionId = new Map<string, RawAttendance[]>();
+    try {
+      const allAttendancesSnap = await getDocs(collectionGroup(db, 'attendances'));
+      for (const attDoc of allAttendancesSnap.docs) {
+        const sessionId = attDoc.ref.parent?.parent?.id;
+        if (!sessionId) continue;
+        const att = attDoc.data();
+        const name = (att.name || '').trim();
+        if (!name) continue;
+        const list = attendancesBySessionId.get(sessionId) || [];
+        list.push({
+          name,
+          isJoining: !!att.isJoining,
+          actualAttended: !!att.actualAttended,
+          guestCount: att.guestCount || 0,
+        });
+        attendancesBySessionId.set(sessionId, list);
+      }
+    } catch {
+      // Fallback: per-session subcollection read if collectionGroup rule not permitted
+      attendancesBySessionId = new Map();
+      await Promise.all(
+        completedSessions.map(async (sessionDoc) => {
+          const attendancesSnap = await getDocs(
+            collection(db, `sessions/${sessionDoc.id}/attendances`)
+          );
+          const list: RawAttendance[] = attendancesSnap.docs
+            .map((attDoc) => {
+              const att = attDoc.data();
+              return {
+                name: (att.name || '').trim(),
+                isJoining: !!att.isJoining,
+                actualAttended: !!att.actualAttended,
+                guestCount: att.guestCount || 0,
+              };
+            })
+            .filter((att) => !!att.name);
+          attendancesBySessionId.set(sessionDoc.id, list);
+        })
+      );
+    }
 
-        const attendancesSnap = await getDocs(
-          collection(db, `sessions/${sessionDoc.id}/attendances`)
-        );
-
-        const attendances: RawAttendance[] = attendancesSnap.docs
-          .map((attDoc) => {
-            const att = attDoc.data();
-            return {
-              name: (att.name || '').trim(),
-              isJoining: !!att.isJoining,
-              actualAttended: !!att.actualAttended,
-              guestCount: att.guestCount || 0,
-            };
-          })
-          .filter((att) => !!att.name);
-
-        return {
-          id: sessionDoc.id,
-          date: sessionDate,
-          shuttlecocksUsed,
-          attendances,
-        };
-      })
-    );
+    const loadedSessions: RawSessionItem[] = completedSessions.map((sessionDoc) => {
+      const sessionData = sessionDoc.data();
+      return {
+        id: sessionDoc.id,
+        date: sessionData.date || '',
+        status: sessionData.status || 'completed',
+        shuttlecocksUsed: sessionData.financials?.shuttlecocksUsed || 0,
+        attendances: attendancesBySessionId.get(sessionDoc.id) || [],
+      };
+    });
 
     rawSessions.value = loadedSessions;
   } catch (e) {
