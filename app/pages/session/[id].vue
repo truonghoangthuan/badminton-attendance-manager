@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { doc, collection, setDoc, orderBy, onSnapshot, query } from 'firebase/firestore';
 import { BadgeDollarSign, Clock3, Feather, Grid2x2, Loader2, MapPin, Share2, Trophy, User, Users as UsersIcon } from 'lucide-vue-next';
-import { calculateFeePerPerson, getSessionFinancialBreakdown } from '~/utils/sessionFinancials';
+import { getSessionFinancialBreakdown } from '~/utils/sessionFinancials';
 
 const route = useRoute();
 const sessionId = route.params.id as string;
@@ -17,6 +17,7 @@ const submitting = ref(false);
 const message = ref({ text: '', type: '' });
 const newName = ref('');
 const showShareModal = ref(false);
+const voteSynced = ref(false);
 const vote = ref({
   isJoining: true,
   guestCount: 0,
@@ -32,7 +33,10 @@ const hasExistingVote = computed(() => {
 const maxCapacity = computed(() => session.value?.maxPlayers || 8);
 const totalJoinedSlots = computed(() =>
   attendanceList.value.reduce((acc, curr) => {
-    if (curr.isJoining) return acc + 1 + (curr.guestCount || 0);
+    if (curr.isJoining) {
+      const guests = Math.max(0, Math.floor(Number(curr.guestCount) || 0));
+      return acc + 1 + guests;
+    }
     return acc;
   }, 0)
 );
@@ -47,7 +51,8 @@ const isUserAlreadyJoining = computed(() => myAttendanceRecord.value?.isJoining 
 const totalActualPlayers = computed(() => {
   return attendanceList.value.reduce((acc, curr) => {
     if (curr.actualAttended) {
-      return acc + 1 + (curr.guestCount || 0);
+      const guests = Math.max(0, Math.floor(Number(curr.guestCount) || 0));
+      return acc + 1 + guests;
     }
 
     return acc;
@@ -61,7 +66,7 @@ const financialBreakdown = computed(() =>
 const totalSessionCost = computed(() => financialBreakdown.value.totalSessionCost);
 
 const calculatedFeePerPerson = computed(() => {
-  return calculateFeePerPerson(totalSessionCost.value, totalActualPlayers.value);
+  return financialBreakdown.value.feePerPerson;
 });
 
 onMounted(async () => {
@@ -84,11 +89,13 @@ onMounted(async () => {
     });
 
     watchEffect(() => {
+      if (voteSynced.value) return;
       if (user.value && attendanceList.value.length) {
         const myVote = attendanceList.value.find((a) => a.id === user.value?.uid);
         if (myVote) {
           vote.value.isJoining = myVote.isJoining;
-          vote.value.guestCount = myVote.guestCount || 0;
+          vote.value.guestCount = Math.max(0, Math.floor(Number(myVote.guestCount) || 0));
+          voteSynced.value = true;
         } else if (isSessionFull.value) {
           vote.value.isJoining = false;
         }
@@ -146,8 +153,10 @@ const submitVote = async () => {
   }
 
   if (vote.value.isJoining) {
-    const previousSlots = isUserAlreadyJoining.value ? 1 + (myAttendanceRecord.value?.guestCount || 0) : 0;
-    const requestedSlots = 1 + (vote.value.guestCount || 0);
+    const safeGuestCount = Math.max(0, Math.floor(Number(vote.value.guestCount) || 0));
+    vote.value.guestCount = safeGuestCount;
+    const previousSlots = isUserAlreadyJoining.value ? 1 + Math.max(0, Math.floor(Number(myAttendanceRecord.value?.guestCount) || 0)) : 0;
+    const requestedSlots = 1 + safeGuestCount;
     const availableSlots = Math.max(0, maxCapacity.value - (totalJoinedSlots.value - previousSlots));
 
     if (requestedSlots > availableSlots) {
@@ -170,16 +179,21 @@ const submitVote = async () => {
     const attendanceRef = doc(db, `sessions/${sessionId}/attendances`, uid);
     const existingRecord = attendanceList.value.find((a: any) => a.id === uid);
     const actualAttended = vote.value.isJoining ? (existingRecord?.actualAttended ?? false) : false;
+    const safeGuestCount = vote.value.isJoining
+      ? Math.max(0, Math.floor(Number(vote.value.guestCount) || 0))
+      : 0;
 
     await setDoc(attendanceRef, {
       uid,
       name: displayName,
       isJoining: vote.value.isJoining,
-      guestCount: vote.value.guestCount || 0,
+      guestCount: safeGuestCount,
       actualAttended,
       hasPaid: existingRecord?.hasPaid ?? false,
       updatedAt: new Date().toISOString(),
     }, { merge: true });
+
+    voteSynced.value = true;
 
     toast.add({
       severity: 'success',
@@ -233,6 +247,13 @@ const isSessionCompleted = computed(() => session.value?.status === 'completed')
 const isMatchOrSettling = computed(
   () => session.value?.status === 'locked' || session.value?.status === 'completed',
 );
+
+const personalAmount = computed(() => {
+  if (!myAttendanceRecord.value?.isJoining) return 0;
+  if (isMatchOrSettling.value && !myAttendanceRecord.value?.actualAttended) return 0;
+  const guests = Math.max(0, Math.floor(Number(myAttendanceRecord.value.guestCount) || 0));
+  return calculatedFeePerPerson.value * (1 + guests);
+});
 
 const getAttendanceStatusClass = (isJoining: boolean) => {
   return isJoining ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-600';
@@ -392,7 +413,7 @@ const getGuestLabel = (guestCount: number) => {
           </div>
 
           <div
-            v-if="myAttendanceRecord?.isJoining"
+            v-if="myAttendanceRecord?.isJoining && (!isMatchOrSettling || myAttendanceRecord.actualAttended)"
             class="rounded-[24px] border border-brand-court/30 bg-emerald-50/80 p-4"
           >
             <div class="flex items-center justify-between">
@@ -405,7 +426,7 @@ const getGuestLabel = (guestCount: number) => {
               </span>
             </div>
             <p class="mt-1 text-2xl font-black text-brand-ink">
-              {{ formatCurrency(calculatedFeePerPerson * (1 + (myAttendanceRecord.guestCount || 0))) }}
+              {{ formatCurrency(personalAmount) }}
             </p>
             <p v-if="myAttendanceRecord.guestCount" class="mt-0.5 text-xs font-medium text-brand-slate">
               {{ t('sessionDetail.includesYouAndGuests', { guests: myAttendanceRecord.guestCount, slots: 1 + myAttendanceRecord.guestCount }) }}
@@ -520,7 +541,7 @@ const getGuestLabel = (guestCount: number) => {
             :total-session-cost="financialBreakdown.totalSessionCost"
             :total-actual-players="financialBreakdown.totalActualPlayers"
             :calculated-fee-per-person="calculatedFeePerPerson"
-            :personal-amount="calculatedFeePerPerson * (1 + (myAttendanceRecord?.guestCount || 0))"
+            :personal-amount="personalAmount"
             :bank-info="session.bankInfo || null"
             :session-date="session.date"
             :user-name="profile?.displayName || ''"

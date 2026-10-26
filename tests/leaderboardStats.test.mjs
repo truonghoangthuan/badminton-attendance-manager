@@ -48,3 +48,29 @@ test('calculatePlayerStats correctly computes matches, totalRsvps, and reliabili
   assert.equal(charlie.totalRsvps, 1);
   assert.equal(charlie.reliabilityRate, 100);
 });
+
+test('calculatePlayerStats ignores open and locked sessions when status is present', () => {
+  const sessions = [
+    {
+      date: '2026-09-01',
+      status: 'completed',
+      attendances: [{ name: 'Alice', isJoining: true, actualAttended: true }],
+    },
+    {
+      date: '2026-09-15',
+      status: 'open',
+      attendances: [{ name: 'Alice', isJoining: true, actualAttended: false }],
+    },
+    {
+      date: '2026-09-10',
+      status: 'locked',
+      attendances: [{ name: 'Alice', isJoining: true, actualAttended: false }],
+    },
+  ];
+
+  const stats = calculatePlayerStats(sessions);
+  assert.equal(stats.length, 1);
+  assert.equal(stats[0].matchesPlayed, 1);
+  assert.equal(stats[0].totalRsvps, 1);
+  assert.equal(stats[0].reliabilityRate, 100);
+});

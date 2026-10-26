@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, getDocs } from 'firebase/firestore';
 import { Calendar, ChevronDown, Clock3, Copy, Feather, Grid2x2, Loader2, MapPin, Plus, RefreshCcw, Trophy, Users as UsersIcon, X } from 'lucide-vue-next';
+import { useToast } from 'primevue/usetoast';
 import { SKILL_LEVEL_OPTIONS } from '~/types/session';
 
 definePageMeta({
@@ -11,6 +12,7 @@ definePageMeta({
 const { db } = useFirebase();
 const { isAdmin, adminUser } = useAdminAccess();
 const confirm = useUIConfirm();
+const toast = useToast();
 const { t } = useI18n();
 const sessionsRef = collection(db, 'sessions');
 const sessions = ref<any[]>([]);
@@ -21,7 +23,6 @@ const adding = ref(false);
 const deletingSessionId = ref<string | null>(null);
 const isEditing = ref(false);
 const editingSessionId = ref<string | null>(null);
-const dateInputRef = ref<HTMLInputElement | null>(null);
 const newSession = ref({
   date: new Date().toISOString().split('T')[0],
   time: '19:00',
@@ -37,20 +38,6 @@ const timeOptions = Array.from({ length: 24 * 12 }, (_, index) => {
 
   return `${hours}:${minutes}`;
 });
-
-const openDatePicker = () => {
-  const input = dateInputRef.value;
-
-  if (!input) {
-    return;
-  }
-
-  input.focus();
-
-  if (typeof input.showPicker === 'function') {
-    input.showPicker();
-  }
-};
 
 onMounted(() => {
   const q = query(sessionsRef, orderBy('date', 'desc'));
@@ -196,6 +183,8 @@ const deleteSession = async (session: any) => {
       deletingSessionId.value = session.id;
 
       try {
+        const attSnap = await getDocs(collection(db, `sessions/${session.id}/attendances`));
+        await Promise.all(attSnap.docs.map((d) => deleteDoc(d.ref)));
         await deleteDoc(doc(db, 'sessions', session.id));
       } catch (e) {
         console.error('Error deleting session:', e);
@@ -207,12 +196,16 @@ const deleteSession = async (session: any) => {
   });
 };
 
-const copySessionLink = (id: string) => {
+const copySessionLink = async (id: string) => {
   const url = `${window.location.origin}/session/${id}`;
-  navigator.clipboard.writeText(url);
+  await navigator.clipboard.writeText(url);
+  toast.add({
+    severity: 'success',
+    summary: t('common.copied'),
+    detail: url,
+    life: 2500,
+  });
 };
-
-// Status color is replaced by small indicator dots directly in template
 </script>
 
 <template>
@@ -222,9 +215,10 @@ const copySessionLink = (id: string) => {
         {{ t('admin.sessionsTitle') }}
       </h1>
       <div class="mt-6">
-        <button type="button" @click="openCreateModal" class="bg-[#CC785C] text-white border-none py-3 px-6 rounded-lg text-[15px] font-medium cursor-pointer transition-transform duration-200 shadow-[0_4px_12px_rgba(204,120,92,0.2)] hover:-translate-y-[1px] hover:shadow-[0_6px_16px_rgba(204,120,92,0.3)]">
+        <UIGlassButton @click="openCreateModal">
+          <template #icon-left><Plus :size="16" /></template>
           {{ t('admin.newSessionBtn') }}
-        </button>
+        </UIGlassButton>
       </div>
     </header>
 
@@ -237,112 +231,170 @@ const copySessionLink = (id: string) => {
     </div>
 
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div v-for="session in sessions" :key="session.id" class="bg-white border border-[#E8E3DA] rounded-xl p-6 transition-all duration-200 relative hover:border-[#D5CFC4] hover:shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
-        <!-- Status Badge -->
-        <div class="absolute top-6 right-6 text-[11px] uppercase tracking-[0.05em] font-semibold py-1 px-2 rounded" 
-             :class="session.status === 'open' ? 'bg-[#E8F5E9] text-[#2E7D32]' : session.status === 'locked' ? 'bg-[#FFF3E0] text-[#EF6C00]' : 'bg-gray-100 text-gray-600'">
-          {{ session.status }}
-        </div>
+      <UIGlassCard v-for="session in sessions" :key="session.id" hoverable class="relative flex flex-col justify-between">
+        <div>
+          <!-- Status Badge -->
+          <div
+            class="absolute top-6 right-6 text-[11px] uppercase tracking-[0.05em] font-semibold py-1 px-2.5 rounded-full border"
+            :class="
+              session.status === 'open'
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                : session.status === 'locked'
+                ? 'border-amber-200 bg-amber-50 text-amber-700'
+                : 'border-slate-200 bg-slate-100 text-slate-600'
+            "
+          >
+            {{ session.status }}
+          </div>
 
-        <div class="font-newsreader text-[28px] font-medium mb-1 text-[#191919]">
-          {{ formatDisplayDate(session.date) }}
-        </div>
-        <div class="text-[14px] text-[#CC785C] font-medium mb-6">
-          {{ session.time }}
-        </div>
+          <div class="font-newsreader text-[28px] font-medium mb-1 text-[#191919]">
+            {{ formatDisplayDate(session.date) }}
+          </div>
+          <div class="text-[14px] text-emerald-700 font-medium mb-6">
+            {{ session.time }}
+          </div>
 
-        <div class="flex flex-col gap-2 mb-6 text-[14px] text-[#666666]">
-          <div>Location: <span class="text-[#191919]">{{ session.location }}</span></div>
-          <div>Capacity: <span class="text-[#191919]">{{ session.maxPlayers || 8 }} {{ t('admin.players') }}</span></div>
-          <div v-if="session.level">Level: <span class="text-[#191919]">{{ session.level }}</span></div>
-          <div v-if="session.courtNumber">Court: <span class="text-[#191919]">{{ session.courtNumber }}</span></div>
+          <div class="flex flex-col gap-2 mb-6 text-[14px] text-brand-slate">
+            <div>{{ t('admin.locationLabel') }}: <span class="font-semibold text-brand-ink">{{ session.location }}</span></div>
+            <div>{{ t('admin.capacityLabel') }}: <span class="font-semibold text-brand-ink">{{ session.maxPlayers || 8 }} {{ t('admin.players') }}</span></div>
+            <div v-if="session.level">{{ t('admin.skillLevelLabel') }}: <span class="font-semibold text-brand-ink">{{ session.level }}</span></div>
+            <div v-if="session.courtNumber">{{ t('admin.courtNumberLabel') }}: <span class="font-semibold text-brand-ink">{{ session.courtNumber }}</span></div>
+          </div>
         </div>
 
         <!-- Actions -->
-        <div class="flex gap-2 pt-4 border-t border-[#E8E3DA]">
-          <NuxtLink :to="`/admin/session/${session.id}`" class="flex-1 text-center bg-[#F5F0E8] border border-[#E8E3DA] text-[#191919] py-2 rounded-md text-[13px] font-medium transition-colors hover:bg-[#EBE5DB]">
-            {{ t('admin.openDetails') }}
+        <div class="flex items-center gap-2 pt-4 border-t border-brand-line">
+          <NuxtLink :to="`/admin/session/${session.id}`" class="flex-1">
+            <UIGlassButton variant="secondary" class="w-full text-[13px] py-1.5">
+              {{ t('admin.openDetails') }}
+            </UIGlassButton>
           </NuxtLink>
-          <button type="button" @click="openEditModal(session)" class="flex-1 bg-[#F5F0E8] border border-[#E8E3DA] text-[#191919] py-2 rounded-md text-[13px] font-medium transition-colors hover:bg-[#EBE5DB]">
+          <UIGlassButton variant="secondary" @click="openEditModal(session)" class="flex-1 text-[13px] py-1.5">
             Edit
-          </button>
-          <button type="button" @click="toggleStatus(session)" class="w-10 flex items-center justify-center bg-[#F5F0E8] border border-[#E8E3DA] text-[#191919] py-2 rounded-md text-[13px] transition-colors hover:bg-[#EBE5DB]" :title="t('admin.toggleStatus')">
+          </UIGlassButton>
+          <UIGlassButton variant="secondary" @click="toggleStatus(session)" class="!p-2 text-[13px]" :title="t('admin.toggleStatus')">
             <RefreshCcw :size="14" />
-          </button>
-          <button type="button" @click="copySessionLink(session.id)" class="w-10 flex items-center justify-center bg-[#F5F0E8] border border-[#E8E3DA] text-[#191919] py-2 rounded-md text-[13px] transition-colors hover:bg-[#EBE5DB]" :title="t('admin.copyLink')">
+          </UIGlassButton>
+          <UIGlassButton variant="secondary" @click="copySessionLink(session.id)" class="!p-2 text-[13px]" :title="t('admin.copyLink')">
             <Copy :size="14" />
-          </button>
-          <button type="button" @click="deleteSession(session)" :disabled="deletingSessionId === session.id" class="w-10 flex items-center justify-center bg-rose-50 border border-rose-100 text-rose-600 py-2 rounded-md text-[13px] transition-colors hover:bg-rose-100 disabled:opacity-50">
-            <Loader2 v-if="deletingSessionId === session.id" class="animate-spin" :size="14" />
-            <X v-else :size="14" />
-          </button>
+          </UIGlassButton>
+          <UIGlassButton
+            variant="ghost"
+            @click="deleteSession(session)"
+            :disabled="deletingSessionId === session.id"
+            :loading="deletingSessionId === session.id"
+            class="!p-2 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+          >
+            <X :size="14" />
+          </UIGlassButton>
         </div>
-      </div>
+      </UIGlassCard>
     </div>
 
     <!-- Modal replacement -->
-    <div v-if="showCreateForm" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#191919]/20 backdrop-blur-sm">
-      <div class="bg-[#F5F0E8] rounded-2xl w-full max-w-lg shadow-xl overflow-hidden border border-[#E8E3DA]">
-        <div class="p-6 border-b border-[#E8E3DA]">
-          <h2 class="font-newsreader text-2xl text-[#191919]">
+    <UIGlassModal v-model="showCreateForm">
+      <template #header>
+        <div class="flex flex-col gap-2 text-center">
+          <h2 class="text-2xl font-black tracking-tight text-brand-ink">
             {{ isEditing ? t('admin.editModalTitle') : t('admin.createModalTitle') }}
           </h2>
         </div>
-        
-        <form @submit.prevent="createSession" class="p-6 flex flex-col gap-4 bg-white">
-          <div class="flex flex-col gap-1">
-            <label class="text-[12px] font-semibold text-[#666666]">{{ t('admin.dateLabel') }}</label>
-            <input type="date" v-model="newSession.date" required class="w-full border border-[#E8E3DA] rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#CC785C] focus:ring-1 focus:ring-[#CC785C]" />
+      </template>
+
+      <form @submit.prevent="createSession" class="flex flex-col gap-4">
+        <div class="flex w-full flex-col gap-2">
+          <label class="text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate px-1">
+            {{ t('admin.dateLabel') }}
+          </label>
+          <div class="relative">
+            <div class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-brand-slate z-10">
+              <Calendar :size="18" />
+            </div>
+            <UIGlassInput v-model="newSession.date" type="date" required class="!pl-12" />
           </div>
-          
-          <div class="flex flex-col gap-1">
-            <label class="text-[12px] font-semibold text-[#666666]">{{ t('admin.timeLabel') }}</label>
-            <select v-model="newSession.time" required class="w-full border border-[#E8E3DA] rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#CC785C] focus:ring-1 focus:ring-[#CC785C]">
+        </div>
+
+        <div class="flex w-full flex-col gap-2">
+          <label class="text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate px-1">
+            {{ t('admin.timeLabel') }}
+          </label>
+          <div class="relative group">
+            <div class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-brand-slate z-10">
+              <Clock3 :size="18" />
+            </div>
+            <select
+              v-model="newSession.time"
+              required
+              class="w-full rounded-lg border border-slate-300 bg-white py-2 pl-12 pr-4 text-sm text-brand-ink focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all outline-none"
+            >
               <option v-for="time in timeOptions" :key="time" :value="time">{{ time }}</option>
             </select>
           </div>
+        </div>
 
-          <div class="flex flex-col gap-1">
-            <label class="text-[12px] font-semibold text-[#666666]">{{ t('admin.locationLabel') }}</label>
-            <input type="text" v-model="newSession.location" required class="w-full border border-[#E8E3DA] rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#CC785C] focus:ring-1 focus:ring-[#CC785C]" />
-          </div>
+        <UIGlassInput v-model="newSession.location" type="text" :label="t('admin.locationLabel')" required>
+          <template #icon><MapPin :size="18" /></template>
+        </UIGlassInput>
 
-          <div class="flex flex-col gap-1">
-            <label class="text-[12px] font-semibold text-[#666666]">{{ t('admin.capacityLabel') }}</label>
-            <input type="number" v-model.number="newSession.maxPlayers" required min="2" class="w-full border border-[#E8E3DA] rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#CC785C] focus:ring-1 focus:ring-[#CC785C]" />
-          </div>
+        <UIGlassInput
+          v-model.number="newSession.maxPlayers"
+          type="number"
+          min="2"
+          max="50"
+          :label="t('admin.capacityLabel')"
+          placeholder="8"
+          required
+        >
+          <template #icon><UsersIcon :size="18" /></template>
+        </UIGlassInput>
 
-          <div class="grid grid-cols-2 gap-4">
-            <div class="flex flex-col gap-1">
-              <label class="text-[12px] font-semibold text-[#666666]">{{ t('admin.courtNumberLabel') }}</label>
-              <input type="text" v-model="newSession.courtNumber" class="w-full border border-[#E8E3DA] rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#CC785C] focus:ring-1 focus:ring-[#CC785C]" />
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <UIGlassInput
+            v-model="newSession.courtNumber"
+            type="text"
+            :label="t('admin.courtNumberLabel')"
+            :placeholder="t('admin.courtNumberPlaceholder')"
+          >
+            <template #icon><Grid2x2 :size="18" /></template>
+          </UIGlassInput>
+
+          <UIGlassInput
+            v-model="newSession.shuttlecockType"
+            type="text"
+            :label="t('admin.shuttlecockLabel')"
+            :placeholder="t('admin.shuttlecockPlaceholder')"
+          >
+            <template #icon><Feather :size="18" /></template>
+          </UIGlassInput>
+        </div>
+
+        <div class="flex w-full flex-col gap-2">
+          <label class="text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate px-1">
+            {{ t('admin.skillLevelLabel') }}
+          </label>
+          <div class="relative group">
+            <div class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-brand-slate z-10">
+              <Trophy :size="18" />
             </div>
-            <div class="flex flex-col gap-1">
-              <label class="text-[12px] font-semibold text-[#666666]">{{ t('admin.shuttlecockLabel') }}</label>
-              <input type="text" v-model="newSession.shuttlecockType" class="w-full border border-[#E8E3DA] rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#CC785C] focus:ring-1 focus:ring-[#CC785C]" />
-            </div>
-          </div>
-
-          <div class="flex flex-col gap-1">
-            <label class="text-[12px] font-semibold text-[#666666]">{{ t('admin.skillLevelLabel') }}</label>
-            <select v-model="newSession.level" class="w-full border border-[#E8E3DA] rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#CC785C] focus:ring-1 focus:ring-[#CC785C]">
+            <select
+              v-model="newSession.level"
+              class="w-full rounded-lg border border-slate-300 bg-white py-2 pl-12 pr-4 text-sm text-brand-ink focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all outline-none"
+            >
               <option value="">{{ t('admin.allSkillLevels') }}</option>
               <option v-for="lvl in SKILL_LEVEL_OPTIONS" :key="lvl" :value="lvl">{{ lvl }}</option>
             </select>
           </div>
+        </div>
 
-          <div class="flex justify-end gap-3 mt-4">
-            <button type="button" @click="showCreateForm = false" class="px-4 py-2 text-sm font-medium text-[#666666] hover:text-[#191919]">
-              Cancel
-            </button>
-            <button type="submit" :disabled="adding" class="bg-[#CC785C] text-white border-none py-2 px-6 rounded-md text-sm font-medium cursor-pointer transition-transform duration-200 hover:bg-[#b8674d] disabled:opacity-50">
-              <Loader2 v-if="adding" class="animate-spin" :size="16" />
-              <span v-else>{{ isEditing ? t('admin.saveChangesBtn') : t('admin.createBtn') }}</span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div class="flex justify-end gap-3 pt-4">
+          <UIGlassButton type="button" variant="secondary" @click="showCreateForm = false">
+            Cancel
+          </UIGlassButton>
+          <UIGlassButton type="submit" :loading="adding">
+            {{ isEditing ? t('admin.saveChangesBtn') : t('admin.createBtn') }}
+          </UIGlassButton>
+        </div>
+      </form>
+    </UIGlassModal>
   </div>
 </template>
-

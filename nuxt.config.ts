@@ -14,7 +14,6 @@ export default defineNuxtConfig({
   },
 
   modules: [
-    '@pinia/nuxt',
     '@nuxtjs/tailwindcss',
     '@primevue/nuxt-module',
     '@nuxtjs/supabase',

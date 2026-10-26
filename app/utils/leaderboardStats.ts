@@ -8,6 +8,7 @@ export interface RawAttendance {
 export interface RawSessionItem {
   id?: string;
   date: string;
+  status?: 'open' | 'locked' | 'completed';
   shuttlecocksUsed?: number;
   attendances: RawAttendance[];
 }
@@ -25,6 +26,10 @@ export function calculatePlayerStats(sessions: RawSessionItem[]): PlayerStats[] 
   const statsMap: Record<string, { matches: number; rsvps: number; lastDate: string }> = {};
 
   for (const session of sessions) {
+    if (session.status && session.status !== 'completed') {
+      continue;
+    }
+
     const sessionDate = (session.date || '').split('T')[0];
     for (const att of session.attendances || []) {
       const name = att.name;

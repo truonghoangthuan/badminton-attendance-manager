@@ -123,13 +123,39 @@ const fetchQRBlob = async (): Promise<Blob | null> => {
   }
 };
 
+const convertBlobToPng = (blob: Blob): Promise<Blob> => {
+  if (blob.type === 'image/png') return Promise.resolve(blob);
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(blob);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth || img.width;
+      canvas.height = img.naturalHeight || img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return reject(new Error('Canvas context unavailable'));
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob((pngBlob) => {
+        if (pngBlob) resolve(pngBlob);
+        else reject(new Error('Canvas toBlob failed'));
+      }, 'image/png');
+    };
+    img.onerror = (err) => {
+      URL.revokeObjectURL(objectUrl);
+      reject(err);
+    };
+    img.src = objectUrl;
+  });
+};
+
 const copyQRImage = async () => {
   if (!vietQRUrl.value) return;
   try {
     const blob = await fetchQRBlob();
     if (!blob) throw new Error('Could not get image blob');
 
-    const pngBlob = blob.type === 'image/png' ? blob : new Blob([blob], { type: 'image/png' });
+    const pngBlob = await convertBlobToPng(blob);
     await navigator.clipboard.write([
       new ClipboardItem({ 'image/png': pngBlob }),
     ]);
@@ -319,4 +345,3 @@ const handleNativeShare = async () => {
     </div>
   </UIGlassModal>
 </template>
-

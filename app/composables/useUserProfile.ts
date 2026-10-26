@@ -1,6 +1,8 @@
 import { signInAnonymously, onAuthStateChanged, type User } from 'firebase/auth'
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 
+let profileAuthListenerInitialized = false
+
 export const useUserProfile = () => {
   const { auth, db } = useFirebase()
   const user = useState<User | null>('auth-user', () => null)
@@ -22,28 +24,25 @@ export const useUserProfile = () => {
     }
   }
 
-  // Initialize Auth (only once)
-  if (import.meta.client && loading.value) {
-    onMounted(() => {
-      const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-        if (!currentUser) {
-          // No user, sign in anonymously for the public flow
-          try {
-            await signInAnonymously(auth)
-          } catch (e) {
-            console.error('Error signing in anonymously:', e)
-            loading.value = false
-          }
-          return
+  // Initialize Auth (only once per client session)
+  if (import.meta.client && !profileAuthListenerInitialized) {
+    profileAuthListenerInitialized = true
+    onAuthStateChanged(auth, async (currentUser) => {
+      if (!currentUser) {
+        // No user, sign in anonymously for the public flow
+        try {
+          await signInAnonymously(auth)
+        } catch (e) {
+          console.error('Error signing in anonymously:', e)
+          loading.value = false
         }
+        return
+      }
 
-        // We have a user (anonymous or email/password)
-        user.value = currentUser
-        await fetchProfile(currentUser.uid)
-        loading.value = false
-      })
-
-      onUnmounted(unsubscribe)
+      // We have a user (anonymous or email/password)
+      user.value = currentUser
+      await fetchProfile(currentUser.uid)
+      loading.value = false
     })
   }
 

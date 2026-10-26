@@ -1,5 +1,7 @@
 import { getIdTokenResult, onAuthStateChanged, type User } from 'firebase/auth'
 
+let adminAuthListenerInitialized = false
+
 export const useAdminAccess = () => {
   const { auth } = useFirebase()
   const adminUser = useState<User | null>('admin-auth-user', () => null)
@@ -7,6 +9,9 @@ export const useAdminAccess = () => {
   const claimsLoading = useState<boolean>('admin-claims-loading', () => true)
 
   const refreshAdminClaims = async (forceRefresh = false) => {
+    if (import.meta.client) {
+      await auth.authStateReady()
+    }
     const currentUser = auth.currentUser
 
     if (!currentUser) {
@@ -24,21 +29,18 @@ export const useAdminAccess = () => {
     return isAdmin.value
   }
 
-  if (import.meta.client && claimsLoading.value) {
-    onMounted(() => {
-      const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-        if (!currentUser) {
-          adminUser.value = null
-          isAdmin.value = false
-          claimsLoading.value = false
-          return
-        }
+  if (import.meta.client && !adminAuthListenerInitialized) {
+    adminAuthListenerInitialized = true
+    onAuthStateChanged(auth, async (currentUser) => {
+      if (!currentUser) {
+        adminUser.value = null
+        isAdmin.value = false
+        claimsLoading.value = false
+        return
+      }
 
-        claimsLoading.value = true
-        await refreshAdminClaims()
-      })
-
-      onUnmounted(unsubscribe)
+      claimsLoading.value = true
+      await refreshAdminClaims()
     })
   }
 
