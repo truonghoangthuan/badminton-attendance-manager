@@ -536,6 +536,10 @@ const getGuestLabel = (guestCount: number) => {
             :shuttlecock-pack-price="financialBreakdown.shuttlecockPackPrice"
             :shuttlecock-price="financialBreakdown.shuttlecockPrice"
             :shuttlecocks-used="financialBreakdown.shuttlecocksUsed"
+            :pack-shuttlecock-cost="financialBreakdown.packShuttlecockCost"
+            :additional-shuttlecocks-used="financialBreakdown.additionalShuttlecocksUsed"
+            :additional-shuttlecock-price="financialBreakdown.additionalShuttlecockPrice"
+            :additional-shuttlecock-cost="financialBreakdown.additionalShuttlecockCost"
             :shuttlecock-cost="financialBreakdown.shuttlecockCost"
             :court-cost="financialBreakdown.courtCost"
             :total-session-cost="financialBreakdown.totalSessionCost"
@@ -623,10 +627,7 @@ const getGuestLabel = (guestCount: number) => {
         :session="session"
         :attendances="attendanceList"
         :financials="{
-          courtCost: financialBreakdown.courtCost,
-          shuttlecocksUsed: financialBreakdown.shuttlecocksUsed,
-          shuttlecockPrice: financialBreakdown.shuttlecockPrice,
-          totalSessionCost: financialBreakdown.totalSessionCost,
+          ...financialBreakdown,
           calculatedFeePerPerson: calculatedFeePerPerson,
         }"
         :initial-tab="session.status === 'completed' ? 'settlement' : 'invite'"

@@ -56,6 +56,8 @@ const financeDraft = ref({
   courtCost: 0,
   shuttlecocksUsed: 0,
   shuttlecockPackPrice: 0,
+  additionalShuttlecocksUsed: 0,
+  additionalShuttlecockPrice: 0,
 });
 const financeEditing = ref(false);
 
@@ -109,6 +111,8 @@ onMounted(() => {
         courtCost: session.value.financials.courtCost || 0,
         shuttlecocksUsed: session.value.financials.shuttlecocksUsed || 0,
         shuttlecockPackPrice: session.value.financials.shuttlecockPackPrice || 0,
+        additionalShuttlecocksUsed: session.value.financials.additionalShuttlecocksUsed || 0,
+        additionalShuttlecockPrice: session.value.financials.additionalShuttlecockPrice || 0,
       };
     }
   });
@@ -446,6 +450,8 @@ const updateFinancials = async () => {
       'financials.shuttlecocksUsed': financeDraft.value.shuttlecocksUsed,
       'financials.shuttlecockPackPrice': financeDraft.value.shuttlecockPackPrice,
       'financials.shuttlecockPrice': financialBreakdown.value.shuttlecockPrice,
+      'financials.additionalShuttlecocksUsed': financeDraft.value.additionalShuttlecocksUsed,
+      'financials.additionalShuttlecockPrice': financeDraft.value.additionalShuttlecockPrice,
       'financials.calculatedFeePerPerson': calculatedFeePerPerson.value,
     });
   } catch (e) {
@@ -869,7 +875,7 @@ const getStatusColor = (status: string) => {
                 />
               </div>
 
-              <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+              <div class="grid gap-3 sm:grid-cols-2">
                 <div class="space-y-2">
                   <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">
                     {{ t('admin.detail.shuttlesUsed') }}
@@ -894,6 +900,45 @@ const getStatusColor = (status: string) => {
                   </label>
                   <InputNumber
                     v-model="financeDraft.shuttlecockPackPrice"
+                    :min="0"
+                    locale="en-US"
+                    :use-grouping="true"
+                    :min-fraction-digits="0"
+                    :max-fraction-digits="0"
+                    fluid
+                    input-class="finance-input"
+                    @focus="financeEditing = true"
+                    @blur="onFinanceBlur"
+                  />
+                </div>
+              </div>
+
+              <!-- Additional Shuttlecock Inputs -->
+              <div class="grid gap-3 sm:grid-cols-2">
+                <div class="space-y-2">
+                  <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">
+                    {{ t('admin.detail.additionalShuttlesUsed') }}
+                  </label>
+                  <InputNumber
+                    v-model="financeDraft.additionalShuttlecocksUsed"
+                    :min="0"
+                    locale="en-US"
+                    :use-grouping="true"
+                    :min-fraction-digits="0"
+                    :max-fraction-digits="0"
+                    fluid
+                    input-class="finance-input"
+                    @focus="financeEditing = true"
+                    @blur="onFinanceBlur"
+                  />
+                </div>
+
+                <div class="space-y-2">
+                  <label class="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-brand-slate">
+                    {{ t('admin.detail.additionalShuttlePrice') }}
+                  </label>
+                  <InputNumber
+                    v-model="financeDraft.additionalShuttlecockPrice"
                     :min="0"
                     locale="en-US"
                     :use-grouping="true"
