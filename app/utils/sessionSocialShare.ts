@@ -56,7 +56,12 @@ export const generateSessionSettlementText = (
   const courtCost = financials?.courtCost || 0;
   const shuttlecocksUsed = financials?.shuttlecocksUsed || 0;
   const shuttlePrice = financials?.shuttlecockPrice || 0;
-  const shuttleCost = shuttlecocksUsed * shuttlePrice;
+  const additionalShuttlecocksUsed = financials?.additionalShuttlecocksUsed || 0;
+  const additionalShuttlecockPrice = financials?.additionalShuttlecockPrice || 0;
+  const totalShuttlecocksUsed = shuttlecocksUsed + additionalShuttlecocksUsed;
+  const shuttleCost =
+    financials?.shuttlecockCost ??
+    shuttlecocksUsed * shuttlePrice + additionalShuttlecocksUsed * additionalShuttlecockPrice;
   const totalCost = financials?.totalSessionCost || (courtCost + shuttleCost);
   const feePerPerson = financials?.calculatedFeePerPerson || 0;
   const courtNumberDisplay = session.courtNumber || 1;
@@ -65,7 +70,7 @@ export const generateSessionSettlementText = (
   text += `📅 Ngày: ${formatDisplayDate(session.date)} | 📍 ${session.location || ''}\n`;
   text += `🏟️ Số lượng sân: ${courtNumberDisplay}\n`;
   text += `🙌 Tổng số người: ${totalActualPlayers}\n`;
-  text += `💰 Chi phí: Sân ${courtCost.toLocaleString('vi-VN')}đ + Cầu (${shuttlecocksUsed} quả = ${shuttleCost.toLocaleString('vi-VN')}đ) = ${totalCost.toLocaleString('vi-VN')}đ\n`;
+  text += `💰 Chi phí: Sân ${courtCost.toLocaleString('vi-VN')}đ + Cầu (${totalShuttlecocksUsed} quả = ${shuttleCost.toLocaleString('vi-VN')}đ) = ${totalCost.toLocaleString('vi-VN')}đ\n`;
   text += `💵 Tiền sân/người: ${feePerPerson.toLocaleString('vi-VN')}đ / người`;
 
   return text;
