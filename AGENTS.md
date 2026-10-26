@@ -152,16 +152,19 @@ These rules should not change unless the user explicitly asks for product behavi
 - Admin walk-in entries write custom IDs (`walkin_<timestamp>`) with `isManual: true`.
 - Admin tools toggle attendance (`actualAttended`) and payment (`hasPaid`) fields directly on the attendance document.
 - Leaderboard stats (`app/utils/leaderboardStats.ts`) only include sessions with `status === 'completed'`, batching attendance reads via `collectionGroup(db, 'attendances')` and ranking players by `matchesPlayed`, `reliabilityRate`, `lastPlayedDate`, and `name`.
+- Unpaid session fees are aggregated across sessions using `calculateUnpaidSummary(sessions, attendancesBySession)` in `app/utils/sessionFinancials.ts`, powering the `unpaid` tab on `/admin` with 1-tap `hasPaid: true` settlement.
 
 ### Cost calculation
 
 - All financial math is centralized in `app/utils/sessionFinancials.ts`:
   - Shuttlecock unit price (`resolveShuttlecockPrice`): if `shuttlecockPackPrice > 0`, `Math.round((shuttlecockPackPrice / 12) / 1000) * 1000`; otherwise `shuttlecockPrice`
-  - Total session cost (`calculateTotalSessionCost`): `courtCost + (shuttlecocksUsed * shuttlecockPrice)`
+  - Total session cost (`calculateTotalSessionCost`): `courtCost + (shuttlecocksUsed * shuttlecockPrice) + (additionalShuttlecocksUsed * additionalShuttlecockPrice)`
   - Fee per person (`calculateFeePerPerson`): `Math.ceil(totalSessionCost / totalActualPlayers / 1000) * 1000` (rounded up to the nearest 1,000 VND; `0` when `totalActualPlayers <= 0`)
 - `totalActualPlayers` counts one player plus their guests (`1 + guestCount`) only when `actualAttended` is true
 - Guests are included in the cost split
 - Individual debts are calculated as `calculatedFeePerPerson * (1 + guestCount)` for attendees who attended (`0` for absent players once locked/completed)
+- Additional shuttlecock pricing (`additionalShuttlecockPrice`) is inherited when creating new sessions from the latest session, while `additionalShuttlecocksUsed` initializes to `0`
+- Leaderboard total shuttlecocks used aggregates both `shuttlecocksUsed` and `additionalShuttlecocksUsed`
 - The admin session page persists `financials.calculatedFeePerPerson` from the computed value
 - Both public (`app/pages/session/[id].vue`) and admin (`app/pages/admin/session/[id].vue`) flows must use `app/utils/sessionFinancials.ts` so fee calculations stay identical
 
@@ -181,6 +184,7 @@ These rules should not change unless the user explicitly asks for product behavi
 - Keep status colors and badges semantically aligned across public and admin pages
 - Avoid introducing dense enterprise-style layouts that conflict with the current product feel
 - Respect the existing split between public default layout and admin layout instead of recreating shell behavior inside pages
+- In sidebar cards and narrow containers (<450px wide, such as `AdminQRCodeManager.vue`), avoid multi-column grids (`lg:grid-cols-4`) that cause severe label wrapping and input truncation; prefer clean stacked 2-column layouts (`sm:grid-cols-2`) and full-width action buttons.
 
 ## Change Risk Checklist
 
@@ -204,4 +208,4 @@ Double-check these areas before shipping:
 - `npm run preview`
 - `npm run generate`
 
-Prefer `codegraph_explore` (when `.codegraph/` is present) and `rg` for code search.
+Prefer `codegraph_explore` (when `.codegraph/` is present) and `rg` for code search. Always quote file paths with brackets in zsh (e.g. `"app/pages/admin/session/[id].vue"`).
