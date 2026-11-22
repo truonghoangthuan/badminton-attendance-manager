@@ -100,10 +100,6 @@ const handleNameUpdate = async () => {
   <div class="relative min-h-screen">
     <Toast position="top-right" />
 
-    <div class="bg-mesh" />
-    <div class="mesh-glow top-[-10%] left-[-10%] animate-pulse-slow" />
-    <div class="mesh-glow bottom-[-10%] right-[-10%] animate-pulse-slow" style="animation-delay: -4s" />
-
     <nav class="sticky top-0 z-50 w-full px-4 py-4 md:px-6">
       <div class="mx-auto max-w-7xl">
         <div class="glass-shell flex items-center justify-between gap-3 px-4 py-4 md:px-6">
@@ -130,7 +126,7 @@ const handleNameUpdate = async () => {
                 {{ welcomeInitial }}
               </div>
               <div class="min-w-0">
-                <p class="text-[8px] font-black uppercase tracking-[0.24em] text-brand-slate/70">{{ t('nav.welcomeBack') }}</p>
+                <p class="text-xs font-black uppercase tracking-[0.24em] text-brand-slate/70">{{ t('nav.welcomeBack') }}</p>
                 <div class="flex min-w-0 items-baseline gap-2">
                   <p class="truncate text-sm font-black tracking-tight text-brand-ink">
                     {{ profile.displayName }}
@@ -186,8 +182,6 @@ const handleNameUpdate = async () => {
         </div>
       </div>
     </nav>
-
-    <UsernamePrompt />
 
     <UIGlassModal :modelValue="isEditNameOpen" @update:modelValue="closeEditNameModal">
       <template #header>

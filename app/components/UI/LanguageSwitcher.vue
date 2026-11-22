@@ -83,7 +83,7 @@ onUnmounted(() => {
         aria-orientation="vertical"
       >
         <div class="border-b border-brand-line/60 px-3 py-2">
-          <p class="text-[9px] font-black uppercase tracking-[0.2em] text-brand-slate">
+          <p class="text-xs font-black uppercase tracking-[0.2em] text-brand-slate">
             {{ t('language.chooseLanguage') }}
           </p>
         </div>

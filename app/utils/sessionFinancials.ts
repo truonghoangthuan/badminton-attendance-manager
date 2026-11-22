@@ -30,12 +30,22 @@ export interface UnpaidPlayerSummary {
 const SHUTTLECOCKS_PER_PACK = 12;
 const PRICE_ROUNDING_STEP = 1000;
 
+const vndFormatter = new Intl.NumberFormat('vi-VN', {
+  style: 'currency',
+  currency: 'VND',
+  maximumFractionDigits: 0,
+});
+
 const toNumber = (value: unknown) => {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return value;
   }
 
   return 0;
+};
+
+export const formatVnd = (value?: number | null): string => {
+  return vndFormatter.format(Math.max(0, toNumber(value)));
 };
 
 export const roundToNearestThousand = (value: number) => {

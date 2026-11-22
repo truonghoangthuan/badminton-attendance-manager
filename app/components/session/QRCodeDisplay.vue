@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Maximize2, QrCode, X, Copy, Check, Sparkles, Image as ImageIcon, AlertCircle } from 'lucide-vue-next';
+import { Maximize2, QrCode, X, Copy, Check, Image as ImageIcon, AlertCircle } from 'lucide-vue-next';
 import { generateVietQRUrl, removeVietnameseDiacritics } from '~/utils/vietqr';
 
 const props = defineProps<{
@@ -107,21 +107,12 @@ const copyText = async (text: string, fieldId: string, label: string) => {
     console.error('Copy failed', e);
   }
 };
-
-const formatCurrency = (value: number | undefined) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'VND',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value || 0);
-};
 </script>
 
 <template>
   <div
     v-if="!currentDisplayQR && !bankInfo?.accountNumber"
-    class="rounded-[32px] border border-dashed border-brand-line bg-brand-sand px-6 py-8 text-center text-brand-slate"
+    class="rounded-2xl border border-dashed border-brand-line bg-brand-sand px-6 py-8 text-center text-brand-slate"
   >
     <QrCode :size="32" class="mx-auto opacity-40" />
     <p class="mt-4 font-black text-brand-ink">{{ t('sessionDetail.noPaymentDetails') }}</p>
@@ -139,7 +130,7 @@ const formatCurrency = (value: number | undefined) => {
           :class="selectedQRType === 'dynamic' ? 'bg-white text-brand-court shadow-sm' : 'text-brand-slate hover:text-brand-ink'"
           @click="selectedQRType = 'dynamic'"
         >
-          <Sparkles :size="12" />
+          <QrCode :size="12" />
           {{ t('sessionDetail.dynamicVietQr') }}
         </button>
         <button
@@ -189,10 +180,10 @@ const formatCurrency = (value: number | undefined) => {
         <!-- Dynamic indicator badge -->
         <div
           v-if="selectedQRType === 'dynamic' && !qrImageError"
-          class="absolute bottom-2 left-2 right-2 flex items-center justify-center gap-1 rounded-md bg-emerald-600/90 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-sm"
+          class="absolute bottom-2 left-2 right-2 flex items-center justify-center gap-1 rounded-md bg-emerald-600/90 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-sm tabular-nums"
         >
-          <Sparkles :size="10" />
-          <span v-if="personalAmount && personalAmount > 0">{{ t('sessionDetail.prefilled', { amount: formatCurrency(personalAmount) }) }}</span>
+          <QrCode :size="10" />
+          <span v-if="personalAmount && personalAmount > 0">{{ t('sessionDetail.prefilled', { amount: formatVnd(personalAmount) }) }}</span>
           <span v-else>{{ t('sessionDetail.smartVietQr') }}</span>
         </div>
       </div>
@@ -204,36 +195,52 @@ const formatCurrency = (value: number | undefined) => {
           <h3 class="mt-1 text-xl font-black tracking-tight text-brand-ink">{{ t('sessionDetail.feeFormulaHeading') }}</h3>
         </div>
 
-        <div v-if="showFeeBreakdown" class="space-y-1 text-sm font-medium text-brand-slate">
+        <div v-if="showFeeBreakdown" class="space-y-1 text-sm font-medium text-brand-slate tabular-nums">
           <p>
-            Shuttlecock price = {{ formatCurrency(shuttlecockPackPrice) }} / 12 =
-            {{ formatCurrency(shuttlecockPrice) }}
+            {{
+              t('sessionDetail.shuttlePriceLine', {
+                packPrice: formatVnd(shuttlecockPackPrice),
+                unitPrice: formatVnd(shuttlecockPrice),
+              })
+            }}
           </p>
           <p>
-            Shuttlecock cost = {{ shuttlecocksUsed || 0 }} × {{ formatCurrency(shuttlecockPrice) }} =
-            {{ formatCurrency(packShuttlecockCost ?? shuttlecockCost) }}
+            {{
+              t('sessionDetail.shuttleCostLine', {
+                count: shuttlecocksUsed || 0,
+                unitPrice: formatVnd(shuttlecockPrice),
+                total: formatVnd(packShuttlecockCost ?? shuttlecockCost),
+              })
+            }}
           </p>
           <p v-if="(additionalShuttlecocksUsed || 0) > 0">
             {{
               t('sessionDetail.additionalShuttleCostLine', {
                 count: additionalShuttlecocksUsed,
-                price: formatCurrency(additionalShuttlecockPrice),
-                total: formatCurrency(additionalShuttlecockCost),
+                price: formatVnd(additionalShuttlecockPrice),
+                total: formatVnd(additionalShuttlecockCost),
               })
             }}
           </p>
-          <p>Court cost = {{ formatCurrency(courtCost) }}</p>
+          <p>{{ t('sessionDetail.courtCostLine', { courtCost: formatVnd(courtCost) }) }}</p>
           <p>
-            Total session cost = {{ formatCurrency(courtCost) }} + {{ formatCurrency(shuttlecockCost) }} =
-            {{ formatCurrency(totalSessionCost) }}
+            {{
+              t('sessionDetail.totalCostLine', {
+                courtCost: formatVnd(courtCost),
+                shuttleCost: formatVnd(shuttlecockCost),
+                total: formatVnd(totalSessionCost),
+              })
+            }}
           </p>
           <p class="text-brand-court font-black">
             <template v-if="(totalActualPlayers || 0) > 0">
-              Fee per person = {{ formatCurrency(totalSessionCost) }} / {{ totalActualPlayers }} player{{
-                totalActualPlayers === 1 ? '' : 's'
+              {{
+                t('sessionDetail.feePerPersonLine', {
+                  total: formatVnd(totalSessionCost),
+                  count: totalActualPlayers,
+                  fee: formatVnd(calculatedFeePerPerson),
+                })
               }}
-              =
-              {{ formatCurrency(calculatedFeePerPerson) }}
             </template>
             <template v-else>
               {{ t('sessionDetail.waitingForCheckin') }}
@@ -315,7 +322,7 @@ const formatCurrency = (value: number | undefined) => {
         @click="showExpand = false"
       >
         <div
-          class="relative w-full max-w-md overflow-hidden rounded-[40px] bg-white p-8 shadow-2xl transition-all"
+          class="relative w-full max-w-md overflow-hidden rounded-2xl bg-white p-8 shadow-2xl transition-all"
           @click.stop
         >
           <button
@@ -332,7 +339,7 @@ const formatCurrency = (value: number | undefined) => {
             </p>
           </div>
 
-          <div class="my-8 aspect-square w-full rounded-[32px] border-8 border-brand-sand bg-white p-4 shadow-inner">
+          <div class="my-8 aspect-square w-full rounded-2xl border-8 border-brand-sand bg-white p-4 shadow-inner">
             <img :src="currentDisplayQR || undefined" alt="Payment QR" class="h-full w-full object-contain" />
           </div>
         </div>

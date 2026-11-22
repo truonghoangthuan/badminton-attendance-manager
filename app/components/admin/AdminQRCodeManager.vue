@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { doc, updateDoc } from 'firebase/firestore';
-import { QrCode, Upload, X, Image as ImageIcon, Trash2, Building2, CreditCard, UserCheck, Save, Sparkles, ChevronDown } from 'lucide-vue-next';
+import { QrCode, Upload, X, Image as ImageIcon, Trash2, Building2, CreditCard, UserCheck, Save, ChevronDown } from 'lucide-vue-next';
 import { COMMON_VIETNAMESE_BANKS, generateVietQRUrl, resolveBankCode } from '~/utils/vietqr';
 
 const props = defineProps<{
@@ -405,8 +405,8 @@ const cancelPreview = () => {
           </div>
         </div>
         <div class="space-y-1.5">
-          <div class="inline-flex items-center gap-1.5 rounded bg-emerald-100 border border-emerald-200 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-800">
-            <Sparkles :size="10" />
+          <div class="inline-flex items-center gap-1.5 rounded bg-emerald-100 border border-emerald-200 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-emerald-800">
+            <QrCode :size="10" />
             {{ t('admin.qr.dynamicVietQrActive') }}
           </div>
           <p class="text-sm font-bold text-brand-ink">{{ t('admin.qr.dynamicVietQrReady') }}</p>

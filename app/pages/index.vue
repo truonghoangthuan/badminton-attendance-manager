@@ -86,14 +86,13 @@ const getStatusStyles = (status: string) => {
     <div class="bg-shuttlecock" />
     <section>
       <UIGlassCard class="space-y-6">
-        <div class="space-y-2">
-          <p class="section-kicker">{{ t('home.heroKicker') }}</p>
-          <h1 class="text-3xl font-black tracking-tight md:text-4xl">
-            {{ greetingText }}
-          </h1>
-        </div>
-
         <template v-if="loading">
+          <div class="space-y-2">
+            <p class="section-kicker">{{ t('home.heroKicker') }}</p>
+            <h1 class="text-3xl font-black tracking-tight md:text-4xl">
+              {{ greetingText }}
+            </h1>
+          </div>
           <div class="space-y-3 animate-pulse">
             <div class="h-12 rounded-2xl bg-brand-sand" />
             <div class="h-12 rounded-2xl bg-brand-sand" />
@@ -102,73 +101,90 @@ const getStatusStyles = (status: string) => {
         </template>
 
         <template v-else-if="featuredSession">
-          <div class="mx-auto rounded-[28px] border border-brand-line bg-brand-sand p-6 md:w-1/2">
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <p class="text-3xl font-black tracking-tight">{{ formatDisplayDate(featuredSession.date) }}</p>
-                <p class="mt-1 text-sm font-medium text-brand-slate">{{ t('home.nextSession') }}</p>
+          <div class="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+            <div class="space-y-5">
+              <div class="space-y-2">
+                <p class="section-kicker">{{ t('home.heroKicker') }}</p>
+                <h1 class="text-3xl font-black tracking-tight md:text-4xl">
+                  {{ greetingText }}
+                </h1>
               </div>
-              <span
-                :class="getStatusStyles(featuredSession.status)"
-                class="rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]"
-              >
-                {{ getStatusLabel(featuredSession.status) }}
-              </span>
+
+              <div class="flex flex-wrap items-center justify-between gap-3 border-t border-brand-line pt-5">
+                <div>
+                  <p class="text-3xl font-black tracking-tight">{{ formatDisplayDate(featuredSession.date) }}</p>
+                  <p class="mt-1 text-sm font-medium text-brand-slate">{{ t('home.nextSession') }}</p>
+                </div>
+                <span
+                  :class="getStatusStyles(featuredSession.status)"
+                  class="rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]"
+                >
+                  {{ getStatusLabel(featuredSession.status) }}
+                </span>
+              </div>
             </div>
 
-            <div class="mt-5 grid gap-3 md:grid-cols-2">
+            <div class="rounded-2xl border border-brand-line bg-brand-sand p-5 space-y-4">
+              <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                <div
+                  class="flex items-center gap-3 rounded-2xl border border-brand-line bg-white px-4 py-3 text-sm font-medium"
+                >
+                  <Clock3 :size="16" class="text-brand-court shrink-0" />
+                  {{ featuredSession.time }}
+                </div>
+                <div
+                  class="flex items-center gap-3 rounded-2xl border border-brand-line bg-white px-4 py-3 text-sm font-medium"
+                >
+                  <MapPin :size="16" class="text-brand-blue shrink-0" />
+                  <span class="truncate">{{ featuredSession.location }}</span>
+                </div>
+              </div>
+
               <div
-                class="flex items-center gap-3 rounded-2xl border border-brand-line bg-white px-4 py-3 text-sm font-medium"
+                v-if="featuredSession.courtNumber || featuredSession.shuttlecockType || featuredSession.level"
+                class="flex flex-wrap items-center gap-2"
               >
-                <Clock3 :size="16" class="text-brand-court" />
-                {{ featuredSession.time }}
+                <span
+                  v-if="featuredSession.courtNumber"
+                  class="inline-flex items-center gap-1 rounded-lg border border-emerald-200/60 bg-emerald-50/80 px-2.5 py-1 text-xs font-bold text-emerald-800"
+                >
+                  <Grid2x2 :size="12" class="text-brand-court" />
+                  {{ featuredSession.courtNumber }}
+                </span>
+                <span
+                  v-if="featuredSession.shuttlecockType"
+                  class="inline-flex items-center gap-1 rounded-lg border border-amber-200/60 bg-amber-50/80 px-2.5 py-1 text-xs font-bold text-amber-800"
+                >
+                  <Feather :size="12" class="text-amber-600" />
+                  {{ featuredSession.shuttlecockType }}
+                </span>
+                <span
+                  v-if="featuredSession.level"
+                  class="inline-flex items-center gap-1 rounded-lg border border-sky-200/60 bg-sky-50/80 px-2.5 py-1 text-xs font-bold text-sky-800"
+                >
+                  <Trophy :size="12" class="text-sky-600" />
+                  {{ featuredSession.level }}
+                </span>
               </div>
-              <div
-                class="flex items-center gap-3 rounded-2xl border border-brand-line bg-white px-4 py-3 text-sm font-medium"
-              >
-                <MapPin :size="16" class="text-brand-blue" />
-                {{ featuredSession.location }}
-              </div>
-            </div>
 
-            <div
-              v-if="featuredSession.courtNumber || featuredSession.shuttlecockType || featuredSession.level"
-              class="mt-3 flex flex-wrap items-center gap-2"
-            >
-              <span
-                v-if="featuredSession.courtNumber"
-                class="inline-flex items-center gap-1 rounded-xl border border-emerald-200/60 bg-emerald-50/80 px-2.5 py-1 text-xs font-bold text-emerald-800"
-              >
-                <Grid2x2 :size="12" class="text-brand-court" />
-                {{ featuredSession.courtNumber }}
-              </span>
-              <span
-                v-if="featuredSession.shuttlecockType"
-                class="inline-flex items-center gap-1 rounded-xl border border-amber-200/60 bg-amber-50/80 px-2.5 py-1 text-xs font-bold text-amber-800"
-              >
-                <Feather :size="12" class="text-amber-600" />
-                {{ featuredSession.shuttlecockType }}
-              </span>
-              <span
-                v-if="featuredSession.level"
-                class="inline-flex items-center gap-1 rounded-xl border border-sky-200/60 bg-sky-50/80 px-2.5 py-1 text-xs font-bold text-sky-800"
-              >
-                <Trophy :size="12" class="text-sky-600" />
-                {{ featuredSession.level }}
-              </span>
+              <NuxtLink :to="`/session/${featuredSession.id}`" class="block">
+                <UIGlassButton class="w-full !justify-between">
+                  {{ t('home.joinNow') }}
+                  <template #icon-right><ArrowRight :size="18" /></template>
+                </UIGlassButton>
+              </NuxtLink>
             </div>
-
-            <NuxtLink :to="`/session/${featuredSession.id}`" class="mt-5 block">
-              <UIGlassButton class="w-full !justify-between">
-                {{ t('home.joinNow') }}
-                <template #icon-right><ArrowRight :size="18" /></template>
-              </UIGlassButton>
-            </NuxtLink>
           </div>
         </template>
 
         <template v-else>
-          <div class="rounded-[28px] border border-dashed border-brand-line bg-brand-sand px-6 py-14 text-center">
+          <div class="space-y-2">
+            <p class="section-kicker">{{ t('home.heroKicker') }}</p>
+            <h1 class="text-3xl font-black tracking-tight md:text-4xl">
+              {{ greetingText }}
+            </h1>
+          </div>
+          <div class="rounded-2xl border border-dashed border-brand-line bg-brand-sand px-6 py-14 text-center">
             <Trophy :size="28" class="mx-auto text-brand-slate" />
             <h2 class="mt-4 text-2xl font-black">{{ t('home.noUpcomingTitle') }}</h2>
             <p class="mt-2 text-sm text-brand-slate">{{ t('home.noUpcomingDesc') }}</p>
@@ -183,7 +199,7 @@ const getStatusStyles = (status: string) => {
         <UIGlassCard hoverable interactive class="relative overflow-hidden !p-6">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div class="flex items-center gap-4">
-              <div class="flex h-13 w-13 shrink-0 items-center justify-center rounded-2xl bg-amber-400/20 text-amber-600 ring-1 ring-amber-400/30 shadow-sm transition-transform group-hover:scale-105">
+              <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-400/20 text-amber-600 ring-1 ring-amber-400/30 shadow-sm transition-transform group-hover:scale-105">
                 <Trophy :size="26" />
               </div>
               <div>

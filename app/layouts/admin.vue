@@ -28,7 +28,6 @@ const handleLogout = async () => {
 
 <template>
   <div class="relative min-h-screen">
-    <div class="bg-mesh" />
     <nav class="sticky top-0 z-50 w-full px-4 py-4 md:px-6">
       <div class="mx-auto max-w-7xl">
         <div class="glass-shell flex items-center justify-between gap-3 px-4 py-3.5 md:px-6">

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AlertCircle, Check, Copy, MessageSquareShare, QrCode, Share2, Sparkles, X } from 'lucide-vue-next';
+import { AlertCircle, Check, Copy, MessageSquareShare, QrCode, Share2, X } from 'lucide-vue-next';
 import { generateSessionInviteText, generateSessionSettlementText } from '~/utils/sessionSocialShare';
 import { generateVietQRUrl } from '~/utils/vietqr';
 

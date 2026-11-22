@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { signInWithEmailAndPassword } from 'firebase/auth'
-import { CalendarDays, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck, Sparkles } from 'lucide-vue-next'
+import { CalendarDays, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from 'lucide-vue-next'
 import { useAdminAccess } from '../../composables/useAdminAccess'
 
 const { auth } = useFirebase()
@@ -41,18 +41,18 @@ definePageMeta({
 </script>
 
 <template>
-  <div class="relative min-h-screen overflow-hidden bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
+  <div class="relative min-h-screen overflow-hidden bg-brand-sand px-4 py-8 sm:px-6 lg:px-8">
     <!-- Language Switcher in Login Page -->
     <div class="absolute right-4 top-4 z-20 sm:right-8 sm:top-8">
       <UILanguageSwitcher />
     </div>
 
     <div class="relative mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-5xl items-center justify-center">
-      <div class="grid w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl lg:grid-cols-[1.1fr_0.9fr]">
-        <section class="relative hidden min-h-full overflow-hidden bg-slate-50 p-10 lg:flex lg:flex-col lg:justify-between border-r border-slate-200">
+      <div class="grid w-full overflow-hidden rounded-2xl border border-brand-line bg-white shadow-glass lg:grid-cols-[1.1fr_0.9fr]">
+        <section class="relative hidden min-h-full overflow-hidden bg-brand-sand/70 p-10 lg:flex lg:flex-col lg:justify-between border-r border-brand-line">
           <div class="relative space-y-6">
-            <div class="inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-600 shadow-sm">
-              <Sparkles :size="14" class="text-emerald-500" />
+            <div class="inline-flex w-fit items-center gap-2 rounded-full border border-brand-line bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-brand-slate shadow-sm">
+              <ShieldCheck :size="14" class="text-brand-court" />
               {{ t('admin.login.controlRoom') }}
             </div>
 
@@ -60,27 +60,27 @@ definePageMeta({
               <h1 class="max-w-md text-5xl font-black leading-[1.05] tracking-tight text-brand-ink">
                 {{ t('admin.login.heroTitle') }}
               </h1>
-              <p class="max-w-lg text-base font-medium leading-7 text-slate-600">
+              <p class="max-w-lg text-base font-medium leading-7 text-brand-slate">
                 {{ t('admin.login.heroSubtitle') }}
               </p>
             </div>
           </div>
 
           <div class="relative grid gap-4 sm:grid-cols-2 mt-12">
-            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div class="mb-4 inline-flex rounded-lg bg-slate-100 p-2.5 text-slate-600 border border-slate-200">
+            <div class="rounded-2xl border border-brand-line bg-white p-5 shadow-sm">
+              <div class="mb-4 inline-flex rounded-lg bg-brand-sand p-2.5 text-brand-court border border-brand-line">
                 <ShieldCheck :size="20" />
               </div>
-              <p class="text-xs font-bold uppercase tracking-wider text-slate-500">{{ t('admin.login.secureAccessTitle') }}</p>
-              <p class="mt-1.5 text-sm leading-6 text-slate-600">{{ t('admin.login.secureAccessDesc') }}</p>
+              <p class="text-xs font-bold uppercase tracking-wider text-brand-slate">{{ t('admin.login.secureAccessTitle') }}</p>
+              <p class="mt-1.5 text-sm leading-6 text-brand-slate">{{ t('admin.login.secureAccessDesc') }}</p>
             </div>
 
-            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div class="mb-4 inline-flex rounded-lg bg-slate-100 p-2.5 text-slate-600 border border-slate-200">
+            <div class="rounded-2xl border border-brand-line bg-white p-5 shadow-sm">
+              <div class="mb-4 inline-flex rounded-lg bg-brand-sand p-2.5 text-brand-court border border-brand-line">
                 <CalendarDays :size="20" />
               </div>
-              <p class="text-xs font-bold uppercase tracking-wider text-slate-500">{{ t('admin.login.matchdayReadyTitle') }}</p>
-              <p class="mt-1.5 text-sm leading-6 text-slate-600">{{ t('admin.login.matchdayReadyDesc') }}</p>
+              <p class="text-xs font-bold uppercase tracking-wider text-brand-slate">{{ t('admin.login.matchdayReadyTitle') }}</p>
+              <p class="mt-1.5 text-sm leading-6 text-brand-slate">{{ t('admin.login.matchdayReadyDesc') }}</p>
             </div>
           </div>
         </section>
@@ -88,7 +88,7 @@ definePageMeta({
         <section class="relative flex items-center p-6 sm:p-8 lg:p-12 bg-white">
           <div class="mx-auto w-full max-w-sm">
             <div class="mb-8 space-y-3">
-              <div class="inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600 border border-emerald-200">
+              <div class="inline-flex items-center gap-1.5 rounded-lg bg-brand-court/10 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-brand-court border border-brand-court/20">
                 <LockKeyhole :size="12" />
                 {{ t('admin.login.signInBadge') }}
               </div>
@@ -97,7 +97,7 @@ definePageMeta({
                 <h2 class="text-3xl font-black tracking-tight text-brand-ink">
                   {{ t('admin.login.welcomeBack') }}
                 </h2>
-                <p class="mt-1.5 text-sm font-medium leading-6 text-slate-500">
+                <p class="mt-1.5 text-sm font-medium leading-6 text-brand-slate">
                   {{ t('admin.login.instructions') }}
                 </p>
               </div>
@@ -124,7 +124,7 @@ definePageMeta({
                     required
                     autocomplete="email"
                     :placeholder="t('admin.login.emailPlaceholder')"
-                    class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 pl-9 text-sm text-brand-ink outline-none transition-all placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    class="w-full rounded-lg border border-brand-line bg-white px-3 py-2 pl-9 text-sm text-brand-ink outline-none transition-all placeholder:text-slate-400 focus:border-brand-court focus:ring-1 focus:ring-brand-court"
                   />
                 </div>
               </label>
@@ -142,7 +142,7 @@ definePageMeta({
                     required
                     autocomplete="current-password"
                     :placeholder="t('admin.login.passwordPlaceholder')"
-                    class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 pl-9 pr-10 text-sm text-brand-ink outline-none transition-all placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    class="w-full rounded-lg border border-brand-line bg-white px-3 py-2 pl-9 pr-10 text-sm text-brand-ink outline-none transition-all placeholder:text-slate-400 focus:border-brand-court focus:ring-1 focus:ring-brand-court"
                   />
                   <button
                     type="button"
@@ -159,7 +159,7 @@ definePageMeta({
               <button
                 type="submit"
                 :disabled="loading"
-                class="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-600 bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:border-emerald-700 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 shadow-sm"
+                class="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-brand-court bg-brand-court px-4 py-2.5 text-sm font-semibold text-white transition-all hover:border-brand-purple hover:bg-brand-purple disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-brand-court/40 focus:ring-offset-1 shadow-sm"
               >
                 <span v-if="loading" class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
                 <template v-else>
@@ -170,12 +170,12 @@ definePageMeta({
               </button>
             </form>
 
-            <div class="mt-8 flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs shadow-sm">
+            <div class="mt-8 flex items-center justify-between gap-4 rounded-2xl border border-brand-line bg-brand-sand px-4 py-3 text-xs shadow-sm">
               <div>
                 <p class="font-bold text-brand-ink">{{ t('admin.login.privateWorkspace') }}</p>
-                <p class="mt-0.5 text-slate-500">{{ t('admin.login.privateWorkspaceDesc') }}</p>
+                <p class="mt-0.5 text-brand-slate">{{ t('admin.login.privateWorkspaceDesc') }}</p>
               </div>
-              <div class="hidden rounded-lg bg-white p-2 text-emerald-600 border border-slate-200 shadow-sm sm:block">
+              <div class="hidden rounded-lg bg-white p-2 text-brand-court border border-brand-line shadow-sm sm:block">
                 <ShieldCheck :size="16" />
               </div>
             </div>
