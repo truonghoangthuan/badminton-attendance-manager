@@ -2,10 +2,10 @@
 
 Nuxt 4 frontend for managing badminton sessions, collecting RSVPs, tracking court attendance, splitting session costs, and ranking community participation.
 
-The app serves two flows backed by Firebase and Supabase:
+The app serves two flows backed by Firebase:
 
 - **Public flow** (`/`, `/session/:id`, `/leaderboard`): session discovery, anonymous RSVP with guest counts, live capacity & fee breakdown, dynamic VietQR payment, social share announcements, and community leaderboard analytics.
-- **Admin flow** (`/admin/login`, `/admin`, `/admin/session/:id`): custom-claim protected session creation, capacity & court metadata management, on-court attendance & payment check-in, manual walk-in entries, QR/bank configuration, and CSV reporting.
+- **Admin flow** (`/admin/login`, `/admin`, `/admin/session/:id`): custom-claim protected session creation, capacity & court metadata management, on-court attendance & payment check-in, manual walk-in entries, bank configuration, and CSV reporting.
 
 ## Feature Overview
 
@@ -16,7 +16,7 @@ The app serves two flows backed by Firebase and Supabase:
 - Authenticate anonymously via Firebase Auth and persist `displayName` in Firestore (`profiles`).
 - Submit or update RSVPs (`isJoining`, `guestCount`) while a session is `open`, subject to `maxPlayers` capacity limits.
 - View live attendance status, court metadata (`courtNumber`, `shuttlecockType`, `level`), and real-time per-person fee calculation.
-- Pay via dynamic VietQR (pre-filled with exact personalized fee and `BDM <date> <name>` transfer memo) or static QR uploaded to Supabase Storage, with 1-tap copy for bank details.
+- Pay via dynamic VietQR (pre-filled with exact personalized fee while intentionally leaving transfer description `addInfo` empty) with 1-tap copy for bank details.
 - Generate 1-click Zalo/Messenger invite and settlement announcements (with clipboard QR image copy).
 - Explore the community leaderboard (`/leaderboard`) with timeframe filters (`all`, `this_month`, `custom` date range), top-3 podium, actual attendance vs total RSVPs (`matchesPlayed / totalRsvps`), reliability rates, and ranking rules modal.
 
@@ -27,7 +27,7 @@ The app serves two flows backed by Firebase and Supabase:
 - Transition session lifecycle between `open`, `locked`, and `completed` (with confirmation dialogs when completing or reopening).
 - Check in attendees (`actualAttended`), record fee payments (`hasPaid`), and add manual walk-in players (`walkin_<timestamp>`).
 - Configure court cost, shuttlecock count, and shuttlecock tube/unit pricing with automatic 1,000 VND rounding.
-- Manage bank details (`bankName`, `bankCode`, `accountNumber`, `accountName`) with live VietQR preview and upload custom payment QR images to Supabase Storage.
+- Manage bank details (`bankName`, `bankCode`, `accountNumber`, `accountName`) with live dynamic VietQR preview.
 - Export session metadata, financial summary, and attendance ledger to UTF-8 BOM CSV for Microsoft Excel compatibility.
 
 ## Route Map
@@ -45,7 +45,6 @@ The app serves two flows backed by Firebase and Supabase:
 - [Tailwind CSS](https://tailwindcss.com/) + custom `UIGlass*` components
 - [PrimeVue 4](https://primevue.org/) (`@primeuix/themes/aura` for Toast notifications)
 - [Firebase Authentication](https://firebase.google.com/docs/auth) & [Cloud Firestore](https://firebase.google.com/docs/firestore)
-- [Supabase Storage](https://supabase.com/docs/guides/storage) (`@nuxtjs/supabase` for custom payment QR images)
 - [Lucide Vue Next](https://lucide.dev/)
 - [Vercel Analytics](https://vercel.com/analytics) & [Vercel Speed Insights](https://vercel.com/docs/speed-insights)
 - Node.js built-in test runner (`node --test`)
@@ -75,7 +74,7 @@ Shared financial math lives in `app/utils/sessionFinancials.ts`:
 - **Actual player count**: counts `1 + guestCount` for each record where `actualAttended === true`.
 - **Personal share**: `calculatedFeePerPerson * (1 + guestCount)` for attending players (`0` for absent players once locked/completed).
 
-## Firebase & Supabase Setup
+## Firebase Setup
 
 ### Expected Firebase configuration
 
@@ -84,18 +83,14 @@ Shared financial math lives in `app/utils/sessionFinancials.ts`:
 
 ### Firestore collections
 
-- `sessions`: session documents (`date`, `time`, `location`, `maxPlayers`, `status`, `courtNumber`, `shuttlecockType`, `level`, `bankInfo`, `paymentQR`, `financials`)
+- `sessions`: session documents (`date`, `time`, `location`, `maxPlayers`, `status`, `courtNumber`, `shuttlecockType`, `level`, `bankInfo`, `financials`)
 - `sessions/{sessionId}/attendances`: RSVP and check-in records (`uid`, `name`, `isJoining`, `guestCount`, `actualAttended`, `hasPaid`, `isManual`, `updatedAt`)
 - `profiles`: public user profiles (`displayName`, `isAnonymous`, `createdAt`, `updatedAt`)
 - `roster`: optional legacy member lookup used as fallback greeting on `/`
 
-### Supabase configuration
-
-- Supabase Storage bucket `payment-qr-codes` with public read access for uploaded session QR images (`useSupabaseQRCode.ts`)
-
 ## Environment Variables
 
-Copy `.env.example` to `.env` and fill in your Firebase and Supabase credentials:
+Copy `.env.example` to `.env` and fill in your Firebase credentials:
 
 ```bash
 cp .env.example .env
@@ -109,8 +104,6 @@ NUXT_PUBLIC_FIREBASE_PROJECT_ID=
 NUXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NUXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NUXT_PUBLIC_FIREBASE_APP_ID=
-NUXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
-NUXT_PUBLIC_SUPABASE_KEY=your-anon-public-key
 
 # Nuxt App Configuration
 NUXT_APP_BASE_URL=/
@@ -156,7 +149,7 @@ app/
     leaderboard/          TimeframeFilterBar, RankingRulesModal
     session/              QRCodeDisplay, SocialShareModal
     UsernamePrompt.vue    Public display-name onboarding modal
-  composables/            useAdminAccess, useI18n, useSupabaseQRCode, useUIConfirm, useUserProfile
+  composables/            useAdminAccess, useI18n, useUIConfirm, useUserProfile
   layouts/                default.vue (public) and admin.vue (admin)
   locales/                Bilingual dictionaries (vi.ts, en.ts)
   middleware/             auth.ts (admin route protection)
@@ -165,7 +158,7 @@ app/
   utils/                  dateFormat, firebase, leaderboardStats, sessionExport, sessionFinancials, sessionSocialShare, vietqr
 public/                   Static public assets
 tests/                    Node test suites (*.test.mjs)
-nuxt.config.ts            Nuxt 4, PrimeVue, Tailwind, Supabase, and Vercel module config
+nuxt.config.ts            Nuxt 4, PrimeVue, Tailwind, and Vercel module config
 tailwind.config.ts        Tailwind theme and custom brand tokens
 ```
 

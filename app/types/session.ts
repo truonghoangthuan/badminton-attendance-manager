@@ -32,7 +32,6 @@ export interface Session {
   shuttlecockType?: string;
   level?: string;
   bankInfo?: BankInfo;
-  paymentQR?: string;
   financials?: SessionFinancials;
   createdBy?: string;
   createdAt?: string;

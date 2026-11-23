@@ -172,3 +172,29 @@ test('generateSessionSettlementText includes additional shuttlecocks in shuttle 
   const lines = result.trim().split('\n');
   assert.equal(lines[4], '💰 Chi phí: Sân 200.000đ + Cầu (6 quả = 160.000đ) = 360.000đ');
 });
+
+test('generateSessionSettlementText falls back to feePerPerson from financialBreakdown', () => {
+  const session = {
+    date: '2026-09-06',
+    location: 'Sân Cầu Lông Sky',
+    courtNumber: 'Sân 3',
+  };
+
+  const attendances = [
+    { name: 'Thuan', actualAttended: true, guestCount: 0 },
+    { name: 'Minh', actualAttended: true, guestCount: 0 },
+  ];
+
+  const breakdown = {
+    courtCost: 100000,
+    shuttlecocksUsed: 1,
+    shuttlecockPrice: 20000,
+    totalSessionCost: 120000,
+    feePerPerson: 60000,
+    totalActualPlayers: 2,
+  };
+
+  const result = generateSessionSettlementText(session, attendances, breakdown);
+  const lines = result.trim().split('\n');
+  assert.equal(lines[5], '💵 Tiền sân/người: 60.000đ / người');
+});

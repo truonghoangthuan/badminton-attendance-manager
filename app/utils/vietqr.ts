@@ -3,7 +3,6 @@ export interface VietQRParams {
   accountNumber: string;
   accountName?: string;
   amount?: number;
-  memo?: string;
   template?: 'compact' | 'compact2' | 'qr_only' | 'print';
 }
 
@@ -90,7 +89,7 @@ export const resolveBankCode = (input?: string): string => {
 };
 
 export const generateVietQRUrl = (params: VietQRParams): string => {
-  const { bankId, accountNumber, accountName, amount, memo, template = 'qr_only' } = params;
+  const { bankId, accountNumber, accountName, amount, template = 'qr_only' } = params;
   if (!bankId || !accountNumber) return '';
   const cleanAccount = accountNumber.replace(/[^a-zA-Z0-9]/g, '');
   const cleanBank = resolveBankCode(bankId);
@@ -109,15 +108,6 @@ export const generateVietQRUrl = (params: VietQRParams): string => {
       .trim();
     if (cleanName) {
       searchParams.append('accountName', cleanName);
-    }
-  }
-  if (memo) {
-    const cleanMemo = removeVietnameseDiacritics(memo)
-      .replace(/[^a-zA-Z0-9\s]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-    if (cleanMemo) {
-      searchParams.append('addInfo', cleanMemo);
     }
   }
 

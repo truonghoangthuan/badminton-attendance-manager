@@ -63,7 +63,7 @@ export const generateSessionSettlementText = (
     financials?.shuttlecockCost ??
     shuttlecocksUsed * shuttlePrice + additionalShuttlecocksUsed * additionalShuttlecockPrice;
   const totalCost = financials?.totalSessionCost || (courtCost + shuttleCost);
-  const feePerPerson = financials?.calculatedFeePerPerson || 0;
+  const feePerPerson = financials?.calculatedFeePerPerson ?? financials?.feePerPerson ?? 0;
   const courtNumberDisplay = session.courtNumber || 1;
 
   let text = `🏸 TỔNG KẾT TIỀN SÂN\n`;

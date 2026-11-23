@@ -16,17 +16,27 @@ test('resolveBankCode matches BIN, code, and alias', () => {
   assert.equal(resolveBankCode('Techcombank'), 'TCB');
 });
 
-test('generateVietQRUrl encodes amount, accountName, and memo as addInfo', () => {
+test('generateVietQRUrl encodes amount and accountName without addInfo', () => {
   const url = generateVietQRUrl({
     bankId: 'MB',
     accountNumber: '0123 456 789',
     accountName: 'Nguyễn Văn A',
     amount: 55000,
-    memo: 'BDM 20261026 Nguyễn Văn A #1',
     template: 'qr_only',
   });
   assert.equal(
     url,
-    'https://img.vietqr.io/image/MB-0123456789-qr_only.jpg?amount=55000&accountName=Nguyen%20Van%20A&addInfo=BDM%2020261026%20Nguyen%20Van%20A%201'
+    'https://img.vietqr.io/image/MB-0123456789-qr_only.jpg?amount=55000&accountName=Nguyen%20Van%20A'
   );
+  assert.equal(url.includes('addInfo'), false);
+});
+
+test('generateVietQRUrl returns clean base URL when amount and accountName are omitted', () => {
+  const url = generateVietQRUrl({
+    bankId: 'VCB',
+    accountNumber: '9988776655',
+    amount: 0,
+    template: 'compact2',
+  });
+  assert.equal(url, 'https://img.vietqr.io/image/VCB-9988776655-compact2.jpg');
 });

@@ -532,7 +532,6 @@ const getGuestLabel = (guestCount: number) => {
           </UIGlassCard>
 
           <SessionQRCodeDisplay
-            :qr-url="session.paymentQR || null"
             :show-fee-breakdown="session.status === 'completed'"
             :shuttlecock-pack-price="financialBreakdown.shuttlecockPackPrice"
             :shuttlecock-price="financialBreakdown.shuttlecockPrice"
@@ -548,8 +547,6 @@ const getGuestLabel = (guestCount: number) => {
             :calculated-fee-per-person="calculatedFeePerPerson"
             :personal-amount="personalAmount"
             :bank-info="session.bankInfo || null"
-            :session-date="session.date"
-            :user-name="profile?.displayName || ''"
           />
         </div>
       </section>

@@ -5,7 +5,7 @@ This repository is the Nuxt 4 frontend for badminton session management. It has 
 - Public flow at `/`, `/session/:id`, and `/leaderboard` for session discovery, RSVP submission, fee/payment visibility, and community attendance rankings
 - Admin flow at `/admin`, `/admin/login`, and `/admin/session/:id` for authentication, session management, attendance tracking, and cost handling
 
-Treat this as a live product UI backed by Firebase and Supabase. Prefer small, surgical changes over broad rewrites.
+Treat this as a live product UI backed by Firebase. Prefer small, surgical changes over broad rewrites.
 
 ## Stack And Source Of Truth
 
@@ -13,8 +13,7 @@ Treat this as a live product UI backed by Firebase and Supabase. Prefer small, s
 - Styling: Tailwind CSS with shared glass-style UI primitives under `app/components/UI`
 - Localization (i18n): Bilingual Vietnamese (`vi`, default) and English (`en`) via `app/composables/useI18n.ts`, `app/locales/vi.ts`, `app/locales/en.ts`, and `app/components/UI/LanguageSwitcher.vue`
 - Data/auth: Firebase Auth + Firestore
-- Session QR storage: Supabase Storage via `app/composables/useSupabaseQRCode.ts` (stored on session document as `paymentQR`)
-- Payment & banking: Smart 1-tap copy for `bankInfo` (`bankName`, `bankCode`, `accountNumber`, `accountName`) and dynamic VietQR transfer notes (`addInfo`: `BDM <date> <name>`) in `app/components/session/QRCodeDisplay.vue` and `app/utils/vietqr.ts`
+- Payment & banking: Smart 1-tap copy for `bankInfo` (`bankName`, `bankCode`, `accountNumber`, `accountName`) and dynamic VietQR codes (pre-filling `amount` and `accountName`, while intentionally omitting `addInfo` so transfer descriptions stay empty) in `app/components/session/QRCodeDisplay.vue` and `app/utils/vietqr.ts`
 - Financial & leaderboard math: `app/utils/sessionFinancials.ts` and `app/utils/leaderboardStats.ts`
 - UI feedback & dialogs: PrimeVue `Toast` / `useToast` and custom confirmation state via `app/composables/useUIConfirm.ts` + `app/components/UI/ConfirmDialog.vue`
 - Telemetry: `@vercel/analytics` and `@vercel/speed-insights`
@@ -38,14 +37,13 @@ Core routes and state:
 - `app/composables/useAdminAccess.ts`: singleton admin auth listener, `authStateReady()` synchronization, and custom claim refresh
 - `app/composables/useI18n.ts`: cookie + `localStorage` backed locale state (`vi`/`en`) and `t()` translation helper
 - `app/composables/useUIConfirm.ts`: reactive confirmation dialog state used across admin flows
-- `app/composables/useSupabaseQRCode.ts`: Supabase Storage upload/remove helper for custom session QR images
 - `app/locales/vi.ts` & `app/locales/en.ts`: Vietnamese and English translation dictionaries
 - `app/middleware/auth.ts`: admin route protection and redirect behavior
 - `app/utils/firebase.ts`: centralized Firebase initialization
 - `app/utils/sessionFinancials.ts`: shared financial calculations (`getShuttlecockPriceFromPack`, `resolveShuttlecockPrice`, `calculateTotalSessionCost`, `calculateFeePerPerson`, `getSessionFinancialBreakdown`)
 - `app/utils/leaderboardStats.ts`: pure leaderboard aggregation and tie-breaking (`calculatePlayerStats`), counting only `completed` sessions
 - `app/utils/dateFormat.ts`: `formatDisplayDate` (`DD/MM/YYYY`) formatter
-- `app/utils/vietqr.ts`: dynamic VietQR open standard URL builder with bank BIN/alias lookup, exact fee encoding (`amount`), and memo encoding (`addInfo`)
+- `app/utils/vietqr.ts`: dynamic VietQR open standard URL builder with bank BIN/alias lookup and exact fee encoding (`amount`), intentionally omitting `addInfo` so transfer descriptions stay empty
 - `app/utils/sessionSocialShare.ts`: 1-click Zalo/Messenger formatted announcement and settlement generators
 - `app/utils/sessionExport.ts`: CSV report exporter with UTF-8 BOM for Microsoft Excel Vietnamese compatibility
 - `app/types/session.ts`: shared TypeScript definitions for `Session`, `SessionMetadata`, `SessionFinancials`, `BankInfo`, and `SKILL_LEVEL_OPTIONS`
@@ -54,9 +52,9 @@ Read these too when relevant:
 
 - `app/layouts/default.vue`: shared public-shell behavior, language switcher, profile editing modal, leaderboard link, top-level public actions
 - `app/layouts/admin.vue`: shared admin shell, language switcher, and sign-out behavior
-- `app/components/session/QRCodeDisplay.vue`: dynamic VietQR switcher with exact fee pre-filling and 1-tap copy mobile banking display
+- `app/components/session/QRCodeDisplay.vue`: dynamic VietQR display with exact fee pre-filling and 1-tap copy mobile banking display
 - `app/components/session/SocialShareModal.vue`: modal for 1-tap copy of invite & settlement announcements and PNG-converted QR image clipboard copy
-- `app/components/admin/AdminQRCodeManager.vue`: admin-side payment QR uploading, bank selector, and dynamic VietQR live preview
+- `app/components/admin/AdminQRCodeManager.vue`: admin-side bank selector, bank details editor, and dynamic VietQR live preview
 - `app/components/leaderboard/TimeframeFilterBar.vue`: leaderboard timeframe mode (`all`, `this_month`, `custom`) and date range controls
 - `app/components/leaderboard/RankingRulesModal.vue`: modal explaining leaderboard ranking criteria and tie-breakers
 - `app/components/UI/GlassCard.vue`
@@ -103,7 +101,7 @@ Use additional checks when applicable:
 - For route or auth changes, trace the affected public/admin code paths and redirect behavior before finishing
 - For attendance, leaderboard, or cost changes, verify unit tests in `tests/` and ensure computed totals and persisted financial fields remain internally consistent
 - For localization changes, verify key parity between `app/locales/vi.ts` and `app/locales/en.ts` (`tests/i18n.test.mjs`)
-- For profile or QR changes, verify both Firestore profile fields and Supabase-related behavior still line up
+- For profile or QR changes, verify Firestore profile fields and VietQR parameters still line up
 - For UI-only changes, still run `npm test` and `npm run build`
 
 If a command cannot be run, say so clearly and explain why.
@@ -172,9 +170,8 @@ These rules should not change unless the user explicitly asks for product behavi
 
 - Firebase initialization is centralized in `app/utils/firebase.ts`; do not create ad hoc app instances
 - User profile data lives in Firestore `profiles`
-- QR code uploads use Supabase Storage and the public URL is stored on the session document as `paymentQR`
 - Mobile banking transfer details are stored on the session document as `bankInfo` (`bankName`, `bankCode`, `accountNumber`, `accountName`)
-- VietQR URLs encode the transfer note in the `addInfo` query parameter (`app/utils/vietqr.ts`)
+- Dynamic VietQR URLs intentionally omit the `addInfo` query parameter so transfer descriptions stay empty (`app/utils/vietqr.ts`)
 - Be careful when changing profile fields because they affect identity across the app
 
 ## UI And UX Constraints
@@ -196,7 +193,7 @@ Double-check these areas before shipping:
 - Attendance totals and guest counts still line up between public, admin, and leaderboard views
 - Fee-per-person math still matches `app/utils/sessionFinancials.ts` and persisted financial fields
 - Translation keys exist in both `app/locales/vi.ts` and `app/locales/en.ts`
-- Any QR code or bank detail changes keep session state, Supabase storage, VietQR parameters, and clipboard copy functions aligned
+- Any QR code or bank detail changes keep session state, VietQR parameters, and clipboard copy functions aligned
 - Shared `UIGlass*` component usage still matches the styles and props expected by the rest of the app
 
 ## Commands
