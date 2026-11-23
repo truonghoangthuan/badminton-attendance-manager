@@ -50,21 +50,16 @@ const inviteUrl = computed(() => {
 });
 
 const vietQRUrl = computed(() => {
-  if (props.session?.paymentQR) {
-    return props.session.paymentQR;
-  }
   const bankInfo = props.session?.bankInfo;
   if (!bankInfo?.accountNumber || (!bankInfo?.bankName && !bankInfo?.bankCode)) {
     return '';
   }
   const feePerPerson = props.financials?.calculatedFeePerPerson || 0;
-  const memoDate = props.session?.date ? props.session.date.replace(/-/g, '') : '';
   return generateVietQRUrl({
     bankId: bankInfo.bankCode || bankInfo.bankName,
     accountNumber: bankInfo.accountNumber,
     accountName: bankInfo.accountName,
     amount: feePerPerson > 0 ? feePerPerson : undefined,
-    memo: `BDM ${memoDate}`.trim(),
     template: 'compact2',
   });
 });

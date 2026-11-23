@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { Maximize2, QrCode, X, Copy, Check, Image as ImageIcon, AlertCircle } from 'lucide-vue-next';
-import { generateVietQRUrl, removeVietnameseDiacritics } from '~/utils/vietqr';
+import { Maximize2, QrCode, X, Copy, Check, AlertCircle } from 'lucide-vue-next';
+import { generateVietQRUrl } from '~/utils/vietqr';
 
 const props = defineProps<{
-  qrUrl?: string | null;
   showFeeBreakdown?: boolean;
   shuttlecockPackPrice?: number;
   shuttlecockPrice?: number;
@@ -24,8 +23,6 @@ const props = defineProps<{
     accountNumber?: string;
     accountName?: string;
   } | null;
-  sessionDate?: string;
-  userName?: string;
 }>();
 
 const { t } = useI18n();
@@ -33,12 +30,6 @@ const showExpand = ref(false);
 const toast = useToast();
 const copiedField = ref<string | null>(null);
 const qrImageError = ref(false);
-
-const transferMemo = computed(() => {
-  const dateFormatted = props.sessionDate ? props.sessionDate.replace(/-/g, '') : '';
-  const cleanName = removeVietnameseDiacritics(props.userName || '').trim().replace(/\s+/g, ' ');
-  return `BDM ${dateFormatted} ${cleanName}`.trim();
-});
 
 const dynamicVietQRUrl = computed(() => {
   if (!props.bankInfo?.accountNumber || (!props.bankInfo?.bankName && !props.bankInfo?.bankCode)) {
@@ -49,40 +40,16 @@ const dynamicVietQRUrl = computed(() => {
     accountNumber: props.bankInfo.accountNumber,
     accountName: props.bankInfo.accountName,
     amount: props.personalAmount && props.personalAmount > 0 ? props.personalAmount : undefined,
-    memo: transferMemo.value,
     template: 'qr_only',
   });
 });
 
-const hasCustomQR = computed(() => !!props.qrUrl);
-const hasDynamicQR = computed(() => !!dynamicVietQRUrl.value);
-const selectedQRType = ref<'dynamic' | 'custom'>('dynamic');
-
-watchEffect(() => {
-  if (!hasDynamicQR.value && hasCustomQR.value) {
-    selectedQRType.value = 'custom';
-  } else if (hasDynamicQR.value && !hasCustomQR.value) {
-    selectedQRType.value = 'dynamic';
-  }
-});
-
-const currentDisplayQR = computed(() => {
-  if (selectedQRType.value === 'custom' && hasCustomQR.value) {
-    return props.qrUrl!;
-  }
-  return dynamicVietQRUrl.value || props.qrUrl || '';
-});
-
-watch(currentDisplayQR, () => {
+watch(dynamicVietQRUrl, () => {
   qrImageError.value = false;
 });
 
 const onImageError = () => {
   qrImageError.value = true;
-  // If dynamic VietQR fails to load but a custom QR was uploaded, fallback to custom QR
-  if (selectedQRType.value === 'dynamic' && hasCustomQR.value) {
-    selectedQRType.value = 'custom';
-  }
 };
 
 const onImageLoad = () => {
@@ -111,7 +78,7 @@ const copyText = async (text: string, fieldId: string, label: string) => {
 
 <template>
   <div
-    v-if="!currentDisplayQR && !bankInfo?.accountNumber"
+    v-if="!dynamicVietQRUrl && !bankInfo?.accountNumber"
     class="rounded-2xl border border-dashed border-brand-line bg-brand-sand px-6 py-8 text-center text-brand-slate"
   >
     <QrCode :size="32" class="mx-auto opacity-40" />
@@ -120,40 +87,15 @@ const copyText = async (text: string, fieldId: string, label: string) => {
   </div>
 
   <UIGlassCard v-else class="relative overflow-hidden space-y-4">
-    <!-- QR Mode Switcher if both dynamic VietQR and uploaded custom QR exist -->
-    <div v-if="hasDynamicQR && hasCustomQR" class="flex items-center justify-between pb-2 border-b border-brand-line/60">
-      <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">{{ t('sessionDetail.paymentQrOption') }}</p>
-      <div class="flex items-center gap-1 rounded-xl bg-brand-sand/80 p-1 border border-brand-line">
-        <button
-          type="button"
-          class="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all"
-          :class="selectedQRType === 'dynamic' ? 'bg-white text-brand-court shadow-sm' : 'text-brand-slate hover:text-brand-ink'"
-          @click="selectedQRType = 'dynamic'"
-        >
-          <QrCode :size="12" />
-          {{ t('sessionDetail.dynamicVietQr') }}
-        </button>
-        <button
-          type="button"
-          class="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all"
-          :class="selectedQRType === 'custom' ? 'bg-white text-brand-court shadow-sm' : 'text-brand-slate hover:text-brand-ink'"
-          @click="selectedQRType = 'custom'"
-        >
-          <ImageIcon :size="12" />
-          {{ t('sessionDetail.customQr') }}
-        </button>
-      </div>
-    </div>
-
     <div class="flex flex-col sm:flex-row sm:items-center">
       <!-- QR Image if present -->
       <div
-        v-if="currentDisplayQR"
+        v-if="dynamicVietQRUrl"
         class="group relative aspect-square w-full shrink-0 border-b border-brand-line bg-white p-6 sm:w-52 sm:border-b-0 sm:border-r flex flex-col items-center justify-center"
       >
         <img
-          v-if="!qrImageError || (hasCustomQR && selectedQRType === 'custom')"
-          :src="currentDisplayQR"
+          v-if="!qrImageError"
+          :src="dynamicVietQRUrl"
           alt="Scan to pay"
           class="h-full w-full object-contain"
           @error="onImageError"
@@ -166,7 +108,7 @@ const copyText = async (text: string, fieldId: string, label: string) => {
         </div>
 
         <button
-          v-if="!qrImageError || (hasCustomQR && selectedQRType === 'custom')"
+          v-if="!qrImageError"
           class="absolute inset-0 flex items-center justify-center bg-brand-ink/40 opacity-0 transition-opacity hover:opacity-100"
           @click="showExpand = true"
         >
@@ -179,7 +121,7 @@ const copyText = async (text: string, fieldId: string, label: string) => {
 
         <!-- Dynamic indicator badge -->
         <div
-          v-if="selectedQRType === 'dynamic' && !qrImageError"
+          v-if="!qrImageError"
           class="absolute bottom-2 left-2 right-2 flex items-center justify-center gap-1 rounded-md bg-emerald-600/90 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-sm tabular-nums"
         >
           <QrCode :size="10" />
@@ -264,7 +206,7 @@ const copyText = async (text: string, fieldId: string, label: string) => {
         </span>
       </div>
 
-      <div class="grid gap-2.5 sm:grid-cols-2">
+      <div class="grid gap-2.5">
         <!-- Bank & Account Number -->
         <div class="flex items-center justify-between rounded-2xl border border-brand-line bg-brand-sand/70 p-3.5">
           <div class="min-w-0 flex-1">
@@ -286,28 +228,6 @@ const copyText = async (text: string, fieldId: string, label: string) => {
             @click="copyText(bankInfo.accountNumber, 'account', bankInfo.accountNumber)"
           >
             <Check v-if="copiedField === 'account'" :size="16" class="text-emerald-600" />
-            <Copy v-else :size="16" />
-          </button>
-        </div>
-
-        <!-- Transfer Memo / Content -->
-        <div class="flex items-center justify-between rounded-2xl border border-brand-line bg-brand-sand/70 p-3.5">
-          <div class="min-w-0 flex-1">
-            <p class="text-[10px] font-black uppercase tracking-wider text-brand-slate">
-              {{ t('sessionDetail.transferNoteMemo') }}
-            </p>
-            <p class="mt-0.5 truncate font-mono text-sm font-bold text-brand-ink">
-              {{ transferMemo }}
-            </p>
-            <p class="text-[11px] font-medium text-brand-slate">{{ t('sessionDetail.includeInTransfer') }}</p>
-          </div>
-          <button
-            type="button"
-            class="ml-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-brand-line bg-white text-brand-ink transition-all hover:border-brand-court hover:bg-brand-sand active:scale-95"
-            :title="'Copy ' + transferMemo"
-            @click="copyText(transferMemo, 'memo', transferMemo)"
-          >
-            <Check v-if="copiedField === 'memo'" :size="16" class="text-emerald-600" />
             <Copy v-else :size="16" />
           </button>
         </div>
@@ -340,7 +260,7 @@ const copyText = async (text: string, fieldId: string, label: string) => {
           </div>
 
           <div class="my-8 aspect-square w-full rounded-2xl border-8 border-brand-sand bg-white p-4 shadow-inner">
-            <img :src="currentDisplayQR || undefined" alt="Payment QR" class="h-full w-full object-contain" />
+            <img :src="dynamicVietQRUrl || undefined" alt="Payment QR" class="h-full w-full object-contain" />
           </div>
         </div>
       </div>
