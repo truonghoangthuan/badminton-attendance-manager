@@ -8,6 +8,7 @@ import {
   calculateFeePerPerson,
   getSessionFinancialBreakdown,
   calculateUnpaidSummary,
+  formatVnd,
 } from '../app/utils/sessionFinancials.ts';
 
 test('roundToNearestThousand rounds to nearest 1000', () => {
@@ -110,4 +111,14 @@ test('calculateUnpaidSummary aggregates unpaid checked-in players and guests acr
   assert.equal(summary[1].sessions.length, 2);
   assert.equal(summary[1].sessions[0].sessionId, 's2'); // newer date first
   assert.equal(summary[1].sessions[1].sessionId, 's1');
+});
+
+test('formatVnd formats VND consistently with vi-VN grouping and guards invalid inputs', () => {
+  const normalize = (s) => s.replace(/\u00a0/g, ' ');
+  assert.equal(normalize(formatVnd(55000)), '55.000 ₫');
+  assert.equal(normalize(formatVnd(0)), '0 ₫');
+  assert.equal(normalize(formatVnd(undefined)), '0 ₫');
+  assert.equal(normalize(formatVnd(null)), '0 ₫');
+  assert.equal(normalize(formatVnd(Number.NaN)), '0 ₫');
+  assert.equal(normalize(formatVnd(-5000)), '0 ₫');
 });

@@ -54,7 +54,6 @@ Read these too when relevant:
 
 - `app/layouts/default.vue`: shared public-shell behavior, language switcher, profile editing modal, leaderboard link, top-level public actions
 - `app/layouts/admin.vue`: shared admin shell, language switcher, and sign-out behavior
-- `app/components/UsernamePrompt.vue`: modal that blocks public flow until a display name exists
 - `app/components/session/QRCodeDisplay.vue`: dynamic VietQR switcher with exact fee pre-filling and 1-tap copy mobile banking display
 - `app/components/session/SocialShareModal.vue`: modal for 1-tap copy of invite & settlement announcements and PNG-converted QR image clipboard copy
 - `app/components/admin/AdminQRCodeManager.vue`: admin-side payment QR uploading, bank selector, and dynamic VietQR live preview
@@ -124,6 +123,7 @@ These rules should not change unless the user explicitly asks for product behavi
 ### Public user identity
 
 - Public users are automatically signed in anonymously when needed (`useUserProfile`)
+- Public users browse freely and enter their display name inline during RSVP submission (or via header edit once set)
 - A player name is stored in the `profiles` collection as `displayName`
 - RSVP submission must not proceed without a display name
 - Existing behavior supports saving a new display name during RSVP submission

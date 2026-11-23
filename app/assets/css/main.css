@@ -43,52 +43,7 @@
 
 @layer components {
   .glass-shell {
-    @apply rounded-[28px] border bg-white shadow-glass transition-all duration-300;
-  }
-
-  .glass-card-hover {
-    @apply hover:-translate-y-1 hover:shadow-glass-hover;
-  }
-
-  .bg-mesh {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: -1;
-    background-image:
-      radial-gradient(circle at top left, rgba(47, 122, 83, 0.13) 0, transparent 34%),
-      radial-gradient(circle at 85% 12%, rgba(244, 201, 93, 0.2) 0, transparent 24%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(246, 243, 235, 0.95));
-  }
-
-  .mesh-glow {
-    position: absolute;
-    width: 600px;
-    height: 600px;
-    background: radial-gradient(circle, rgba(47, 122, 83, 0.1) 0%, transparent 72%);
-    border-radius: 50%;
-    filter: blur(60px);
-    pointer-events: none;
-    z-index: -1;
-  }
-
-  .btn-glow {
-    @apply relative overflow-hidden transition-all duration-300;
-  }
-
-  .btn-glow::after {
-    content: '';
-    @apply absolute inset-0 opacity-0 bg-white/20 transition-opacity duration-300;
-  }
-
-  .btn-glow:hover::after {
-    @apply opacity-100;
-  }
-
-  .btn-glow:hover {
-    @apply shadow-[0_12px_24px_rgba(18,55,42,0.12)];
+    @apply rounded-2xl border bg-white shadow-glass transition-all duration-300;
   }
 
   .court-divider {
@@ -102,10 +57,6 @@
 
   .court-divider > span {
     @apply relative inline-block bg-brand-sand px-3 text-[11px] font-black uppercase tracking-[0.24em] text-brand-slate;
-  }
-
-  .score-chip {
-    @apply inline-flex items-center rounded-full border border-brand-line bg-brand-sand px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-brand-slate;
   }
 
   .section-kicker {
@@ -184,7 +135,6 @@
 
 .p-dialog.p-confirmdialog .p-confirm-dialog-accept {
   @apply border-brand-court bg-brand-court text-white shadow-[0_10px_20px_rgba(47,122,83,0.18)] hover:bg-brand-purple hover:border-brand-purple !important;
-  background-color: var(--brand-court) !important;
 }
 
 /* Handle severity variants correctly */

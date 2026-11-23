@@ -6,7 +6,6 @@ import {
   Calendar,
   Flame,
   Search,
-  Sparkles,
   Users,
 } from 'lucide-vue-next';
 
@@ -213,7 +212,7 @@ const getPlayerBadge = (index: number) => {
             <Calendar :size="18" />
           </div>
         </div>
-        <p class="mt-3 text-3xl font-black text-brand-ink">
+        <p class="mt-3 text-3xl font-black text-brand-ink tabular-nums">
           {{ loading ? '...' : totalSessionsCount }}
         </p>
         <p class="mt-0.5 text-xs text-brand-slate">{{ t('leaderboard.statsSessionsDesc') }}</p>
@@ -226,7 +225,7 @@ const getPlayerBadge = (index: number) => {
             <Users :size="18" />
           </div>
         </div>
-        <p class="mt-3 text-3xl font-black text-brand-ink">
+        <p class="mt-3 text-3xl font-black text-brand-ink tabular-nums">
           {{ loading ? '...' : allPlayers.length }}
         </p>
         <p class="mt-0.5 text-xs text-brand-slate">{{ t('leaderboard.statsMembersDesc') }}</p>
@@ -239,7 +238,7 @@ const getPlayerBadge = (index: number) => {
             <Award :size="18" />
           </div>
         </div>
-        <p class="mt-3 text-3xl font-black text-brand-ink">
+        <p class="mt-3 text-3xl font-black text-brand-ink tabular-nums">
           {{ loading ? '...' : totalPlayerCheckIns }}
         </p>
         <p class="mt-0.5 text-xs text-brand-slate">{{ t('leaderboard.statsCheckinsDesc') }}</p>
@@ -252,7 +251,7 @@ const getPlayerBadge = (index: number) => {
             <Flame :size="18" />
           </div>
         </div>
-        <p class="mt-3 text-3xl font-black text-brand-ink">
+        <p class="mt-3 text-3xl font-black text-brand-ink tabular-nums">
           {{ loading ? '...' : totalShuttlecocksUsed }}
         </p>
         <p class="mt-0.5 text-xs text-brand-slate">{{ t('leaderboard.statsShuttlesDesc') }}</p>
@@ -261,7 +260,7 @@ const getPlayerBadge = (index: number) => {
 
     <!-- Top 3 Podium (when available) -->
     <section v-if="!loading && topThree.length > 0" class="space-y-4">
-      <div class="court-divider"><span>🏆 {{ t('leaderboard.topPodiumTitle') }}</span></div>
+      <div class="court-divider"><span>{{ t('leaderboard.topPodiumTitle') }}</span></div>
 
       <div class="grid gap-4 md:grid-cols-3 items-end">
         <!-- 2nd Place -->
@@ -269,8 +268,8 @@ const getPlayerBadge = (index: number) => {
           v-if="topThree[1]"
           class="relative order-2 md:order-1 overflow-hidden border-slate-200 bg-gradient-to-b from-slate-50/70 to-white text-center !p-6"
         >
-          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-200 text-slate-700 text-xl font-black shadow-inner">
-            🥈
+          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-200 text-slate-800 text-xl font-black tabular-nums shadow-inner">
+            02
           </div>
           <p class="mt-3 text-lg font-black text-brand-ink">{{ topThree[1].name }}</p>
           <span class="inline-block mt-1 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-slate-700">
@@ -279,11 +278,11 @@ const getPlayerBadge = (index: number) => {
           <div class="mt-4 pt-3 border-t border-brand-line/60 flex justify-around text-xs">
             <div>
               <p class="text-brand-slate font-bold">{{ t('leaderboard.matches') }}</p>
-              <p class="text-lg font-black text-brand-ink">{{ topThree[1].matchesPlayed }}</p>
+              <p class="text-lg font-black text-brand-ink tabular-nums">{{ topThree[1].matchesPlayed }}</p>
             </div>
             <div>
               <p class="text-brand-slate font-bold">{{ t('leaderboard.reliability') }}</p>
-              <p class="text-lg font-black text-emerald-600">{{ topThree[1].reliabilityRate }}%</p>
+              <p class="text-lg font-black text-emerald-600 tabular-nums">{{ topThree[1].reliabilityRate }}%</p>
             </div>
           </div>
         </UIGlassCard>
@@ -292,11 +291,8 @@ const getPlayerBadge = (index: number) => {
         <UIGlassCard
           class="relative order-1 md:order-2 overflow-hidden border-amber-300/80 bg-gradient-to-b from-amber-50/90 to-white text-center !p-8 shadow-xl md:-translate-y-2"
         >
-          <div class="absolute top-2 right-3 text-amber-500/30">
-            <Sparkles :size="28" />
-          </div>
-          <div class="mx-auto flex h-18 w-18 items-center justify-center rounded-full bg-amber-400 text-white text-3xl shadow-lg ring-4 ring-amber-200">
-            🥇
+          <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-brand-shuttle text-brand-ink text-2xl font-black tabular-nums shadow-lg ring-4 ring-brand-shuttle/30">
+            01
           </div>
           <p class="mt-3 text-2xl font-black text-brand-ink">{{ topThree[0].name }}</p>
           <span class="inline-block mt-1 rounded-full border border-amber-300 bg-amber-100 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-amber-900 shadow-sm">
@@ -305,11 +301,11 @@ const getPlayerBadge = (index: number) => {
           <div class="mt-5 pt-4 border-t border-brand-line/60 flex justify-around text-sm">
             <div>
               <p class="text-brand-slate font-bold text-xs">{{ t('leaderboard.sessionsAttended') }}</p>
-              <p class="text-2xl font-black text-brand-court">{{ topThree[0].matchesPlayed }}</p>
+              <p class="text-2xl font-black text-brand-court tabular-nums">{{ topThree[0].matchesPlayed }}</p>
             </div>
             <div>
               <p class="text-brand-slate font-bold text-xs">{{ t('leaderboard.reliability') }}</p>
-              <p class="text-2xl font-black text-emerald-600">{{ topThree[0].reliabilityRate }}%</p>
+              <p class="text-2xl font-black text-emerald-600 tabular-nums">{{ topThree[0].reliabilityRate }}%</p>
             </div>
           </div>
         </UIGlassCard>
@@ -319,8 +315,8 @@ const getPlayerBadge = (index: number) => {
           v-if="topThree[2]"
           class="relative order-3 overflow-hidden border-orange-200 bg-gradient-to-b from-orange-50/70 to-white text-center !p-6"
         >
-          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-orange-200 text-orange-800 text-xl font-black shadow-inner">
-            🥉
+          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-orange-200/80 text-orange-900 text-xl font-black tabular-nums shadow-inner">
+            03
           </div>
           <p class="mt-3 text-lg font-black text-brand-ink">{{ topThree[2].name }}</p>
           <span class="inline-block mt-1 rounded-full border border-orange-200 bg-orange-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-orange-800">
@@ -329,11 +325,11 @@ const getPlayerBadge = (index: number) => {
           <div class="mt-4 pt-3 border-t border-brand-line/60 flex justify-around text-xs">
             <div>
               <p class="text-brand-slate font-bold">{{ t('leaderboard.matches') }}</p>
-              <p class="text-lg font-black text-brand-ink">{{ topThree[2].matchesPlayed }}</p>
+              <p class="text-lg font-black text-brand-ink tabular-nums">{{ topThree[2].matchesPlayed }}</p>
             </div>
             <div>
               <p class="text-brand-slate font-bold">{{ t('leaderboard.reliability') }}</p>
-              <p class="text-lg font-black text-emerald-600">{{ topThree[2].reliabilityRate }}%</p>
+              <p class="text-lg font-black text-emerald-600 tabular-nums">{{ topThree[2].reliabilityRate }}%</p>
             </div>
           </div>
         </UIGlassCard>
@@ -344,7 +340,7 @@ const getPlayerBadge = (index: number) => {
     <section class="space-y-4">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p class="section-kicker">Member Directory</p>
+          <p class="section-kicker">{{ t('leaderboard.badge') }}</p>
           <h2 class="mt-1 text-2xl font-black tracking-tight text-brand-ink">
             {{ t('leaderboard.memberDirectory') }}
           </h2>
@@ -407,29 +403,29 @@ const getPlayerBadge = (index: number) => {
                 class="transition-colors hover:bg-white/70"
               >
                 <!-- Rank -->
-                <td class="px-5 py-4 font-black">
+                <td class="px-5 py-4 font-black tabular-nums">
                   <span
                     v-if="(player.rank || idx + 1) === 1"
-                    class="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-amber-800 text-sm"
-                    title="Hạng 1"
+                    class="flex h-7 w-7 items-center justify-center rounded-full bg-brand-shuttle text-brand-ink ring-4 ring-brand-shuttle/30 text-xs font-black tabular-nums"
+                    :title="t('leaderboard.rankTooltip', { rank: 1 })"
                   >
-                    🥇
+                    01
                   </span>
                   <span
                     v-else-if="(player.rank || idx + 1) === 2"
-                    class="flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 text-slate-800 text-sm"
-                    title="Hạng 2"
+                    class="flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 text-slate-800 text-xs font-black tabular-nums"
+                    :title="t('leaderboard.rankTooltip', { rank: 2 })"
                   >
-                    🥈
+                    02
                   </span>
                   <span
                     v-else-if="(player.rank || idx + 1) === 3"
-                    class="flex h-7 w-7 items-center justify-center rounded-full bg-orange-100 text-orange-800 text-sm"
-                    title="Hạng 3"
+                    class="flex h-7 w-7 items-center justify-center rounded-full bg-orange-200/80 text-orange-900 text-xs font-black tabular-nums"
+                    :title="t('leaderboard.rankTooltip', { rank: 3 })"
                   >
-                    🥉
+                    03
                   </span>
-                  <span v-else class="text-sm font-bold text-brand-slate pl-2">
+                  <span v-else class="text-sm font-bold text-brand-slate pl-2 tabular-nums">
                     #{{ player.rank || idx + 1 }}
                   </span>
                 </td>
@@ -450,7 +446,7 @@ const getPlayerBadge = (index: number) => {
                 </td>
 
                 <!-- Matches -->
-                <td class="px-5 py-4 text-center">
+                <td class="px-5 py-4 text-center tabular-nums">
                   <div class="inline-flex items-baseline gap-1">
                     <span class="font-black text-brand-ink text-base">{{ player.matchesPlayed }}</span>
                     <span class="text-xs font-bold text-brand-slate">/ {{ player.totalRsvps }}</span>
@@ -461,7 +457,7 @@ const getPlayerBadge = (index: number) => {
                 </td>
 
                 <!-- Reliability Rate -->
-                <td class="px-5 py-4 text-center">
+                <td class="px-5 py-4 text-center tabular-nums">
                   <div class="inline-flex items-center gap-1 font-bold text-xs" :class="player.reliabilityRate >= 80 ? 'text-emerald-700' : 'text-amber-700'">
                     <span>{{ player.reliabilityRate }}%</span>
                   </div>

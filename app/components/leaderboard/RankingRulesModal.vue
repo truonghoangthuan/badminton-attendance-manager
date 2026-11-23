@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Award, ShieldCheck, Sparkles, Trophy } from 'lucide-vue-next';
+import { Award, ShieldCheck, Trophy } from 'lucide-vue-next';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -22,7 +22,7 @@ const isOpen = computed({
     <template #header>
       <div class="space-y-2 text-left">
         <div class="inline-flex items-center gap-1.5 rounded-full bg-brand-court/10 px-3 py-1 text-xs font-black uppercase tracking-wider text-brand-court">
-          <Sparkles :size="14" />
+          <Trophy :size="14" />
           <span>{{ t('leaderboard.rulesKicker') }}</span>
         </div>
         <h3 class="text-xl sm:text-2xl font-black tracking-tight text-brand-ink">
@@ -79,35 +79,35 @@ const isOpen = computed({
             </h4>
             <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               <div class="flex items-center gap-2 p-2 rounded-xl bg-amber-50/80 border border-amber-200">
-                <span class="text-base">🥇</span>
+                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-shuttle text-brand-ink text-xs font-black tabular-nums">01</span>
                 <div>
                   <p class="font-black text-amber-900">Top 1: {{ t('leaderboard.legendBadge') }}</p>
                   <p class="text-[11px] text-amber-700">{{ t('leaderboard.goldTitle') }}</p>
                 </div>
               </div>
               <div class="flex items-center gap-2 p-2 rounded-xl bg-slate-50/80 border border-slate-200">
-                <span class="text-base">🥈</span>
+                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-800 text-xs font-black tabular-nums">02</span>
                 <div>
                   <p class="font-black text-slate-800">Top 2: {{ t('leaderboard.contenderBadge') }}</p>
                   <p class="text-[11px] text-slate-600">{{ t('leaderboard.silverTitle') }}</p>
                 </div>
               </div>
               <div class="flex items-center gap-2 p-2 rounded-xl bg-orange-50/80 border border-orange-200">
-                <span class="text-base">🥉</span>
+                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-200/80 text-orange-900 text-xs font-black tabular-nums">03</span>
                 <div>
                   <p class="font-black text-orange-900">Top 3: {{ t('leaderboard.starBadge') }}</p>
                   <p class="text-[11px] text-orange-700">{{ t('leaderboard.bronzeTitle') }}</p>
                 </div>
               </div>
               <div class="flex items-center gap-2 p-2 rounded-xl bg-emerald-50/80 border border-emerald-200">
-                <span class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-200 text-emerald-800 font-black text-[10px]">#</span>
+                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-200 text-emerald-800 font-black text-xs tabular-nums">#</span>
                 <div>
                   <p class="font-black text-emerald-900">Top 4 - 10: {{ t('leaderboard.regularBadge') }}</p>
                   <p class="text-[11px] text-emerald-700">{{ t('leaderboard.rulesRegularDesc') }}</p>
                 </div>
               </div>
               <div class="flex items-center gap-2 p-2 rounded-xl bg-brand-sand/80 border border-brand-line sm:col-span-2">
-                <span class="text-base">⚪</span>
+                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-line text-brand-ink text-xs font-black tabular-nums">11+</span>
                 <div>
                   <p class="font-black text-brand-ink">Top 11+: {{ t('leaderboard.memberBadge') }}</p>
                   <p class="text-[11px] text-brand-slate">{{ t('leaderboard.rulesMemberDesc') }}</p>

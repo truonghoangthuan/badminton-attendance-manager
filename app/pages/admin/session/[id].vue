@@ -12,7 +12,6 @@ import {
   Info,
   Lock,
   MapPin,
-  MessageSquareShare,
   Minus,
   Plus,
   ReceiptText,
@@ -25,7 +24,7 @@ import {
   Users,
 } from 'lucide-vue-next';
 import { doc, onSnapshot, collection, updateDoc, deleteDoc, query, orderBy, setDoc } from 'firebase/firestore';
-import { calculateFeePerPerson, getSessionFinancialBreakdown } from '~/utils/sessionFinancials';
+import { calculateFeePerPerson, formatVnd, getSessionFinancialBreakdown } from '~/utils/sessionFinancials';
 import { formatDisplayDate } from '~/utils/dateFormat';
 import { exportSessionToCSV } from '~/utils/sessionExport';
 
@@ -220,7 +219,7 @@ const summaryStats = computed(() => [
     value: unpaidPlayers.value,
     hint:
       unpaidSlots.value > 0
-        ? `${unpaidSlots.value} ${unpaidSlots.value === 1 ? t('admin.detail.slotUnit') : t('admin.detail.slotsUnit')} (${formatCurrency(unpaidTotalRevenue.value)})`
+        ? `${unpaidSlots.value} ${unpaidSlots.value === 1 ? t('admin.detail.slotUnit') : t('admin.detail.slotsUnit')} (${formatVnd(unpaidTotalRevenue.value)})`
         : t('admin.detail.allPaidUp'),
     accent: unpaidPlayers.value > 0 ? 'from-brand-shuttle/22 to-brand-shuttle/8 text-amber-700' : 'from-emerald-500/14 to-emerald-500/5 text-emerald-600',
   },
@@ -471,15 +470,6 @@ watch(calculatedFeePerPerson, (newVal) => {
   }
 });
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'VND',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value || 0);
-};
-
 const formatPreciseCurrency = (value: number) => {
   return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 0,
@@ -551,16 +541,6 @@ const getStatusColor = (status: string) => {
                   <div class="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
-                      class="inline-flex items-center justify-center rounded-full border border-brand-line bg-white px-3.5 py-2 text-[11px] font-black uppercase tracking-wider text-brand-ink transition-all hover:border-brand-court hover:text-brand-court active:scale-95"
-                      :title="t('admin.detail.shareTitle')"
-                      @click="openSocialShare('invite')"
-                    >
-                      <MessageSquareShare :size="14" class="mr-1.5 text-brand-court" />
-                      {{ t('admin.detail.share') }}
-                    </button>
-
-                    <button
-                      type="button"
                       class="inline-flex items-center justify-center rounded-full border border-brand-line bg-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-brand-ink transition-colors hover:border-brand-court hover:text-brand-court"
                       @click="openEditModal"
                     >
@@ -593,7 +573,7 @@ const getStatusColor = (status: string) => {
                       <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                         {{ stat.label }}
                       </p>
-                      <div class="flex items-baseline gap-2 leading-none mt-1">
+                      <div class="flex items-baseline gap-2 leading-none mt-1 tabular-nums">
                         <p class="text-xl font-black tracking-tight text-brand-ink">
                           {{ stat.value }}
                         </p>
@@ -742,7 +722,7 @@ const getStatusColor = (status: string) => {
                       <span class="font-bold text-brand-ink text-sm sm:text-base">{{ att.name }}</span>
                       <span
                         v-if="att.isManual"
-                        class="rounded bg-sky-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sky-700"
+                        class="rounded bg-sky-100 px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider text-sky-700"
                       >
                         {{ t('admin.detail.walkInBadge') }}
                       </span>
@@ -760,8 +740,8 @@ const getStatusColor = (status: string) => {
 
                     <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-slate-500">
                       <span>{{ att.actualAttended ? t('admin.detail.checkedInOnSite') : t('admin.detail.awaitingCheckIn') }}</span>
-                      <span v-if="att.actualAttended && calculatedFeePerPerson" class="font-semibold text-brand-ink">
-                        {{ t('admin.detail.owes') }} {{ formatCurrency(calculatedFeePerPerson * (1 + (att.guestCount || 0))) }}
+                      <span v-if="att.actualAttended && calculatedFeePerPerson" class="font-semibold text-brand-ink tabular-nums">
+                        {{ t('admin.detail.owes') }} {{ formatVnd(calculatedFeePerPerson * (1 + (att.guestCount || 0))) }}
                       </span>
                     </div>
                   </div>
@@ -956,13 +936,13 @@ const getStatusColor = (status: string) => {
                 <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">
                   {{ t('admin.detail.derivedShuttlePrice') }}
                 </p>
-                <p class="mt-2 text-2xl font-black tracking-tight text-brand-ink">
-                  {{ formatCurrency(financialBreakdown.shuttlecockPrice) }}
+                <p class="mt-2 text-2xl font-black tracking-tight text-brand-ink tabular-nums">
+                  {{ formatVnd(financialBreakdown.shuttlecockPrice) }}
                 </p>
                 <p class="mt-1 text-sm font-medium text-brand-slate">
                   {{
                     t('admin.detail.derivedFormulaHint', {
-                      packPrice: formatCurrency(financialBreakdown.shuttlecockPackPrice),
+                      packPrice: formatVnd(financialBreakdown.shuttlecockPackPrice),
                       rawPrice: formatPreciseCurrency(financialBreakdown.rawShuttlecockPrice),
                     })
                   }}
@@ -975,7 +955,7 @@ const getStatusColor = (status: string) => {
                 <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">
                   {{ t('admin.detail.activePlayers') }}
                 </p>
-                <p class="mt-2 text-3xl font-black tracking-tight text-brand-ink">{{ totalActualPlayers }}</p>
+                <p class="mt-2 text-3xl font-black tracking-tight text-brand-ink tabular-nums">{{ totalActualPlayers }}</p>
                 <p class="mt-1 text-sm font-medium text-brand-slate">{{ t('admin.detail.activePlayersHint') }}</p>
               </div>
 
@@ -985,8 +965,8 @@ const getStatusColor = (status: string) => {
                 <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">
                   {{ t('admin.detail.feePerPerson') }}
                 </p>
-                <p class="mt-2 text-3xl font-black tracking-tight text-brand-ink">
-                  {{ formatCurrency(calculatedFeePerPerson) }}
+                <p class="mt-2 text-3xl font-black tracking-tight text-brand-ink tabular-nums">
+                  {{ formatVnd(calculatedFeePerPerson) }}
                 </p>
                 <p class="mt-1 text-sm font-medium text-brand-slate">{{ t('admin.detail.feePerPersonHint') }}</p>
               </div>

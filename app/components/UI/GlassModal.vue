@@ -16,7 +16,7 @@
           <div 
             v-if="modelValue"
             ref="modalContent"
-            class="relative w-full max-w-lg overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl focus:outline-none"
+            class="relative w-full max-w-lg overflow-hidden rounded-2xl border border-brand-line bg-white shadow-xl focus:outline-none"
             role="dialog"
             aria-modal="true"
             aria-labelledby="modal-title"

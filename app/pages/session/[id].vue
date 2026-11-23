@@ -73,7 +73,7 @@ onMounted(async () => {
   try {
     const unsubscribeSession = onSnapshot(doc(db, 'sessions', sessionId), (sessionDoc) => {
       if (!sessionDoc.exists()) {
-        message.value = { text: 'Session not found.', type: 'error' };
+        message.value = { text: t('sessionDetail.notFound'), type: 'error' };
         loading.value = false;
         return;
       }
@@ -110,7 +110,7 @@ onMounted(async () => {
     });
   } catch (e) {
     console.error('Error loading session:', e);
-    message.value = { text: 'Error loading session data.', type: 'error' };
+    message.value = { text: t('sessionDetail.loadError'), type: 'error' };
   } finally {
     if (message.value.type === 'error') {
       loading.value = false;
@@ -122,30 +122,41 @@ const submitVote = async () => {
   if (!user.value) {
     toast.add({
       severity: 'error',
-      summary: 'Unable to save RSVP',
-      detail: 'Please wait a moment.',
+      summary: t('sessionDetail.rsvpWaitSummary'),
+      detail: t('sessionDetail.rsvpWaitDetail'),
       life: 3000,
     });
     return;
   }
 
   if (!profile.value?.displayName) {
-    if (!newName.value.trim()) {
+    const trimmedName = newName.value.trim();
+    if (!trimmedName) {
       toast.add({
         severity: 'error',
-        summary: 'Missing name',
-        detail: 'Please enter your name.',
+        summary: t('sessionDetail.missingNameSummary'),
+        detail: t('sessionDetail.missingNameDetail'),
         life: 3000,
       });
       return;
     }
 
-    const success = await setProfile(newName.value.trim());
+    if (trimmedName.length < 2) {
+      toast.add({
+        severity: 'error',
+        summary: t('sessionDetail.missingNameSummary'),
+        detail: t('profileModal.errorTooShort'),
+        life: 3000,
+      });
+      return;
+    }
+
+    const success = await setProfile(trimmedName);
     if (!success) {
       toast.add({
         severity: 'error',
-        summary: 'Profile update failed',
-        detail: 'Could not save your name.',
+        summary: t('sessionDetail.profileUpdateFailedSummary'),
+        detail: t('sessionDetail.profileUpdateFailedDetail'),
         life: 3000,
       });
       return;
@@ -162,10 +173,10 @@ const submitVote = async () => {
     if (requestedSlots > availableSlots) {
       toast.add({
         severity: 'warn',
-        summary: availableSlots === 0 ? 'Session Full' : 'Capacity Exceeded',
+        summary: availableSlots === 0 ? t('sessionDetail.sessionFullTitle') : t('sessionDetail.capacityExceededTitle'),
         detail: availableSlots === 0
-          ? 'This session is full and cannot accept new players.'
-          : `Only ${availableSlots} slot(s) remaining.`,
+          ? t('sessionDetail.sessionFullDetail')
+          : t('sessionDetail.remainingSlotsDetail', { count: availableSlots }),
         life: 3500,
       });
       return;
@@ -197,16 +208,16 @@ const submitVote = async () => {
 
     toast.add({
       severity: 'success',
-      summary: vote.value.isJoining ? 'RSVP confirmed' : 'RSVP updated',
-      detail: vote.value.isJoining ? 'You are in.' : 'You are marked unavailable.',
+      summary: vote.value.isJoining ? t('sessionDetail.rsvpConfirmedSummary') : t('sessionDetail.rsvpUpdatedSummary'),
+      detail: vote.value.isJoining ? t('sessionDetail.rsvpConfirmedDetail') : t('sessionDetail.rsvpUnavailableDetail'),
       life: 3000,
     });
   } catch (e) {
     console.error('Error submitting vote:', e);
     toast.add({
       severity: 'error',
-      summary: 'Save failed',
-      detail: 'Failed to save your RSVP.',
+      summary: t('sessionDetail.saveFailedSummary'),
+      detail: t('sessionDetail.saveFailedDetail'),
       life: 3000,
     });
   } finally {
@@ -225,15 +236,6 @@ const getStatusColor = (status: string) => {
     default:
       return 'bg-white text-brand-slate border-brand-line';
   }
-};
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'VND',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value || 0);
 };
 
 const formatPreciseCurrency = (value: number) => {
@@ -287,7 +289,6 @@ const getGuestLabel = (guestCount: number) => {
 <template>
   <div class="space-y-8 pb-14">
     <div class="bg-shuttlecock" />
-    <Toast position="top-right" />
 
     <section v-if="loading" class="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
       <UIGlassCard class="animate-pulse space-y-4">
@@ -371,35 +372,35 @@ const getGuestLabel = (guestCount: number) => {
             </div>
           </div>
 
-          <div class="rounded-[24px] border border-brand-line bg-brand-sand px-4 py-4">
+          <div class="rounded-2xl border border-brand-line bg-brand-sand px-4 py-4">
             <p class="text-sm font-medium text-brand-slate">{{ t('sessionDetail.responsesCount', { count: attendanceList.length }) }}</p>
           </div>
 
           <div class="grid gap-3 sm:grid-cols-2">
             <div
-              class="rounded-[24px] border border-brand-court/15 bg-[linear-gradient(180deg,rgba(47,122,83,0.12),rgba(255,255,255,0.95))] px-4 py-4"
+              class="rounded-2xl border border-brand-court/15 bg-[linear-gradient(180deg,rgba(47,122,83,0.12),rgba(255,255,255,0.95))] px-4 py-4"
             >
               <div class="flex items-center gap-2 text-brand-court">
                 <BadgeDollarSign :size="18" />
                 <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">{{ t('sessionDetail.feePerPerson') }}</p>
               </div>
-              <p class="mt-2 text-3xl font-black tracking-tight text-brand-ink">
-                {{ formatCurrency(calculatedFeePerPerson) }}
+              <p class="mt-2 text-3xl font-black tracking-tight text-brand-ink tabular-nums">
+                {{ formatVnd(calculatedFeePerPerson) }}
               </p>
               <p class="mt-1 text-sm font-medium text-brand-slate">{{ t('sessionDetail.financialsSubtitle') }}</p>
             </div>
 
-            <div class="rounded-[24px] border border-brand-line bg-brand-sand px-4 py-4">
+            <div class="rounded-2xl border border-brand-line bg-brand-sand px-4 py-4">
               <p class="text-[11px] font-black uppercase tracking-[0.2em] text-brand-slate">{{ t('sessionDetail.playersCounted') }}</p>
-              <p class="mt-2 text-3xl font-black tracking-tight text-brand-ink">{{ totalActualPlayers }}</p>
+              <p class="mt-2 text-3xl font-black tracking-tight text-brand-ink tabular-nums">{{ totalActualPlayers }}</p>
               <p class="mt-1 text-sm font-medium text-brand-slate">{{ t('sessionDetail.playersCountedDesc') }}</p>
             </div>
           </div>
 
-          <div class="rounded-[24px] border border-brand-line bg-brand-sand px-4 py-4 space-y-2">
+          <div class="rounded-2xl border border-brand-line bg-brand-sand px-4 py-4 space-y-2">
             <div class="flex justify-between items-center text-xs font-black uppercase tracking-wider">
               <span class="text-brand-slate">{{ t('sessionDetail.courtCapacity') }}</span>
-              <span :class="isSessionFull ? 'text-amber-700 font-bold' : 'text-brand-court'">
+              <span class="tabular-nums" :class="isSessionFull ? 'text-amber-700 font-bold' : 'text-brand-court'">
                 {{ t('sessionDetail.courtSlots', { current: totalJoinedSlots, max: maxCapacity }) }}
               </span>
             </div>
@@ -414,7 +415,7 @@ const getGuestLabel = (guestCount: number) => {
 
           <div
             v-if="myAttendanceRecord?.isJoining && (!isMatchOrSettling || myAttendanceRecord.actualAttended)"
-            class="rounded-[24px] border border-brand-court/30 bg-emerald-50/80 p-4"
+            class="rounded-2xl border border-brand-court/30 bg-emerald-50/80 p-4"
           >
             <div class="flex items-center justify-between">
               <p class="text-[11px] font-black uppercase tracking-wider text-brand-court">{{ t('sessionDetail.yourCalculatedShare') }}</p>
@@ -425,8 +426,8 @@ const getGuestLabel = (guestCount: number) => {
                 {{ t('sessionDetail.checkedIn') }}
               </span>
             </div>
-            <p class="mt-1 text-2xl font-black text-brand-ink">
-              {{ formatCurrency(personalAmount) }}
+            <p class="mt-1 text-2xl font-black text-brand-ink tabular-nums">
+              {{ formatVnd(personalAmount) }}
             </p>
             <p v-if="myAttendanceRecord.guestCount" class="mt-0.5 text-xs font-medium text-brand-slate">
               {{ t('sessionDetail.includesYouAndGuests', { guests: myAttendanceRecord.guestCount, slots: 1 + myAttendanceRecord.guestCount }) }}
@@ -460,14 +461,14 @@ const getGuestLabel = (guestCount: number) => {
                 <template #icon><User :size="18" /></template>
               </UIGlassInput>
 
-              <div v-else class="rounded-[22px] border border-brand-line bg-brand-sand px-4 py-4">
+              <div v-else class="rounded-2xl border border-brand-line bg-brand-sand px-4 py-4">
                 <p class="text-sm font-medium text-brand-slate">{{ t('sessionDetail.playingAs') }}</p>
                 <p class="mt-1 text-lg font-black">{{ profile.displayName }}</p>
               </div>
 
               <div
                 v-if="isSessionFull && !isUserAlreadyJoining"
-                class="rounded-[20px] border border-amber-200 bg-amber-50/80 p-3.5 text-xs font-bold text-amber-900"
+                class="rounded-2xl border border-amber-200 bg-amber-50/80 p-3.5 text-xs font-bold text-amber-900"
               >
                 {{ t('sessionDetail.sessionFullNotice', { max: maxCapacity }) }}
               </div>
@@ -485,7 +486,7 @@ const getGuestLabel = (guestCount: number) => {
                     class="peer hidden"
                   />
                   <div
-                    class="rounded-[22px] border border-brand-line bg-brand-sand px-4 py-4 text-center font-bold transition-all peer-checked:border-brand-court peer-checked:bg-emerald-50"
+                    class="rounded-2xl border border-brand-line bg-brand-sand px-4 py-4 text-center font-bold transition-all peer-checked:border-brand-court peer-checked:bg-emerald-50"
                   >
                     {{ isSessionFull && !isUserAlreadyJoining ? t('sessionDetail.sessionFull') : t('sessionDetail.imJoining') }}
                   </div>
@@ -493,7 +494,7 @@ const getGuestLabel = (guestCount: number) => {
                 <label class="cursor-pointer">
                   <input type="radio" v-model="vote.isJoining" :value="false" class="peer hidden" />
                   <div
-                    class="rounded-[22px] border border-brand-line bg-brand-sand px-4 py-4 text-center font-bold transition-all peer-checked:border-red-200 peer-checked:bg-red-50"
+                    class="rounded-2xl border border-brand-line bg-brand-sand px-4 py-4 text-center font-bold transition-all peer-checked:border-red-200 peer-checked:bg-red-50"
                   >
                     {{ t('sessionDetail.cantMakeIt') }}
                   </div>
@@ -513,7 +514,7 @@ const getGuestLabel = (guestCount: number) => {
 
               <p
                 v-if="hasExistingVote"
-                class="rounded-[20px] border border-brand-court/15 bg-emerald-50/70 px-4 py-3 text-sm font-medium text-brand-slate"
+                class="rounded-2xl border border-brand-court/15 bg-emerald-50/70 px-4 py-3 text-sm font-medium text-brand-slate"
               >
                 {{ t('sessionDetail.alreadyRespondedNotice') }}
               </p>

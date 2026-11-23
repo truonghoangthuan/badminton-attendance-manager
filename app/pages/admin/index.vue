@@ -3,7 +3,7 @@ import { collection, collectionGroup, addDoc, updateDoc, deleteDoc, doc, onSnaps
 import { Copy, Plus, RefreshCcw, X, Edit2, ExternalLink, Calendar, MapPin, Users, Trophy, Feather, Grid2x2, CheckCircle2, CircleDollarSign, ReceiptText } from 'lucide-vue-next';
 import { useToast } from 'primevue/usetoast';
 import { formatDisplayDate, getLocalTodayDate } from '~/utils/dateFormat';
-import { calculateUnpaidSummary } from '~/utils/sessionFinancials';
+import { calculateUnpaidSummary, formatVnd } from '~/utils/sessionFinancials';
 
 definePageMeta({
   layout: 'admin',
@@ -364,14 +364,6 @@ const copySessionLink = async (id: string) => {
     life: 2500,
   });
 };
-
-const formatCurrency = (val?: number) => {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
-  }).format(val || 0);
-};
 </script>
 
 <template>
@@ -466,12 +458,12 @@ const formatCurrency = (val?: number) => {
 
           <UIGlassCard class="!p-4 border-amber-200/60 bg-amber-50/40">
             <p class="text-[10px] font-black uppercase tracking-wider text-slate-500">{{ t('admin.detail.activePlayers') }}</p>
-            <p class="mt-1 text-2xl font-black text-brand-ink">{{ t('admin.unpaidTotalSlots', { count: totalUnpaidSlots }) }}</p>
+            <p class="mt-1 text-2xl font-black text-brand-ink tabular-nums">{{ t('admin.unpaidTotalSlots', { count: totalUnpaidSlots }) }}</p>
           </UIGlassCard>
 
           <UIGlassCard class="!p-4 border-amber-200/60 bg-amber-50/40">
             <p class="text-[10px] font-black uppercase tracking-wider text-slate-500">{{ t('admin.unpaidTotalAmount') }}</p>
-            <p class="mt-1 text-2xl font-black text-brand-court">{{ formatCurrency(totalUnpaidAmount) }}</p>
+            <p class="mt-1 text-2xl font-black text-brand-court tabular-nums">{{ formatVnd(totalUnpaidAmount) }}</p>
           </UIGlassCard>
         </div>
 
@@ -490,8 +482,8 @@ const formatCurrency = (val?: number) => {
                     {{ t('admin.unpaidSessionsCount', { count: player.sessions.length }) }}
                   </p>
                 </div>
-                <div class="text-right">
-                  <span class="text-base font-black text-amber-700">{{ formatCurrency(player.totalOwed) }}</span>
+                <div class="text-right tabular-nums">
+                  <span class="text-base font-black text-amber-700">{{ formatVnd(player.totalOwed) }}</span>
                   <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                     {{ player.totalSlots }} {{ player.totalSlots === 1 ? t('admin.detail.slotUnit') : t('admin.detail.slotsUnit') }}
                   </p>
@@ -516,7 +508,7 @@ const formatCurrency = (val?: number) => {
                       <ExternalLink :size="11" class="text-slate-400 group-hover:text-brand-court shrink-0" />
                     </NuxtLink>
                     <p class="text-[11px] text-slate-500 mt-0.5 truncate">
-                      <span>{{ formatCurrency(s.feePerPerson) }} / {{ t('admin.detail.slotUnit') }}</span>
+                      <span>{{ formatVnd(s.feePerPerson) }} / {{ t('admin.detail.slotUnit') }}</span>
                       <span v-if="s.guestCount > 0" class="ml-1.5 font-bold text-amber-700">
                         (+{{ s.guestCount }} {{ t('admin.detail.guestUnit') }})
                       </span>
@@ -524,7 +516,7 @@ const formatCurrency = (val?: number) => {
                   </div>
 
                   <div class="flex items-center gap-2 shrink-0">
-                    <span class="font-black text-brand-ink">{{ formatCurrency(s.amountOwed) }}</span>
+                    <span class="font-black text-brand-ink tabular-nums">{{ formatVnd(s.amountOwed) }}</span>
                     <button
                       type="button"
                       class="inline-flex items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-800 transition-all hover:bg-emerald-100 active:scale-95 disabled:opacity-50"
@@ -630,7 +622,7 @@ const formatCurrency = (val?: number) => {
             class="mb-4 flex items-center justify-between rounded-xl border border-brand-court/15 bg-brand-court/5 px-3 py-2 text-xs"
           >
             <span class="font-medium text-brand-slate">{{ t('admin.detail.feePerPerson') }}:</span>
-            <span class="font-black text-brand-court">{{ formatCurrency(session.financials.calculatedFeePerPerson) }}</span>
+            <span class="font-black text-brand-court tabular-nums">{{ formatVnd(session.financials.calculatedFeePerPerson) }}</span>
           </div>
         </div>
 
