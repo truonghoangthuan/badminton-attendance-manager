@@ -2,6 +2,13 @@
 import { doc, collection, setDoc, orderBy, onSnapshot, query } from 'firebase/firestore';
 import { BadgeDollarSign, Clock3, Feather, Grid2x2, Loader2, MapPin, Share2, Trophy, User, Users as UsersIcon } from 'lucide-vue-next';
 import { getSessionFinancialBreakdown } from '~/utils/sessionFinancials';
+import {
+  buildAttendancePayload,
+  calculateJoinedSlots,
+  getMaxCapacity,
+  normalizeGuestCount,
+  validateRsvpSubmission,
+} from '~/utils/sessionRsvp';
 
 const route = useRoute();
 const sessionId = route.params.id as string;
@@ -12,6 +19,8 @@ const toast = useToast();
 
 const session = ref<any>(null);
 const attendanceList = ref<any[]>([]);
+const attendanceLoaded = ref(false);
+const attendanceError = ref(false);
 const loading = ref(true);
 const submitting = ref(false);
 const message = ref({ text: '', type: '' });
@@ -30,16 +39,8 @@ const hasExistingVote = computed(() => {
   return attendanceList.value.some((attendance) => attendance.id === user.value?.uid);
 });
 
-const maxCapacity = computed(() => session.value?.maxPlayers || 8);
-const totalJoinedSlots = computed(() =>
-  attendanceList.value.reduce((acc, curr) => {
-    if (curr.isJoining) {
-      const guests = Math.max(0, Math.floor(Number(curr.guestCount) || 0));
-      return acc + 1 + guests;
-    }
-    return acc;
-  }, 0)
-);
+const maxCapacity = computed(() => getMaxCapacity(session.value?.maxPlayers));
+const totalJoinedSlots = computed(() => calculateJoinedSlots(attendanceList.value));
 const isSessionFull = computed(() => totalJoinedSlots.value >= maxCapacity.value);
 
 const myAttendanceRecord = computed(() => {
@@ -83,10 +84,20 @@ onMounted(async () => {
 
     const attendancesRef = collection(db, `sessions/${sessionId}/attendances`);
     const qAttendance = query(attendancesRef, orderBy('updatedAt', 'desc'));
-    const unsubscribeSnapshot = onSnapshot(qAttendance, (snapshot) => {
-      attendanceList.value = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      loading.value = false;
-    });
+    const unsubscribeSnapshot = onSnapshot(
+      qAttendance,
+      (snapshot) => {
+        attendanceList.value = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        attendanceLoaded.value = true;
+        attendanceError.value = false;
+        loading.value = false;
+      },
+      (err) => {
+        console.error('Error loading attendances:', err);
+        attendanceError.value = true;
+        loading.value = false;
+      },
+    );
 
     watchEffect(() => {
       if (voteSynced.value) return;
@@ -94,7 +105,7 @@ onMounted(async () => {
         const myVote = attendanceList.value.find((a) => a.id === user.value?.uid);
         if (myVote) {
           vote.value.isJoining = myVote.isJoining;
-          vote.value.guestCount = Math.max(0, Math.floor(Number(myVote.guestCount) || 0));
+          vote.value.guestCount = normalizeGuestCount(myVote.guestCount);
           voteSynced.value = true;
         } else if (isSessionFull.value) {
           vote.value.isJoining = false;
@@ -118,6 +129,48 @@ onMounted(async () => {
   }
 });
 
+const checkLiveSessionSubmit = (uid: string, safeGuestCount: number) => {
+  const check = validateRsvpSubmission({
+    session: session.value,
+    attendances: attendanceList.value,
+    attendanceLoaded: attendanceLoaded.value,
+    attendanceError: attendanceError.value,
+    uid,
+    isJoining: vote.value.isJoining,
+    guestCount: safeGuestCount,
+  });
+
+  if (!check.ok) {
+    if (check.reason === 'closed') {
+      toast.add({
+        severity: 'warn',
+        summary: t('sessionDetail.sessionClosed'),
+        detail: t('home.sessionNoLongerOpen'),
+        life: 3500,
+      });
+    } else if (check.reason === 'unloaded') {
+      toast.add({
+        severity: 'error',
+        summary: t('sessionDetail.saveFailedSummary'),
+        detail: t('sessionDetail.loadError'),
+        life: 3500,
+      });
+    } else {
+      toast.add({
+        severity: 'warn',
+        summary: check.reason === 'full' ? t('sessionDetail.sessionFullTitle') : t('sessionDetail.capacityExceededTitle'),
+        detail: check.reason === 'full'
+          ? t('sessionDetail.sessionFullDetail')
+          : t('sessionDetail.remainingSlotsDetail', { count: check.availableSlots }),
+        life: 3500,
+      });
+    }
+    return false;
+  }
+
+  return true;
+};
+
 const submitVote = async () => {
   if (!user.value) {
     toast.add({
@@ -126,6 +179,15 @@ const submitVote = async () => {
       detail: t('sessionDetail.rsvpWaitDetail'),
       life: 3000,
     });
+    return;
+  }
+
+  const safeGuestCount = normalizeGuestCount(vote.value.guestCount);
+  if (vote.value.isJoining) {
+    vote.value.guestCount = safeGuestCount;
+  }
+
+  if (!checkLiveSessionSubmit(user.value.uid, safeGuestCount)) {
     return;
   }
 
@@ -163,24 +225,8 @@ const submitVote = async () => {
     }
   }
 
-  if (vote.value.isJoining) {
-    const safeGuestCount = Math.max(0, Math.floor(Number(vote.value.guestCount) || 0));
-    vote.value.guestCount = safeGuestCount;
-    const previousSlots = isUserAlreadyJoining.value ? 1 + Math.max(0, Math.floor(Number(myAttendanceRecord.value?.guestCount) || 0)) : 0;
-    const requestedSlots = 1 + safeGuestCount;
-    const availableSlots = Math.max(0, maxCapacity.value - (totalJoinedSlots.value - previousSlots));
-
-    if (requestedSlots > availableSlots) {
-      toast.add({
-        severity: 'warn',
-        summary: availableSlots === 0 ? t('sessionDetail.sessionFullTitle') : t('sessionDetail.capacityExceededTitle'),
-        detail: availableSlots === 0
-          ? t('sessionDetail.sessionFullDetail')
-          : t('sessionDetail.remainingSlotsDetail', { count: availableSlots }),
-        life: 3500,
-      });
-      return;
-    }
+  if (!checkLiveSessionSubmit(user.value.uid, safeGuestCount)) {
+    return;
   }
 
   submitting.value = true;
@@ -189,20 +235,15 @@ const submitVote = async () => {
     const displayName = profile.value?.displayName || newName.value.trim();
     const attendanceRef = doc(db, `sessions/${sessionId}/attendances`, uid);
     const existingRecord = attendanceList.value.find((a: any) => a.id === uid);
-    const actualAttended = vote.value.isJoining ? (existingRecord?.actualAttended ?? false) : false;
-    const safeGuestCount = vote.value.isJoining
-      ? Math.max(0, Math.floor(Number(vote.value.guestCount) || 0))
-      : 0;
-
-    await setDoc(attendanceRef, {
+    const payload = buildAttendancePayload({
       uid,
       name: displayName,
       isJoining: vote.value.isJoining,
       guestCount: safeGuestCount,
-      actualAttended,
-      hasPaid: existingRecord?.hasPaid ?? false,
-      updatedAt: new Date().toISOString(),
-    }, { merge: true });
+      existingRecord,
+    });
+
+    await setDoc(attendanceRef, payload, { merge: true });
 
     voteSynced.value = true;
 
