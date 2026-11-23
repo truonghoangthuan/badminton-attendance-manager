@@ -7,7 +7,7 @@ import {
   calculateJoinedSlots,
   getMaxCapacity,
   normalizeGuestCount,
-  validateRsvpCapacity,
+  validateRsvpSubmission,
 } from '~/utils/sessionRsvp';
 
 const route = useRoute();
@@ -19,6 +19,8 @@ const toast = useToast();
 
 const session = ref<any>(null);
 const attendanceList = ref<any[]>([]);
+const attendanceLoaded = ref(false);
+const attendanceError = ref(false);
 const loading = ref(true);
 const submitting = ref(false);
 const message = ref({ text: '', type: '' });
@@ -82,10 +84,20 @@ onMounted(async () => {
 
     const attendancesRef = collection(db, `sessions/${sessionId}/attendances`);
     const qAttendance = query(attendancesRef, orderBy('updatedAt', 'desc'));
-    const unsubscribeSnapshot = onSnapshot(qAttendance, (snapshot) => {
-      attendanceList.value = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      loading.value = false;
-    });
+    const unsubscribeSnapshot = onSnapshot(
+      qAttendance,
+      (snapshot) => {
+        attendanceList.value = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        attendanceLoaded.value = true;
+        attendanceError.value = false;
+        loading.value = false;
+      },
+      (err) => {
+        console.error('Error loading attendances:', err);
+        attendanceError.value = true;
+        loading.value = false;
+      },
+    );
 
     watchEffect(() => {
       if (voteSynced.value) return;
@@ -117,6 +129,48 @@ onMounted(async () => {
   }
 });
 
+const checkLiveSessionSubmit = (uid: string, safeGuestCount: number) => {
+  const check = validateRsvpSubmission({
+    session: session.value,
+    attendances: attendanceList.value,
+    attendanceLoaded: attendanceLoaded.value,
+    attendanceError: attendanceError.value,
+    uid,
+    isJoining: vote.value.isJoining,
+    guestCount: safeGuestCount,
+  });
+
+  if (!check.ok) {
+    if (check.reason === 'closed') {
+      toast.add({
+        severity: 'warn',
+        summary: t('sessionDetail.sessionClosed'),
+        detail: t('home.sessionNoLongerOpen'),
+        life: 3500,
+      });
+    } else if (check.reason === 'unloaded') {
+      toast.add({
+        severity: 'error',
+        summary: t('sessionDetail.saveFailedSummary'),
+        detail: t('sessionDetail.loadError'),
+        life: 3500,
+      });
+    } else {
+      toast.add({
+        severity: 'warn',
+        summary: check.reason === 'full' ? t('sessionDetail.sessionFullTitle') : t('sessionDetail.capacityExceededTitle'),
+        detail: check.reason === 'full'
+          ? t('sessionDetail.sessionFullDetail')
+          : t('sessionDetail.remainingSlotsDetail', { count: check.availableSlots }),
+        life: 3500,
+      });
+    }
+    return false;
+  }
+
+  return true;
+};
+
 const submitVote = async () => {
   if (!user.value) {
     toast.add({
@@ -125,6 +179,15 @@ const submitVote = async () => {
       detail: t('sessionDetail.rsvpWaitDetail'),
       life: 3000,
     });
+    return;
+  }
+
+  const safeGuestCount = normalizeGuestCount(vote.value.guestCount);
+  if (vote.value.isJoining) {
+    vote.value.guestCount = safeGuestCount;
+  }
+
+  if (!checkLiveSessionSubmit(user.value.uid, safeGuestCount)) {
     return;
   }
 
@@ -162,28 +225,8 @@ const submitVote = async () => {
     }
   }
 
-  const safeGuestCount = normalizeGuestCount(vote.value.guestCount);
-  if (vote.value.isJoining) {
-    vote.value.guestCount = safeGuestCount;
-    const capacityCheck = validateRsvpCapacity({
-      attendances: attendanceList.value,
-      maxPlayers: session.value?.maxPlayers,
-      uid: user.value.uid,
-      isJoining: true,
-      guestCount: safeGuestCount,
-    });
-
-    if (!capacityCheck.ok) {
-      toast.add({
-        severity: 'warn',
-        summary: capacityCheck.reason === 'full' ? t('sessionDetail.sessionFullTitle') : t('sessionDetail.capacityExceededTitle'),
-        detail: capacityCheck.reason === 'full'
-          ? t('sessionDetail.sessionFullDetail')
-          : t('sessionDetail.remainingSlotsDetail', { count: capacityCheck.availableSlots }),
-        life: 3500,
-      });
-      return;
-    }
+  if (!checkLiveSessionSubmit(user.value.uid, safeGuestCount)) {
+    return;
   }
 
   submitting.value = true;

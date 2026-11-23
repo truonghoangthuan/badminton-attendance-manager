@@ -6,7 +6,7 @@ import {
   calculateJoinedSlots,
   getMaxCapacity,
   normalizeGuestCount,
-  validateRsvpCapacity,
+  validateRsvpSubmission,
 } from '~/utils/sessionRsvp';
 
 const { db } = useFirebase();
@@ -55,6 +55,7 @@ const visibleOpenSessionIds = computed(() => {
 
 const attendancesBySession = ref<Record<string, any[]>>({});
 const attendanceLoadedBySession = ref<Record<string, boolean>>({});
+const attendanceErrorBySession = ref<Record<string, boolean>>({});
 const attendanceUnsubs = new Map<string, () => void>();
 let unsubscribeSessions: (() => void) | null = null;
 let stopOpenSessionsWatch: (() => void) | null = null;
@@ -101,6 +102,7 @@ onMounted(() => {
           attendanceUnsubs.delete(id);
           delete attendancesBySession.value[id];
           delete attendanceLoadedBySession.value[id];
+          delete attendanceErrorBySession.value[id];
         }
       }
 
@@ -111,11 +113,12 @@ onMounted(() => {
           collection(db, `sessions/${id}/attendances`),
           (snap) => {
             attendancesBySession.value[id] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+            attendanceErrorBySession.value[id] = false;
             attendanceLoadedBySession.value[id] = true;
           },
           (err) => {
             console.error(`Error loading attendances for session ${id}:`, err);
-            attendanceLoadedBySession.value[id] = true;
+            attendanceErrorBySession.value[id] = true;
           },
         );
         attendanceUnsubs.set(id, unsub);
@@ -133,6 +136,7 @@ onUnmounted(() => {
 });
 
 const isAttendanceLoaded = (sessionId: string): boolean => Boolean(attendanceLoadedBySession.value[sessionId]);
+const hasAttendanceError = (sessionId: string): boolean => Boolean(attendanceErrorBySession.value[sessionId]);
 const getSessionMaxCapacity = (session: any): number => getMaxCapacity(session?.maxPlayers);
 const getSessionJoinedSlots = (sessionId: string): number =>
   calculateJoinedSlots(attendancesBySession.value[sessionId] || []);
@@ -165,23 +169,62 @@ watch(quickModalSession, (session) => {
   }
 });
 
+const checkLiveQuickRsvpWrite = (
+  sessionId: string,
+  uid: string,
+  isJoining: boolean,
+  guestCount: number,
+) => {
+  const liveSession = sessions.value.find((s) => s.id === sessionId) || null;
+  const attendances = attendancesBySession.value[sessionId] || [];
+  const check = validateRsvpSubmission({
+    session: liveSession,
+    attendances,
+    attendanceLoaded: isAttendanceLoaded(sessionId),
+    attendanceError: hasAttendanceError(sessionId),
+    uid,
+    isJoining,
+    guestCount,
+  });
+
+  if (!check.ok) {
+    if (check.reason === 'closed') {
+      toast.add({
+        severity: 'warn',
+        summary: t('sessionDetail.sessionClosed'),
+        detail: t('home.sessionNoLongerOpen'),
+        life: 3500,
+      });
+      quickModalOpen.value = false;
+    } else if (check.reason === 'unloaded') {
+      if (hasAttendanceError(sessionId)) {
+        toast.add({
+          severity: 'error',
+          summary: t('sessionDetail.saveFailedSummary'),
+          detail: t('sessionDetail.loadError'),
+          life: 3500,
+        });
+      }
+    } else {
+      toast.add({
+        severity: 'warn',
+        summary: check.reason === 'full' ? t('sessionDetail.sessionFullTitle') : t('sessionDetail.capacityExceededTitle'),
+        detail: check.reason === 'full'
+          ? t('sessionDetail.sessionFullDetail')
+          : t('sessionDetail.remainingSlotsDetail', { count: check.availableSlots }),
+        life: 3500,
+      });
+    }
+    return null;
+  }
+
+  return { liveSession: liveSession!, attendances };
+};
+
 const saveQuickRsvp = async (
   session: any,
   payload: { name?: string; isJoining: boolean; guestCount: number },
 ) => {
-  const liveSession = sessions.value.find((s) => s.id === session.id) || session;
-
-  if (liveSession.status !== 'open') {
-    toast.add({
-      severity: 'warn',
-      summary: t('sessionDetail.sessionClosed'),
-      detail: t('home.sessionNoLongerOpen'),
-      life: 3500,
-    });
-    quickModalOpen.value = false;
-    return;
-  }
-
   if (!user.value) {
     toast.add({
       severity: 'error',
@@ -192,11 +235,11 @@ const saveQuickRsvp = async (
     return;
   }
 
-  if (!isAttendanceLoaded(liveSession.id)) {
-    return;
-  }
+  const uid = user.value.uid;
+  const preCheck = checkLiveQuickRsvpWrite(session.id, uid, payload.isJoining, payload.guestCount);
+  if (!preCheck) return;
 
-  submittingSessionId.value = liveSession.id;
+  submittingSessionId.value = session.id;
   try {
     if (!profile.value?.displayName) {
       const trimmedName = (payload.name || '').trim();
@@ -231,30 +274,11 @@ const saveQuickRsvp = async (
       }
     }
 
-    const attendances = attendancesBySession.value[liveSession.id] || [];
-    const capacityCheck = validateRsvpCapacity({
-      attendances,
-      maxPlayers: liveSession.maxPlayers,
-      uid: user.value.uid,
-      isJoining: payload.isJoining,
-      guestCount: payload.guestCount,
-    });
+    const postCheck = checkLiveQuickRsvpWrite(session.id, uid, payload.isJoining, payload.guestCount);
+    if (!postCheck) return;
 
-    if (!capacityCheck.ok) {
-      toast.add({
-        severity: 'warn',
-        summary: capacityCheck.reason === 'full' ? t('sessionDetail.sessionFullTitle') : t('sessionDetail.capacityExceededTitle'),
-        detail: capacityCheck.reason === 'full'
-          ? t('sessionDetail.sessionFullDetail')
-          : t('sessionDetail.remainingSlotsDetail', { count: capacityCheck.availableSlots }),
-        life: 3500,
-      });
-      return;
-    }
-
-    const uid = user.value.uid;
     const displayName = profile.value?.displayName || (payload.name || '').trim();
-    const existingRecord = attendances.find((a: any) => a.id === uid) || null;
+    const existingRecord = postCheck.attendances.find((a: any) => a.id === uid) || null;
     const attendancePayload = buildAttendancePayload({
       uid,
       name: displayName,
@@ -263,7 +287,7 @@ const saveQuickRsvp = async (
       existingRecord,
     });
 
-    await setDoc(doc(db, `sessions/${liveSession.id}/attendances`, uid), attendancePayload, { merge: true });
+    await setDoc(doc(db, `sessions/${postCheck.liveSession.id}/attendances`, uid), attendancePayload, { merge: true });
     quickModalOpen.value = false;
 
     toast.add({
@@ -419,7 +443,12 @@ const getStatusStyles = (status: string) => {
 
               <template v-if="featuredSession.status === 'open'">
                 <div class="rounded-2xl border border-brand-line bg-white px-4 py-3.5 space-y-2.5">
-                  <template v-if="!isAttendanceLoaded(featuredSession.id)">
+                  <template v-if="hasAttendanceError(featuredSession.id)">
+                    <p class="text-xs font-semibold text-red-600">
+                      {{ t('sessionDetail.loadError') }}
+                    </p>
+                  </template>
+                  <template v-else-if="!isAttendanceLoaded(featuredSession.id)">
                     <div class="animate-pulse space-y-2">
                       <div class="flex items-center justify-between gap-2">
                         <div class="h-4 w-28 rounded bg-brand-sand" />
@@ -642,7 +671,12 @@ const getStatusStyles = (status: string) => {
 
             <div class="space-y-3 pt-1">
               <div class="rounded-2xl border border-brand-line bg-brand-sand/70 px-3.5 py-2.5 space-y-2">
-                <template v-if="!isAttendanceLoaded(session.id)">
+                <template v-if="hasAttendanceError(session.id)">
+                  <p class="text-xs font-semibold text-red-600">
+                    {{ t('sessionDetail.loadError') }}
+                  </p>
+                </template>
+                <template v-else-if="!isAttendanceLoaded(session.id)">
                   <div class="animate-pulse space-y-1.5">
                     <div class="flex items-center justify-between gap-2">
                       <div class="h-3.5 w-24 rounded bg-white/80" />

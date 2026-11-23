@@ -6,6 +6,7 @@ import {
   getMaxCapacity,
   calculateJoinedSlots,
   validateRsvpCapacity,
+  validateRsvpSubmission,
   buildAttendancePayload,
 } from '../app/utils/sessionRsvp.ts';
 
@@ -141,5 +142,72 @@ test('buildAttendancePayload preserves actualAttended and hasPaid invariants', (
       hasPaid: false,
       updatedAt: '2026-11-23T12:00:00.000Z',
     }
+  );
+});
+
+test('validateRsvpSubmission blocks closed, deleted, unloaded, and errored sessions before capacity check', () => {
+  const openSession = { status: 'open', maxPlayers: 8 };
+  const attendances = [{ id: 'u1', isJoining: true, guestCount: 0 }];
+
+  // Missing (deleted) or non-open session blocks even when attendances are empty
+  assert.equal(
+    validateRsvpSubmission({
+      session: null,
+      attendances: [],
+      attendanceLoaded: true,
+      uid: 'u2',
+      isJoining: true,
+      guestCount: 0,
+    }).reason,
+    'closed',
+  );
+  assert.equal(
+    validateRsvpSubmission({
+      session: { status: 'locked', maxPlayers: 8 },
+      attendances: [],
+      attendanceLoaded: true,
+      uid: 'u2',
+      isJoining: true,
+      guestCount: 0,
+    }).reason,
+    'closed',
+  );
+
+  // Pre-snapshot or snapshot-error state blocks even on open session with empty attendances
+  assert.equal(
+    validateRsvpSubmission({
+      session: openSession,
+      attendances: [],
+      attendanceLoaded: false,
+      uid: 'u2',
+      isJoining: true,
+      guestCount: 0,
+    }).reason,
+    'unloaded',
+  );
+  assert.equal(
+    validateRsvpSubmission({
+      session: openSession,
+      attendances: [],
+      attendanceLoaded: true,
+      attendanceError: true,
+      uid: 'u2',
+      isJoining: true,
+      guestCount: 0,
+    }).reason,
+    'unloaded',
+  );
+
+  // Open + loaded delegates to validateRsvpCapacity
+  assert.deepEqual(
+    validateRsvpSubmission({
+      session: openSession,
+      attendances,
+      attendanceLoaded: true,
+      uid: 'u2',
+      isJoining: true,
+      guestCount: 0,
+    }),
+    { ok: true, availableSlots: 7, totalJoinedSlots: 1, maxCapacity: 8 },
   );
 });

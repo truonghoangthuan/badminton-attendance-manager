@@ -116,3 +116,54 @@ export function buildAttendancePayload(params: {
     updatedAt: params.nowIso || new Date().toISOString(),
   };
 }
+
+export type RsvpSubmissionBlockReason = 'closed' | 'unloaded' | 'full' | 'exceeded';
+
+export interface RsvpSubmissionCheckResult {
+  ok: boolean;
+  reason?: RsvpSubmissionBlockReason;
+  availableSlots: number;
+  totalJoinedSlots: number;
+  maxCapacity: number;
+}
+
+export function validateRsvpSubmission(params: {
+  session?: { status?: string; maxPlayers?: unknown } | null;
+  attendances: AttendanceRsvpRecord[];
+  attendanceLoaded: boolean;
+  attendanceError?: boolean;
+  uid?: string | null;
+  isJoining: boolean;
+  guestCount?: unknown;
+}): RsvpSubmissionCheckResult {
+  const maxCapacity = getMaxCapacity(params.session?.maxPlayers);
+  const totalJoinedSlots = calculateJoinedSlots(params.attendances);
+
+  if (!params.session || params.session.status !== 'open') {
+    return {
+      ok: false,
+      reason: 'closed',
+      availableSlots: 0,
+      totalJoinedSlots,
+      maxCapacity,
+    };
+  }
+
+  if (!params.attendanceLoaded || params.attendanceError) {
+    return {
+      ok: false,
+      reason: 'unloaded',
+      availableSlots: 0,
+      totalJoinedSlots,
+      maxCapacity,
+    };
+  }
+
+  return validateRsvpCapacity({
+    attendances: params.attendances,
+    maxPlayers: params.session.maxPlayers,
+    uid: params.uid,
+    isJoining: params.isJoining,
+    guestCount: params.guestCount,
+  });
+}
