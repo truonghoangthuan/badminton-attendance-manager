@@ -233,7 +233,6 @@ const handleSaveSession = async () => {
           calculatedFeePerPerson: 0,
         },
         bankInfo: inherit?.bankInfo || null,
-        paymentQR: inherit?.paymentQR || null,
         createdBy: adminUser.value?.uid || null,
         createdAt: new Date().toISOString(),
       });
