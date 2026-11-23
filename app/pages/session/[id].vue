@@ -2,6 +2,13 @@
 import { doc, collection, setDoc, orderBy, onSnapshot, query } from 'firebase/firestore';
 import { BadgeDollarSign, Clock3, Feather, Grid2x2, Loader2, MapPin, Share2, Trophy, User, Users as UsersIcon } from 'lucide-vue-next';
 import { getSessionFinancialBreakdown } from '~/utils/sessionFinancials';
+import {
+  buildAttendancePayload,
+  calculateJoinedSlots,
+  getMaxCapacity,
+  normalizeGuestCount,
+  validateRsvpCapacity,
+} from '~/utils/sessionRsvp';
 
 const route = useRoute();
 const sessionId = route.params.id as string;
@@ -30,16 +37,8 @@ const hasExistingVote = computed(() => {
   return attendanceList.value.some((attendance) => attendance.id === user.value?.uid);
 });
 
-const maxCapacity = computed(() => session.value?.maxPlayers || 8);
-const totalJoinedSlots = computed(() =>
-  attendanceList.value.reduce((acc, curr) => {
-    if (curr.isJoining) {
-      const guests = Math.max(0, Math.floor(Number(curr.guestCount) || 0));
-      return acc + 1 + guests;
-    }
-    return acc;
-  }, 0)
-);
+const maxCapacity = computed(() => getMaxCapacity(session.value?.maxPlayers));
+const totalJoinedSlots = computed(() => calculateJoinedSlots(attendanceList.value));
 const isSessionFull = computed(() => totalJoinedSlots.value >= maxCapacity.value);
 
 const myAttendanceRecord = computed(() => {
@@ -94,7 +93,7 @@ onMounted(async () => {
         const myVote = attendanceList.value.find((a) => a.id === user.value?.uid);
         if (myVote) {
           vote.value.isJoining = myVote.isJoining;
-          vote.value.guestCount = Math.max(0, Math.floor(Number(myVote.guestCount) || 0));
+          vote.value.guestCount = normalizeGuestCount(myVote.guestCount);
           voteSynced.value = true;
         } else if (isSessionFull.value) {
           vote.value.isJoining = false;
@@ -163,20 +162,24 @@ const submitVote = async () => {
     }
   }
 
+  const safeGuestCount = normalizeGuestCount(vote.value.guestCount);
   if (vote.value.isJoining) {
-    const safeGuestCount = Math.max(0, Math.floor(Number(vote.value.guestCount) || 0));
     vote.value.guestCount = safeGuestCount;
-    const previousSlots = isUserAlreadyJoining.value ? 1 + Math.max(0, Math.floor(Number(myAttendanceRecord.value?.guestCount) || 0)) : 0;
-    const requestedSlots = 1 + safeGuestCount;
-    const availableSlots = Math.max(0, maxCapacity.value - (totalJoinedSlots.value - previousSlots));
+    const capacityCheck = validateRsvpCapacity({
+      attendances: attendanceList.value,
+      maxPlayers: session.value?.maxPlayers,
+      uid: user.value.uid,
+      isJoining: true,
+      guestCount: safeGuestCount,
+    });
 
-    if (requestedSlots > availableSlots) {
+    if (!capacityCheck.ok) {
       toast.add({
         severity: 'warn',
-        summary: availableSlots === 0 ? t('sessionDetail.sessionFullTitle') : t('sessionDetail.capacityExceededTitle'),
-        detail: availableSlots === 0
+        summary: capacityCheck.reason === 'full' ? t('sessionDetail.sessionFullTitle') : t('sessionDetail.capacityExceededTitle'),
+        detail: capacityCheck.reason === 'full'
           ? t('sessionDetail.sessionFullDetail')
-          : t('sessionDetail.remainingSlotsDetail', { count: availableSlots }),
+          : t('sessionDetail.remainingSlotsDetail', { count: capacityCheck.availableSlots }),
         life: 3500,
       });
       return;
@@ -189,20 +192,15 @@ const submitVote = async () => {
     const displayName = profile.value?.displayName || newName.value.trim();
     const attendanceRef = doc(db, `sessions/${sessionId}/attendances`, uid);
     const existingRecord = attendanceList.value.find((a: any) => a.id === uid);
-    const actualAttended = vote.value.isJoining ? (existingRecord?.actualAttended ?? false) : false;
-    const safeGuestCount = vote.value.isJoining
-      ? Math.max(0, Math.floor(Number(vote.value.guestCount) || 0))
-      : 0;
-
-    await setDoc(attendanceRef, {
+    const payload = buildAttendancePayload({
       uid,
       name: displayName,
       isJoining: vote.value.isJoining,
       guestCount: safeGuestCount,
-      actualAttended,
-      hasPaid: existingRecord?.hasPaid ?? false,
-      updatedAt: new Date().toISOString(),
-    }, { merge: true });
+      existingRecord,
+    });
+
+    await setDoc(attendanceRef, payload, { merge: true });
 
     voteSynced.value = true;
 
