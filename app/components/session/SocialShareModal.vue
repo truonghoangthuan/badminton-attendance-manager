@@ -54,7 +54,7 @@ const vietQRUrl = computed(() => {
   if (!bankInfo?.accountNumber || (!bankInfo?.bankName && !bankInfo?.bankCode)) {
     return '';
   }
-  const feePerPerson = props.financials?.calculatedFeePerPerson || 0;
+  const feePerPerson = props.financials?.calculatedFeePerPerson ?? props.financials?.feePerPerson ?? 0;
   return generateVietQRUrl({
     bankId: bankInfo.bankCode || bankInfo.bankName,
     accountNumber: bankInfo.accountNumber,
