@@ -1002,7 +1002,6 @@ const getStatusColor = (status: string) => {
           <!-- QR & Banking Management (Separated into its own card instead of nested inside sticky card) -->
           <AdminQRCodeManager
             :session-id="sessionId"
-            :qr-url="session?.paymentQR || null"
             :bank-info="session?.bankInfo || null"
           />
         </div>
